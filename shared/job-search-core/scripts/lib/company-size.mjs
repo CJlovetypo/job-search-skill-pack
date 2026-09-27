@@ -14,9 +14,9 @@ export function workforceRange(fact){
 }
 export function classifyCompanySize(company,ownership,profile,{now=new Date().toISOString(),model=SIZE_MODEL}={}){
  const fact=profile?.workforce,base={company_id:company.company_id,display_name:company.display_name,model_version:model.version,checked_at:now,ownership_tag:ownership?.ownership_tag||'待核实',label:'待核实',status:'unknown',entity:fact?.entity||'',as_of:fact?.as_of||'',workforce:fact?.value||'',evidence:fact?.evidence||[],scope:/全球|集团|并表|子公司|group/i.test(fact?.entity||'')?'group_scope':'reported_entity',confidence:'unknown'};
- if(!ownership||ownership.status!=='verified'||ownership.ownership_tag==='待核实')return {...base,reason:'公司性质尚未核实，暂不判定是否适用厂级标签'};
+ if(!ownership||!['verified','demo_unreviewed'].includes(ownership.status)||ownership.ownership_tag==='待核实')return {...base,reason:'公司性质尚未形成可用初值，暂不判定是否适用厂级标签'};
  if(!['私企','外企'].includes(ownership.ownership_tag))return {...base,status:'not_applicable',label:'不适用',reason:'本模型仅用于已确认的私企和外企'};
- const range=workforceRange(fact);if(!range)return {...base,reason:'缺少能解析且有证据的员工规模，或该数字不是雇员人数'};
+ const range=workforceRange({...fact,status:['api_supported','demo_unreviewed'].includes(fact?.status)?'verified':fact?.status});if(!range)return {...base,reason:'缺少能解析且有证据的员工规模，或该数字不是雇员人数'};
  const year=String(fact.as_of||'').match(/20\d{2}/)?.[0]||String(fact.value).match(/(20\d{2})年/)?.[1];
  const rawDate=String(fact.as_of||''),iso=rawDate.match(/20\d{2}-\d{2}-\d{2}/)?.[0];
  const asOf=iso||year&&year+'-01-01',age=asOf?(Date.parse(now)-Date.parse(asOf))/86400000:null;

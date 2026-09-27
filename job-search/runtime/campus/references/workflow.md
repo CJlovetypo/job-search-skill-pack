@@ -67,6 +67,8 @@ node ../../scripts/jobs.mjs render --mode campus --run runs/本次运行
   "city_filters": ["武汉"],
   "ownership_preferences": ["外企"],
   "ownership_filters": [],
+  "headquarters_country_filters": [],
+  "listing_status_filters": [],
   "business_preferences": ["人工智能"],
   "business_match": "any",
   "avoid_business_tags": [],
@@ -83,7 +85,7 @@ node ../../scripts/jobs.mjs render --mode campus --run runs/本次运行
 
 示例仅说明字段，不能直接当真实用户数据。偏好或到岗字段可以为空，不编造承诺；毕业时间与学历是正式岗位评估的必需字段，缺失时先向用户确认，不输出正式匹配结论。证据分类字段须由模型根据材料填写。`evidence.kind` 表示来源，与客观性分开。`claim_type`、`experience_type` 枚举及分类方法见 [能力证据模型](ability-model.md)。同一实习或项目的行动和成果共用 `experience_id`；自评、意愿不能冒充实践。客观事实陈述不等于已经外部核验。`prepare` 检查证据结构，并保存完整画像指纹。
 
-业务倾向读取统一公司画像发布后的正式业务标签，再把用户语义对应到既有词表。多个可接受业务默认 any；只有用户明确必须同时满足多个业务方向时才 all。`ownership_preferences` 是国企／私企／外企的软倾向，影响优先顺序；用户明确要求只看某类时才使用 `ownership_filters` 硬筛。API 支持的正式标签可以用于本轮筛选，但保持待独立核实状态。业务倾向与职能倾向分开，HR 不是所有雇主的主营业务。对用户要求避免的业务也在意愿对照中判断一次；业务资料未知不能冒充符合，不在优先级重复扣分。
+业务倾向读取统一公司画像发布后的正式业务标签，再把用户语义对应到既有词表。多个可接受业务默认 any；只有用户明确必须同时满足多个业务方向时才 all。`ownership_preferences` 是国企／私企／外企的软倾向，影响优先顺序；用户明确要求只看某类时才使用 `ownership_filters` 硬筛。`headquarters_country_filters` 和 `listing_status_filters` 分别按正式画像中的精确值硬筛。API 支持和首版待复核标签都可以用于本轮筛选，并保留各自审核状态。业务倾向与职能倾向分开，HR 不是所有雇主的主营业务。对用户要求避免的业务也在意愿对照中判断一次；业务资料未知不能冒充符合，不在优先级重复扣分。
 
 ## 过程文件与最终产物
 

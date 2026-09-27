@@ -16,6 +16,8 @@ description: 中文求职统一入口。理解岗位发现、简历匹配、岗�
 
 ## 执行和交付
 
+公司范围支持行业、具体业务和公司名。用户明确“只看游戏研发/发行”时使用任务 `conditions.businesses` 和 profile `business_filters`，按语义选 any/all；“更偏好”写入 `business_preferences`，不硬排除。只明确业务时不额外追问宽行业。标签定义及命令见[任务契约](../shared/job-search-core/references/task-contract.md)。正式 Demo 标签可以筛选，不能称为独立核实。
+
 - `node job-search/scripts/jobs.mjs industries` 查看真实来源库行业，无需画像或方向。准备执行时先 task-save 保存不可覆盖的任务修订；主入口 prepare 需要 --task，方向来自明确 --mode 或任务记录。
 - discover 可无简历：按 [执行命令](../shared/job-search-core/references/task-contract.md) prepare → collect → render-discovery。只交付未做个人匹配的候选和覆盖；实际职能相关性可读全文解释，不能生成个人匹配分或投递建议。
 - match 新评估先读 [判断模型v5](../shared/job-search-core/references/assessment-v5.md)，再读 [匹配模型](../shared/job-search-core/references/matching-model.md) 与对应方向 assessment/workflow。prepare → collect → 范围已有就保存、没有才询问 → 固定批次全文评估 → render。所有新准备运行绑定任务，旧运行仍可续用。

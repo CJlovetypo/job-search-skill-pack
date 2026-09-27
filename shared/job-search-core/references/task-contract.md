@@ -1,5 +1,13 @@
 # 任务记录与统一命令
 
+## 公司业务硬筛选
+
+“只看游戏研发公司”等明确限制写入 `conditions.businesses={state:"explicit",value:["游戏研发"],match:"any",basis:"用户原话"}`，对应 profile 的 `business_filters` 和 `business_filter_match`。`any` 命中任一项，`all` 需同时命中。行业、业务、公司、性质与城市硬条件取交集；只明确业务时内部行业用 `all` 表示不另加行业限制。`business_preferences` / `business_match` 继续表示排序偏好，不改变公司范围。
+
+业务使用公开词表 `data/business-taxonomy.json`。别名先归一化，例如游戏开发→游戏研发；游戏研发/发行/运营可以命中上级“游戏”，游戏工具和美术外包不自动命中。业务条件改变记录 `changes:["businesses"]` 并新建运行。日常查询不触发标签维护。
+
+只读验证：`node job-search/scripts/jobs.mjs catalog --mode social --businesses 游戏研发,游戏发行 --business-match all`。prepare 将相同条件写入 profile；绑定任务时校验条件及 any/all 一致。
+
 新匹配prepare自动使用assessment_model_version=5，evidence允许空数组，未知学历/年限不伪填；task-check的can_assess代表完整画像就绪，can_review_partial表示除画像外无阻塞时可按v5做有限判断。最终未知仍可审阅完成。城市偏好在profile.city_preference记录state/values/importance（must/prefer/open），与硬查询city_filters分开；salary_preference仅参考，不能转查询条件；同城距离需求告知不支持并忽略。
 
 conditions.cities可附importance：must保持明确城市过滤，prefer/open仅保留偏好且city_filters为空；省略时明确城市列表按既有范围语义处理。profile.city_preference须与任务一致。conditions.salary只作为参考记录，conditions.commute/office_distance记录不支持的原需求；它们及同名issues不阻塞采集/评估，task-check返回required_notices，Agent须向用户说明后继续支持的任务，不能把它们变成后续目标。
@@ -47,7 +55,7 @@ node job-search/scripts/jobs.mjs task-save --file job-search/runs/input/task.jso
 node job-search/scripts/jobs.mjs task-save --file job-search/runs/input/patch.json --previous job-search/runs/campus-pm/r1.json --out job-search/runs/campus-pm/r2.json
 ```
 
-修订 patch 提供同task_id、连续revision、当前user_request和修改字段；其余已明确条件继承，来源记录到上版。清空条件显式写 unspecified/null。changes 指明 cities/industries/companies/recruitment/evidence/preference/availability/refresh/presentation/scope。输出不可覆盖，supersedes 绑定旧版本指纹。
+修订 patch 提供同task_id、连续revision、当前user_request和修改字段；其余已明确条件继承，来源记录到上版。清空条件显式写 unspecified/null。changes 指明 cities/industries/businesses/companies/recruitment/evidence/preference/availability/refresh/presentation/scope。输出不可覆盖，supersedes 绑定旧版本指纹。
 
 准备岗位发现时，查询文件不是个人画像，只含实际查询参数及 is_test；不造证据数组：
 

@@ -38,6 +38,7 @@ test('all three product directions consume labels read-only; explicit maintenanc
  await fs.copyFile(path.join(PACK_ROOT,'shared/job-search-core/assets/custom-providers.json'),path.join(core,'assets/custom-providers.json'));
  await write(path.join(core,'assets/sources.json'),{companies:[{company_id:'synthetic',display_name:'合成公司',provider:'beisen',industry_tags:['internet'],primary_entry_url:'https://example.invalid/jobs'}]});
  for(const file of ['company-business-tags','company-ownership-tags','company-profiles','company-size-tags'])await write(path.join(core,'data',file+'.json'),{companies:[]});
+ await fs.copyFile(path.join(PACK_ROOT,'shared/job-search-core/data/business-taxonomy.json'),path.join(core,'data/business-taxonomy.json'));
  await write(path.join(core,'data/company-profiles.json'),{companies:[{company_id:'synthetic',business:{status:'verified',value:'缺少来源的合成简介'}}]});
  // Only the isolated copy gets a deterministic collector; no live provider calls.
  const collector=path.join(core,'scripts/lib/source-collector.mjs');

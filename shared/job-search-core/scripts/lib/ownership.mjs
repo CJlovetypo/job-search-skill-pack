@@ -3,7 +3,7 @@ const DECIDED_TAGS = new Set(['国企', '私企', '外企']);
 // Product use consumes saved decisions; evidence validation belongs to maintenance.
 export function ownershipDisplayTag(entry) {
   const status = entry?.ownership_status ?? entry?.status;
-  return ['verified','api_supported'].includes(status) && DECIDED_TAGS.has(entry?.ownership_tag) ? entry.ownership_tag : '待核实';
+  return ['verified','api_supported','demo_unreviewed'].includes(status) && DECIDED_TAGS.has(entry?.ownership_tag) ? entry.ownership_tag : '待核实';
 }
 
 const hasText = value => typeof value === 'string' && value.trim().length > 0;
@@ -21,8 +21,9 @@ export function ownershipEntryProblem(entry, expectedCompanyId) {
   if (expectedCompanyId && entry.company_id !== expectedCompanyId) return '公司 ID 不一致';
   if (!hasText(entry.reason)) return '缺少性质判断或无法判断的具体说明';
   if (!hasText(entry.checked_at)) return '缺少性质资料日期';
-  if (!hasPublicEvidence(entry)) return '缺少可核对的公开来源、标题或依据';
-  if (DECIDED_TAGS.has(entry.ownership_tag)) return ['verified','api_supported'].includes(entry.status) ? null : '已定性标签的状态必须为 verified 或 api_supported';
+  if (entry.status !== 'demo_unreviewed' && !hasPublicEvidence(entry)) return '缺少可核对的公开来源、标题或依据';
+  if (DECIDED_TAGS.has(entry.ownership_tag)) return ['verified','api_supported','demo_unreviewed'].includes(entry.status) ? null : '已定性标签的状态必须为 verified、api_supported 或 demo_unreviewed';
+  if (entry.ownership_tag === '待核实' && entry.status === 'demo_unreviewed') return null;
   if (entry.ownership_tag === '待核实') return entry.status === 'verified_unresolved' ? null : '待核实仅用于已核查仍无法定性的公司，状态必须为 verified_unresolved';
   return '性质必须为国企、私企、外企或经核查仍无法定性的待核实';
 }

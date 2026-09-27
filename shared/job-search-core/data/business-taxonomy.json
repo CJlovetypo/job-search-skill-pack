@@ -1,0 +1,2258 @@
+{
+  "schema_version": 1,
+  "version": "2026-09-27",
+  "policy": "行业保持19个宽类；业务按主体实际产品/服务归类。legacy标签保留原口径，不作为新分类依据。",
+  "terms": [
+    {
+      "label": "3D内容生成",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "5G",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "AI for Science",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "EDA",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "IP开发",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "IP衍生",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "IT",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "IT服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "专业服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "专业服务／科研",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "两轮出行",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "临床与科研",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "云服务",
+      "aliases": [],
+      "definition": "提供云计算基础设施、平台或云服务。",
+      "exclude": "在云上部署自身业务不等于提供云服务。",
+      "status": "defined"
+    },
+    {
+      "label": "互联网",
+      "aliases": [
+        "internet"
+      ],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "互联网平台",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "互联网／数字科技",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "五金制品",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "交通规划",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "交通运输",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "交通运输设备制造业",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "产业园",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "产业投资",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "产业链供应商",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "人力",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "人力资源开发",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "人工智能",
+      "aliases": [
+        "AI"
+      ],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "人才管理",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "仪器仪表",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "仪器设备",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "企业服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "企业软件",
+      "aliases": [],
+      "definition": "向企业提供经营、管理、协同等软件产品。",
+      "exclude": "软件公司的企业客户身份本身不足以确定企业软件业务。",
+      "status": "defined"
+    },
+    {
+      "label": "会展中心",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "传媒",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "传媒事业单位",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "体育健身",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "供应链",
+      "aliases": [
+        "supply_chain"
+      ],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "供应链服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "保健品",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "保险",
+      "aliases": [],
+      "definition": "经营保险承保、再保险或明确保险服务。",
+      "exclude": "员工保险福利不构成保险业务。",
+      "status": "defined"
+    },
+    {
+      "label": "信息系统建设",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "信托",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "健康",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "储能设备",
+      "aliases": [],
+      "definition": "提供储能系统、设备或专门部件。",
+      "exclude": "仅使用储能设施不构成该业务。",
+      "status": "defined"
+    },
+    {
+      "label": "光伏",
+      "aliases": [],
+      "definition": "提供光伏产品、技术或发电服务。",
+      "exclude": "普通能源投资或光伏客户不自动证明该业务。",
+      "status": "defined"
+    },
+    {
+      "label": "光学光电",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "光纤光缆",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "公共事业",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "公共交通",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "公寓租赁",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "养殖",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "养殖业",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "内容服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "内容社区",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "军工",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "军工电子",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "军工装备制造",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "农业科技",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "农产品供应链",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "农副产品",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "农商行",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "农林",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "农林牧渔",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "农牧",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "农药",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "冶金",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "出版",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "出行",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "创作软件",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "制药",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "制造",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "制造业",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "办公",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "动力电池／电驱",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "包装",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "包装设计加工",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "化妆品",
+      "aliases": [
+        "美妆"
+      ],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "化学",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "化学制品",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "化学制品制造业",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "化学化工",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "化学原料",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "化工",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "化工材料",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "医疗",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "医疗健康",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "医疗器械",
+      "aliases": [],
+      "definition": "研发、生产或销售诊断、治疗、监护等医疗器械。",
+      "exclude": "使用医疗设备或服务医疗客户不等于提供器械。",
+      "status": "defined"
+    },
+    {
+      "label": "医药／医疗健康",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "医院",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "半导体",
+      "aliases": [],
+      "definition": "提供半导体芯片、器件、材料或专用设备。",
+      "exclude": "终端使用芯片、服务半导体客户不自动归入该业务。",
+      "status": "defined"
+    },
+    {
+      "label": "原材料加工",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "厨卫行业",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "厨房器具",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "咨询",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "商业租赁",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "商业管理",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "商业运营",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "商业银行",
+      "aliases": [],
+      "definition": "提供存贷款、结算等商业银行业务。",
+      "exclude": "银行客户、银行软件或银行投资关系不构成商业银行业务。",
+      "status": "defined"
+    },
+    {
+      "label": "商务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "商务服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "园林景观",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "国际合作",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "国际贸易",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "在线教育",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "城乡规划",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "城市更新",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "城市服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "城市轨道交通",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "基础设施",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "基础软件",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "基金",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "基金证券",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "大健康",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "大宗商品贸易",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "大模型",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "学术科研",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "安防监控",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "实验室",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "宠物消费品",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "审计",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "家具",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "家具制造",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "家居家纺",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "家电",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "家电／清洁电器",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "家装",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "工业制造",
+      "aliases": [
+        "industrial"
+      ],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "工业自动化",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "工业软件",
+      "aliases": [],
+      "definition": "提供工业设计、制造、仿真或生产管理软件。",
+      "exclude": "使用工业软件或一般企业办公软件不构成该业务。",
+      "status": "defined"
+    },
+    {
+      "label": "工程勘察设计",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "工程建设",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "工程建设标准",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "工程技术",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "工程服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "工程设计",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "市政工程",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "广告营销",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "建材",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "建筑",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "建筑业研究",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "建筑地产",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "建筑数字科技",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "建筑材料",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "建筑软件",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "建筑／地产／基础设施",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "开源软件",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "影视",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "待核实",
+      "aliases": [],
+      "definition": "正式描述缺少可判断的业务事实。",
+      "exclude": "该值不构成可用于确定业务匹配的标签。",
+      "status": "defined"
+    },
+    {
+      "label": "快消零售",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "快速消费品",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "房产服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "房产经纪",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "房地产",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "批发零售百货",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "技术服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "投融资",
+      "aliases": [
+        "投融资​"
+      ],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "投资运营",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "投资银行",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "招聘服务",
+      "aliases": [],
+      "definition": "向企业或人才提供招聘中介、招聘平台或猎头服务。",
+      "exclude": "公司正在招聘员工不构成招聘服务业务。",
+      "status": "defined"
+    },
+    {
+      "label": "政务数字化",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "教育培训",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "教育科技",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "数字内容",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "数字科技",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "数字营销",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "数字阅读",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "数字零售",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "数字音乐",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "数据库",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "数据服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "数据统计分析",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "数码",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "文具",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "文创设计",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "文化",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "文化传媒",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "文化传媒／旅游",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "新材料",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "新能源",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "新零售",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "旅游",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "旅游娱乐",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "无人机",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "日化",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "时尚零售",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "智慧交通",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "智慧城市",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "智能仪器",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "智能出行",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "智能制造",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "智能制造业",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "智能家居",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "智能建造",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "智能显示终端",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "智能照明",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "智能硬件",
+      "aliases": [
+        "smart_hardware"
+      ],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "智能终端",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "智能终端零售",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "智能终端／计算设备",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "智能驾驶",
+      "aliases": [],
+      "definition": "提供辅助驾驶、自动驾驶系统或专用技术。",
+      "exclude": "智能座舱、普通汽车电子不自动视为智能驾驶。",
+      "status": "defined"
+    },
+    {
+      "label": "有色金属",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "服装服饰",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "机器人",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "机械",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "机械装备",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "材料／化工／矿冶",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "核能核电",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "检测认证",
+      "aliases": [],
+      "definition": "对外提供检测、检验、认证服务。",
+      "exclude": "自有产品通过认证不构成该业务。",
+      "status": "defined"
+    },
+    {
+      "label": "检测认证机构",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "模具开发",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "水利工程",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "水利水务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "水处理",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "污染防治",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "污水处理",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "汽车制造",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "汽车整车",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "汽车服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "汽车电子",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "汽车科技",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "汽车经销",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "汽车经销养护",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "汽车软件",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "汽车零部件",
+      "aliases": [],
+      "definition": "研发、制造或供应汽车组成部件。",
+      "exclude": "车辆租赁、汽车营销和维修不自动视为零部件制造。",
+      "status": "defined"
+    },
+    {
+      "label": "汽车零部件／汽车电子",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "法律",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "法律科技",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "消费品",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "消费品／零售",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "消费电子",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "消费电子／智能家居",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "清洁能源",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "港口",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "港口航运",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "游戏",
+      "aliases": [],
+      "definition": "公司直接研发、发行或运营游戏产品。",
+      "exclude": "仅为游戏企业供应工具、硬件、广告、外包服务或投资，不由此标成游戏。",
+      "status": "defined"
+    },
+    {
+      "label": "游戏发行",
+      "aliases": [
+        "手游发行"
+      ],
+      "definition": "公司发行游戏产品，包括代理发行和海外发行。",
+      "exclude": "广告投放、渠道技术支持、一般软件发布不等于游戏发行。",
+      "status": "defined",
+      "parents": [
+        "游戏"
+      ]
+    },
+    {
+      "label": "游戏开发工具",
+      "aliases": [],
+      "definition": "向开发者提供游戏引擎、编辑器或专门的开发工具。",
+      "exclude": "使用开发工具制作游戏不自动提供开发工具。",
+      "status": "defined"
+    },
+    {
+      "label": "游戏研发",
+      "aliases": [
+        "游戏开发",
+        "手游研发"
+      ],
+      "definition": "公司自主或受托承担游戏产品研发；游戏开发与游戏研发同义。",
+      "exclude": "游戏引擎、芯片、AI工具或美术外包服务不单独证明研发游戏产品。",
+      "status": "defined",
+      "parents": [
+        "游戏"
+      ]
+    },
+    {
+      "label": "游戏美术外包",
+      "aliases": [],
+      "definition": "为游戏客户提供美术资产、动画或相关制作外包服务。",
+      "exclude": "游戏研发企业自有美术团队不等于对外外包业务。",
+      "status": "defined"
+    },
+    {
+      "label": "游戏运营",
+      "aliases": [
+        "手游运营"
+      ],
+      "definition": "公司承担游戏产品持续运营。",
+      "exclude": "游戏客户、电竞活动或数据服务不证明游戏运营。",
+      "status": "defined",
+      "parents": [
+        "游戏"
+      ]
+    },
+    {
+      "label": "潮玩",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "激光设备",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "煤炭",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "物业",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "物流",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "物流仓储",
+      "aliases": [
+        "仓储物流"
+      ],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "物流／贸易",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "物联网",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "玩具",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "环保",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "环保制造",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "环保科技",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "环境工程",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "环境检测",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "生命科学",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "生态环境",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "生活护理",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "生活服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "生活用品",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "生物",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "生物制药",
+      "aliases": [],
+      "definition": "研发、制造生物技术药物。",
+      "exclude": "生命科学工具、普通化学药物不自动算生物制药。",
+      "status": "defined"
+    },
+    {
+      "label": "电力",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "电力电子",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "电力电气",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "电力设备",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "电商",
+      "aliases": [
+        "电子商务"
+      ],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "电器",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "电子",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "电子制造",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "电子设备",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "电气设备",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "电池",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "电池材料",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "电竞",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "直播",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "知识产权",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "石油石化",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "矿产",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "研究所",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "社交",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "社区服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "科研",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "科研服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "移动终端",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "税务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "管理咨询",
+      "aliases": [],
+      "definition": "向客户提供经营管理咨询。",
+      "exclude": "泛称咨询、技术咨询不自动成为管理咨询。",
+      "status": "defined"
+    },
+    {
+      "label": "给排水",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "综合集团",
+      "aliases": [
+        "diversified",
+        "多元化业务集团公司"
+      ],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "绿色建筑科技",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "网络安全",
+      "aliases": [],
+      "definition": "提供网络或信息安全产品、服务。",
+      "exclude": "只声明自身系统安全不构成该业务。",
+      "status": "defined"
+    },
+    {
+      "label": "网络通信设备",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "美妆日化",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "翻译服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "职业教育",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "能源",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "能源工程",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "能源／电力／环保",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "自动化设备",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "自动驾驶",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "航天",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "航空",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "航空信息服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "航空航天",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "航空航天／船舶／轨道装备",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "航空装备",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "船舶",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "节能环保",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "芯片",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "营销策划",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "行业信息化",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "行业软件",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "装备制造",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "视频娱乐",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "计算机硬件",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "设备租赁",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "证券",
+      "aliases": [],
+      "definition": "面向客户经营证券经纪、承销、交易等业务。",
+      "exclude": "股票代码、上市、持有证券不等于经营证券业务。",
+      "status": "defined"
+    },
+    {
+      "label": "财富管理",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "账户服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "贸易事业单位",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "资产管理",
+      "aliases": [
+        "资管"
+      ],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "资源回收利用",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "超市",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "跨境支付",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "跨境电商",
+      "aliases": [],
+      "definition": "跨境在线商品销售或直接运营相关电商平台。",
+      "exclude": "提供物流、支付、软件给跨境电商客户不等于经营跨境电商。",
+      "status": "defined"
+    },
+    {
+      "label": "车载设备",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "轨道交通",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "轨道交通装备",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "软件",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "软件研发",
+      "aliases": [],
+      "definition": "对外提供软件产品研发或定制开发服务。",
+      "exclude": "为自己的非软件产品配套开发程序不单独成立该业务。",
+      "status": "defined"
+    },
+    {
+      "label": "轻工",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "运动健身",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "运动消费品",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "进出口",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "连锁",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "通信",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "通信服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "通信模组",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "通信设备",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "通信运营",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "造纸",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "道路桥梁建设",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "邮政快递",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "酒店",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "酒店管理",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "酒水饮料",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "重工",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "量化",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "金融",
+      "aliases": [
+        "finance"
+      ],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "金融数据",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "金融服务",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "金融科技",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "钢铁",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "铁路",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "银行",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "集成电路",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "零售",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "零售百货",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "鞋服",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "风电装备",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "风能",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "食品",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "餐饮",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "饲料",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "高分子材料",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    },
+    {
+      "label": "高速公路",
+      "aliases": [],
+      "definition": "保留既有业务名称；新增赋值必须有同主体简介或产品服务的直接支持。",
+      "status": "legacy"
+    }
+  ]
+}

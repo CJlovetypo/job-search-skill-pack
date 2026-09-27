@@ -4,6 +4,8 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 import {createHash, randomUUID} from 'node:crypto';
 import {DatabaseSync} from 'node:sqlite';
 import {INDUSTRIES, normalizeIndustries, industryMatches} from '../../shared/job-search-core/scripts/lib/industry-routing.mjs';
+import {loadCompanyContext} from '../../shared/job-search-core/scripts/lib/company-records.mjs';
+import {normalizeBusinessFilters,businessMatchMode,businessMatches} from '../../shared/job-search-core/scripts/lib/business-taxonomy.mjs';
 import {normalizeJobLocations, normalizeCityFilters, jobCityStatus} from '../../shared/job-search-core/scripts/lib/locations.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -23,15 +25,17 @@ export function normalizeConfig(raw, companies) {
   const c = {id:raw.id, name:String(raw.name || raw.id), mode:raw.mode,
     keywords:words(raw.keywords,'keywords'), exclude_keywords:words(raw.exclude_keywords,'exclude_keywords'),
     company_ids:words(raw.company_ids,'company_ids'), cities:normalizeCityFilters(words(raw.cities,'cities')),
-    industries:normalizeIndustries(raw.industries || ['all'])};
-  if (!c.keywords.length && !c.company_ids.length && c.industries.includes('all')) throw Error('至少提供岗位词、具体行业或公司');
+    industries:normalizeIndustries(raw.industries || ['all']),
+    business_filters:normalizeBusinessFilters(raw.business_filters),business_filter_match:businessMatchMode(raw.business_filter_match)};
+  if (!c.keywords.length && !c.company_ids.length && !c.business_filters.length && c.industries.includes('all')) throw Error('至少提供岗位词、具体行业、业务或公司');
   const unknown = c.company_ids.filter(id => !companies.some(x => x.company_id === id));
   if (unknown.length) throw Error('来源库未收录的公司ID：' + unknown.join(', '));
   if (!selectCompanies(c, companies).length) throw Error('行业与公司交集为空，请检查条件');
   return c;
 }
 export function selectCompanies(c, companies) {
-  return companies.filter(x => (!c.company_ids.length || c.company_ids.includes(x.company_id)) && industryMatches(x,c.industries));
+  const wanted=normalizeBusinessFilters(c.business_filters),match=businessMatchMode(c.business_filter_match);
+  return companies.filter(x => (!c.company_ids.length || c.company_ids.includes(x.company_id)) && industryMatches(x,c.industries)&&businessMatches(x.business_tags,wanted,match));
 }
 export function openDb(file = path.join(ROOT,'state/radar.sqlite')) {
   fs.mkdirSync(path.dirname(file), {recursive:true});
@@ -138,7 +142,7 @@ export function renderReport(db,run,{limit=10,timeZone='Asia/Shanghai'}={}) {
   const text = [`# ${cell(c.name)} · 岗位日报`, '', new Date(r.started).toLocaleString('zh-CN',{timeZone})+`（${timeZone}）`, '',
     `首次发现 **${count('new')}** · 更新 **${count('updated')}** · 重新出现 **${count('reappeared')}** · 本次未见 **${count('missing')}**`, '',
     `覆盖 ${coverage.length} 家：完整 ${coverage.filter(x=>x.status==='complete').length}，部分 ${coverage.filter(x=>x.status==='partial').length}，失败 ${coverage.filter(x=>x.status==='failed').length}。运行状态：${r.status}。`, '',
-    `范围：${cell(c.mode)}；岗位词 ${cell(c.keywords.join(' / ') || '不限')}；行业 ${cell(c.industries.join(' / '))}；城市 ${cell(c.cities.join(' / ') || '不限')}；公司 ${cell(c.company_ids.join(' / ') || '所选行业全部已收录公司')}。`, '',
+    `范围：${cell(c.mode)}；岗位词 ${cell(c.keywords.join(' / ') || '不限')}；行业 ${cell(c.industries.join(' / '))}；业务 ${cell((c.business_filters||[]).join(' / ') || '不限')}（${cell(c.business_filter_match||'any')}）；城市 ${cell(c.cities.join(' / ') || '不限')}；公司 ${cell(c.company_ids.join(' / ') || '条件内全部已收录公司')}。`, '',
     '| 变化 | 公司 / 岗位 | 城市 | 薪资 | 需核实 | 链接 |', '| --- | --- | --- | --- | --- | --- |'];
   for (const {kind,j} of rows.slice(0,limit)) text.push(`| ${labels[kind]} | ${cell(j.company_name)} / ${cell(j.title)} | ${cell(j.radar_locations.join(' / ') || '未知')} | ${cell(j.salary || j.salary_raw)} | ${cell(j.radar_pending.join('、') || '—')} | ${link(j)} |`);
   if (!rows.length) text.push('',coverage.every(x=>x.status==='complete') && r.status==='complete' ? '本次没有新发现或更新的目标岗位。' : '本次未发现可展示的变化；存在采集缺口，不能判断为没有招聘。');
@@ -155,8 +159,12 @@ async function main() {
   for (let i=0;i<args.length;i+=2) {if (!args[i].startsWith('--') || args[i+1]===undefined) throw Error('参数格式：--名称 值'); flags[args[i].slice(2)] = args[i+1];}
   const positive = (name,fallback) => {const n = Number(flags[name] || fallback); if (!Number.isInteger(n)||n<1) throw Error(name+' 必须为正整数'); return n;};
   if (command==='industries') return console.log(json(INDUSTRIES));
-  const companies = read(REGISTRY).companies;
-  if (command==='catalog') return console.log(json(companies.filter(x=>!flags.query||[x.display_name,x.company_id,...x.industry_tags||[]].join(' ').toLowerCase().includes(flags.query.toLowerCase())).map(x=>({id:x.company_id,name:x.display_name,industries:x.industry_tags}))));
+  const context=await loadCompanyContext(),records=new Map(context.records.companies.map(x=>[x.company_id,x]));
+  const companies=context.registry.companies.map(x=>({...x,business_tags:records.get(x.company_id)?.tags.business||[],business_status:records.get(x.company_id)?.governance.fields['tags.business'].status}));
+  if (command==='catalog') {
+    const wanted=normalizeBusinessFilters(flags.businesses),match=businessMatchMode(flags['business-match']);
+    return console.log(json(companies.filter(x=>businessMatches(x.business_tags,wanted,match)&&(!flags.query||[x.display_name,x.company_id,...x.industry_tags||[],...x.business_tags].join(' ').toLowerCase().includes(flags.query.toLowerCase()))).map(x=>({id:x.company_id,name:x.display_name,industries:x.industry_tags,business_tags:x.business_tags,business_status:x.business_status}))));
+  }
   const db = openDb(flags.db);
   try {
     if (command==='subscribe') console.log(json(subscribe(db,normalizeConfig(read(flags.file),companies))));

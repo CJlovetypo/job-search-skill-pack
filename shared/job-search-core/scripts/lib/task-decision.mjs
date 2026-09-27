@@ -2,12 +2,13 @@
 // computes stage gates; it deliberately contains no prompt/keyword classifier.
 import {createHash} from 'node:crypto';
 import {isV5} from './assessment-v5.mjs';
+import {normalizeBusinessFilters,businessMatchMode} from './business-taxonomy.mjs';
 
 export const TASK_VERSION = 1;
 export const GOALS = ['clarify','consult','capabilities','discover','match','compare','explore','radar','repair'];
 export const MODES = ['campus','internship','social'];
 const states = ['explicit','inherited','unspecified','conflict'];
-const arrayFields = ['industries','companies','cities','roles'];
+const arrayFields = ['industries','businesses','companies','cities','roles'];
 const nonBlockingConditions=new Set(['salary','commute','office_distance']);
 const text = x => typeof x === 'string' && x.trim().length > 0;
 const object = x => x !== null && typeof x === 'object' && !Array.isArray(x);
@@ -36,6 +37,7 @@ export function validateTask(task) {
     if(specified(c)&&arrayFields.includes(key)&&(!Array.isArray(c.value)||c.value.some(x=>!text(x))||new Set(c.value).size!==c.value.length))errors.push(key+' 必须为不重复字符串数组；空数组表示明确不限');
     if(specified(c)&&key==='industries'&&Array.isArray(c.value)&&c.value.includes('all')&&c.value.length>1)errors.push('不限行业不能混入其他行业');
     if(key==='cities'&&c.importance!=null&&!['must','prefer','open'].includes(c.importance))errors.push('城市importance须为must/prefer/open');
+    if(key==='businesses'&&specified(c))try {normalizeBusinessFilters(c.value);businessMatchMode(c.match);}catch(e){errors.push(e.message);}
   }
   const r=task.retrieval;
   if(!object(r)||!['exhaustive','targeted'].includes(r.mode)||!['default','explicit','inherited'].includes(r.selection)||!text(r.basis))errors.push('retrieval 需要 mode、selection、basis');
@@ -59,7 +61,7 @@ export function validateTask(task) {
   for(const [key,value] of Object.entries(task.materials||{}))if(!['available','missing','partial','unreadable','conflict','not_needed'].includes(value))errors.push('材料状态无效：'+key);
   if(task.issues!=null&&!Array.isArray(task.issues))errors.push('issues 必须为数组');
   else for(const issue of task.issues||[])if(!object(issue)||!text(issue.field)||!text(issue.reason)||!text(issue.question)||!Array.isArray(issue.blocks)||issue.blocks.some(s=>!['collect','assess','schedule','repair'].includes(s)))errors.push('issue 需要 field、reason、question 和合法 blocks');
-  if(task.changes!=null&&(!Array.isArray(task.changes)||task.changes.some(x=>!['cities','industries','companies','recruitment','evidence','preference','availability','refresh','presentation','scope'].includes(x))))errors.push('changes 存在未知变化类型');
+  if(task.changes!=null&&(!Array.isArray(task.changes)||task.changes.some(x=>!['cities','industries','businesses','companies','recruitment','evidence','preference','availability','refresh','presentation','scope'].includes(x))))errors.push('changes 存在未知变化类型');
   return errors;
 }
 
@@ -79,8 +81,8 @@ export function decideTask(task) {
   if(searching||task.goal==='compare'||radarSearch){
     if(!mode)need('recruitment','这次找校招、实习还是社招？',['collect','assess',...(task.goal==='radar'?['schedule']:[])]);
   }
-  if(searching&&!(specified(c.industries)||specified(c.companies)&&c.companies.value.length))need('industries','想看哪些行业？可以多选或明确不限。',['collect','assess']);
-  if(radarSearch&&!['industries','companies','roles'].some(k=>specified(c[k])&&c[k].value.length&&!(k==='industries'&&c[k].value.includes('all'))))need('radar_target','想持续关注哪些岗位、行业或公司？',['collect','schedule']);
+  if(searching&&!(specified(c.industries)||specified(c.companies)&&c.companies.value.length||specified(c.businesses)&&c.businesses.value.length))need('industries','想看哪些行业？可以多选或明确不限。',['collect','assess']);
+  if(radarSearch&&!['industries','businesses','companies','roles'].some(k=>specified(c[k])&&c[k].value.length&&!(k==='industries'&&c[k].value.includes('all'))))need('radar_target','想持续关注哪些岗位、行业、业务或公司？',['collect','schedule']);
   for(const [key,value] of Object.entries(c))if(value.state==='conflict'&&!nonBlockingConditions.has(key))need(key,'请明确 '+key+' 中冲突的条件。',['collect','assess']);
   if(['match','compare','explore'].includes(task.goal)&&task.materials.profile!=='available')need('profile','请提供可核对的实际职责、个人行动与产出；已有文字或脱敏材料即可。',['assess']);
   if(task.goal==='compare'&&task.materials.jd!=='available')need('jd','请提供或定位要比较的完整岗位资料。',['assess']);
@@ -95,7 +97,7 @@ export function decideTask(task) {
   for(const issue of task.issues||[])if(!nonBlockingConditions.has(issue.field))need(issue.field,issue.question,issue.blocks);
   const changes=task.changes||[], actions=[];
   if(changes.includes('refresh'))actions.push('refresh_jobs');
-  if(changes.some(x=>['cities','industries','companies'].includes(x)))actions.push('new_run_extend_scope_reuse_valid_jd');
+  if(changes.some(x=>['cities','industries','businesses','companies'].includes(x)))actions.push('new_run_extend_scope_reuse_valid_jd');
   if(changes.includes('recruitment'))actions.push('new_direction_runtime_verify_direction_and_cities');
   if(changes.some(x=>['evidence','preference','availability','recruitment'].includes(x)))actions.push('invalidate_assessments_reuse_unchanged_facts');
   if(changes.includes('scope'))actions.push('update_scope_use_remaining_jobs');
@@ -158,6 +160,8 @@ export function assertTaskExecution(task,profile,mode,{discovery=false,searchPla
   if(!equalSet(profile.company_filters||[],specified(c.companies)?c.companies.value:[]))throw Error('执行公司与任务条件不一致；先将公司解析为真实ID');
   const industries=specified(c.industries)?(c.industries.value.length?c.industries.value:['all']):['all'];
   if(!equalSet(profile.industry_filters||[],industries))throw Error('执行行业与任务条件不一致');
+  const businesses=normalizeBusinessFilters(specified(c.businesses)?c.businesses.value:[]);
+  if(!equalSet(normalizeBusinessFilters(profile.business_filters),businesses)||businessMatchMode(profile.business_filter_match)!==businessMatchMode(specified(c.businesses)?c.businesses.match:undefined))throw Error('执行业务硬筛选与任务条件不一致');
   if((searchPlan?'targeted':'exhaustive')!==task.retrieval.mode)throw Error('执行检索策略与任务选择不一致');
   if(!!profile.is_test!==task.is_test)throw Error('任务与画像 is_test 不一致');
   return plan;
@@ -181,7 +185,7 @@ export function assertTaskScope(task,{mode,limit,companyIds,jobs,candidateCount}
 export function assertScopeRevision(previous,next) {
   if(taskFingerprint(previous)===taskFingerprint(next))return;
   if(next.task_id!==previous.task_id||next.revision!==previous.revision+1||next.supersedes?.fingerprint!==taskFingerprint(previous))throw Error('新评估范围须绑定当前任务的连续修订');
-  const conditions=value=>Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b)).map(([key,c])=>[key,{state:specified(c)?'known':c.state,value:c.value,...(c.importance?{importance:c.importance}:{})}]));
+  const conditions=value=>Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b)).map(([key,c])=>[key,{state:specified(c)?'known':c.state,value:c.value,...(c.importance?{importance:c.importance}:{}),...(key==='businesses'?{match:c.match||'any'}:{})}]));
   if(next.goal!==previous.goal||(next.changes||[]).some(change=>change!=='scope')||
     taskFingerprint(conditions(next.conditions))!==taskFingerprint(conditions(previous.conditions))||
     taskFingerprint(next.materials)!==taskFingerprint(previous.materials)||next.retrieval.mode!==previous.retrieval.mode)throw Error('变更条件或画像需 prepare 新运行，原运行只允许更新评估范围');

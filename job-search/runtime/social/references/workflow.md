@@ -28,6 +28,8 @@ Node.js 22+；PDF提取用Python+pypdf，DOCX用标准zip/xml解析。Excel使�
     "internet"
   ],
   "company_filters": [],
+  "headquarters_country_filters": [],
+  "listing_status_filters": [],
   "city_filters": [
     "上海"
   ],
@@ -47,7 +49,7 @@ Node.js 22+；PDF提取用Python+pypdf，DOCX用标准zip/xml解析。Excel使�
 }
 ```
 
-执行参数industry_filters必填，使用industries返回的ID或all；仅指定公司时all只表示不额外加行业过滤。城市为空表示本轮不加过滤，是否用户明确不限另存任务状态。业务偏好用已有标签词汇，职能偏好独立填写。能力事实与意愿不得混写。kind为resume/self_description/user_clarification；claim_type为objective_experience/objective_achievement/self_assessment/preference；experience_type为internship/employment/research_project/course_project/personal_project/other/none。客观经历必须有experience_id；同一经历不重复计数。
+执行参数industry_filters必填，使用industries返回的ID或all；仅指定公司时all只表示不额外加行业过滤。`headquarters_country_filters` 和 `listing_status_filters` 可按正式画像中的精确值硬筛，首版待复核值仍保留审核状态。城市为空表示本轮不加过滤，是否用户明确不限另存任务状态。业务偏好用已有标签词汇，职能偏好独立填写。能力事实与意愿不得混写。kind为resume/self_description/user_clarification；claim_type为objective_experience/objective_achievement/self_assessment/preference；experience_type为internship/employment/research_project/course_project/personal_project/other/none。客观经历必须有experience_id；同一经历不重复计数。
 
 ## 来源证据与启用
 

@@ -1,4 +1,7 @@
 import {publishPublicRecords} from './lib/public-company-data.mjs';
+import {withPublicationLock} from './lib/company-publication-transaction.mjs';
+import {companyInputHashes} from './lib/company-review-publication.mjs';
+import {bytesHash} from './lib/company-evidence.mjs';
 import {ARCHIVE_FILE,REVIEWS_FILE,API_LABELS_FILE,INTERNAL_RECORDS_FILE,RESEARCH_ROOT,RAW_ROOT,resolveResearchRecord} from '../maintenance-paths.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -6,6 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {gzipSync} from 'node:zlib';
 import {CORE_ROOT,PACK_ROOT} from '../runtime-context.mjs';
 import {INDUSTRIES} from './lib/industry-routing.mjs';
+import {businessVocabulary} from './lib/business-taxonomy.mjs';
 import {STATIC_FIELDS,loadCompanyInputs,buildCompanyRecords,projectCompanyRecords,indexById} from './lib/company-records.mjs';
 
 const ARCHIVE_ROOT=path.join(PACK_ROOT,'job-search/artifacts');
@@ -40,12 +44,12 @@ function sourceSupportsIdentity(source,company,item) {
   return names.some(name=>hay.includes(name));
 }
 
-async function rawFor(item,company,cache) {
+async function rawFor(item,company,cache,inputHashes) {
   let file;try{file=resolveResearchRecord(item.source_record);}catch{return {problem:'source_record_outside_archive'};}const rel=path.relative(PACK_ROOT,file);
   if(rel==='..'||rel.startsWith('..'+path.sep)||path.isAbsolute(rel))return {problem:'source_record_outside_archive'};
   if(!cache.has(file)) {
-    try {cache.set(file,JSON.parse(await fs.readFile(file,'utf8')));}
-    catch {cache.set(file,null);}
+    try {const bytes=await fs.readFile(file);inputHashes[file]=bytesHash(bytes);cache.set(file,JSON.parse(bytes));}
+    catch(e) {if(e.code==='ENOENT')inputHashes[file]=null;else if(!(e instanceof SyntaxError))throw e;cache.set(file,null);}
   }
   const raw=cache.get(file);
   if(!raw||raw.company_id!==company.company_id||raw.provider!==item.provider)return {problem:'source_record_or_identity_mismatch'};
@@ -58,8 +62,8 @@ async function rawFor(item,company,cache) {
   return {evidence:matched.slice(0,1).map(source=>({url:source.url,title:titleText(source)||source.url,note:bodyText(source).slice(0,180),checked_at:item.checked_at,provider:item.provider,source_record:item.source_record}))};
 }
 
-export async function buildApiPublication(inputs,{archive=inputs.research,rechecks={companies:[]}}={}) {
-  const registry=indexById(inputs.registry),reviews=indexById(inputs.reviews),recheckMap=indexById(rechecks),vocabulary=new Set(inputs.business.companies.flatMap(c=>c.business_tags||[]));
+export async function buildApiPublication(inputs,{archive=inputs.research,rechecks={companies:[]},inputHashes={}}={}) {
+  const registry=indexById(inputs.registry),reviews=indexById(inputs.reviews),recheckMap=indexById(rechecks),vocabulary=new Set([...businessVocabulary(),...inputs.business.companies.flatMap(c=>c.business_tags||[])]);
   const counts=Object.fromEntries(STATIC_FIELDS.map(key=>[key,{published:0,conflict:0,pending:0,not_supported:0,existing_review:0}]));
   const pending=[],companies=[],cache=new Map();
   for(const entry of archive.companies||[]) {
@@ -75,7 +79,7 @@ export async function buildApiPublication(inputs,{archive=inputs.research,rechec
         if(!validApiValue(key,item.value,vocabulary)){problems.push('invalid_value');continue;}
         if((item.issues||[]).some(issue=>issue!=='conflicting_provider_values')){problems.push(...item.issues.filter(issue=>issue!=='conflicting_provider_values'));continue;}
         if(!Array.isArray(item.source_urls)||!item.source_urls.some(webUrl)||!Number.isFinite(Date.parse(item.checked_at))){problems.push('missing_source_or_time');continue;}
-        const source=await rawFor(item,company,cache);
+        const source=await rawFor(item,company,cache,inputHashes);
         if(source.problem){problems.push(source.problem);continue;}
         accepted.push({item,evidence:source.evidence});
       }
@@ -98,20 +102,23 @@ export async function buildApiPublication(inputs,{archive=inputs.research,rechec
 }
 
 async function main() {
+  return withPublicationLock(async()=>{
   const {assertMaintenanceInputs}=await import('../maintenance-paths.mjs');await assertMaintenanceInputs();await fs.access(ARCHIVE_FILE);
+  const hashes=await companyInputHashes();
+  hashes[ARCHIVE_FILE]=bytesHash(await fs.readFile(ARCHIVE_FILE));
   const inputs=await loadCompanyInputs({includeResearch:true});
   const recheckFile=path.join(RAW_ROOT,'company-api-rechecks-20260924/results.json');
-  let rechecks={companies:[]};try{rechecks=JSON.parse(await fs.readFile(recheckFile,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;}
-  const {labels,audit}=await buildApiPublication(inputs,{rechecks});
+  let rechecks={companies:[]};try{const bytes=await fs.readFile(recheckFile);hashes[recheckFile]=bytesHash(bytes);rechecks=JSON.parse(bytes);}catch(error){if(error.code!=='ENOENT')throw error;hashes[recheckFile]=null;}
+  const {labels,audit}=await buildApiPublication(inputs,{rechecks,inputHashes:hashes});
   const records=buildCompanyRecords({...inputs,apiLabels:labels});
   const target=API_LABELS_FILE;
-  await fs.writeFile(target,gzipSync(JSON.stringify(labels)+'\n',{level:6}));
-  await fs.mkdir(path.dirname(INTERNAL_RECORDS_FILE),{recursive:true});
-  await fs.writeFile(INTERNAL_RECORDS_FILE,JSON.stringify(records)+'\n');
-  await publishPublicRecords(records,projectCompanyRecords(records,inputs));
+  await publishPublicRecords(records,projectCompanyRecords(records,inputs),{inputs:hashes,extraWrites:[
+    {file:target,bytes:gzipSync(JSON.stringify(labels)+'\n',{level:6})},
+    {file:INTERNAL_RECORDS_FILE,bytes:JSON.stringify(records)+'\n'}],metadata:{kind:'api_supported'}});
   await fs.writeFile(path.join(ARCHIVE_ROOT,'company-api-publication-audit-20260924.json'),JSON.stringify(audit,null,2)+'\n');
   const {recheck_queue,...summary}=audit;
   console.log(JSON.stringify(summary));
+  });
 }
 
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))main().catch(error=>{console.error(error);process.exitCode=1;});

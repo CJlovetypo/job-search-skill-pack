@@ -7,6 +7,7 @@
 | `shared/job-search-core/assets/` | 当前正式来源和采集配置 | 是 |
 | `shared/job-search-core/data/company-records.json` | 正式公司画像，是日常读取入口 | 是 |
 | `shared/job-search-core/data/company-{business-tags,ownership-tags,profiles,size-tags}.json` | 从同一正式画像生成的兼容数据 | 是 |
+| `shared/job-search-core/data/business-taxonomy.json` | 业务词表、同义词和归类定义；求职与雷达共用 | 是 |
 | `job-search/runtime/*/data/company-city-index.json` | 各招聘方向的正式城市索引 | 是 |
 | `datasets/recruitment-links/` | 原始寻源文档、历史快照、索引和候选目录 | 否 |
 | `datasets/company-research/` | 搜索原件、候选字段、复核过程、完整内部导出 | 否 |
@@ -15,17 +16,19 @@
 
 ## 发布与读取
 
-维护流程主动采集和复核，在私有数据中保存完整依据。发布器按允许字段列表生成公开画像，保留正式标签、描述、供应商、时间、状态和公开来源 URL；不发布原始响应、搜索摘要、复核正文、私人笔记或本地文件路径。`api_supported` 不升级成 `verified`。
+维护流程主动采集和复核，在私有数据中保存完整依据。发布器按允许字段列表生成公开画像，保留正式标签、描述、供应商、时间、状态和公开来源 URL；不发布原始响应、搜索摘要、复核正文、私人笔记或本地文件路径。首版发布使用 `demo_unreviewed`，API 入库使用 `api_supported`，只有独立复核发布才能写入 `verified`；各渠道不能相互冒充。
 
 用户运行 `catalog`、`prepare`、匹配或雷达时只读取正式画像，不读取 `datasets` 和 `docs`，不触发公司标签搜索。招聘城市仍由既有岗位 API 维护链路更新。
 
-完整独立复核记录位于 `datasets/company-research/reviews/company-label-reviews.json`；API 决策工作档案位于同目录 `company-api-labels.json.gz`；候选归档位于 `candidates/`。维护兼容输入位于 `inputs/`，通过维护工具编辑后运行：
+完整独立复核记录位于 `datasets/company-research/reviews/company-label-reviews.json`；API 决策工作档案位于同目录 `company-api-labels.json.gz`；首版处置档案位于 `company-demo-labels.json.gz`；候选归档位于 `candidates/`。维护兼容输入位于 `inputs/`，通过维护工具编辑后运行：
 
 ```sh
 node shared/job-search-core/scripts/publish-company-data.mjs
 ```
 
-该命令发布已有结论，不联网或重新核实。研究档案重建只写私有档案；API 入库使用 `publish-api-company-labels.mjs`，独立复核发布使用 `company-records.mjs publish`，两者均更新公开正式画像与兼容文件。不要直接修改公开兼容文件作为另一份数据源。
+该命令发布已有结论，不联网或重新核实。研究档案重建只写私有档案；首版入库使用 `publish-demo-company-labels.mjs`，API 入库使用 `publish-api-company-labels.mjs`，独立复核发布使用 `company-records.mjs publish`，均更新公开正式画像与兼容文件。首版入口不得覆盖较新的 `verified` 字段。不要直接修改公开兼容文件作为另一份数据源。
+
+独立复核沿用[字段复核与发布规则](company-review-policy.md)：先分析已有原件，再按明确缺口补证；保存分项评分、门槛、批准及校准样本。支持保留原抓取时间的正文复用，正式写入要求未变更的发布预检。所有正式公司发布器使用共同写锁和可恢复日志。
 
 ## 模块职责与扩展边界
 
@@ -63,13 +66,13 @@ docs：设计、审核与过程报告
 普通数据维护仅对已定义的标签和描述字段补值、纠错或更新，沿用现有字段结构、词表、枚举和分类规则。超出这些定义的需求另行设计并按用户授权处理，不在数据补充中顺带修改。
 
 ```text
-主动触发维护 → 搜索原件与候选归档 → 按现有规则逐字段判定
-            → 发布正式画像及兼容数据 → 产品读取
+主动触发维护 → 搜索原件与候选归档 → 逐字段形成首版或独立复核结论
+            → 按真实审核状态发布正式画像及兼容数据 → 产品读取
 ```
 
 按 `company_id` 关联原件与结论。主体不符、来源不明或冲突的具体字段继续待核，其他合格字段可以发布。保留供应商、来源、时间与核实状态；正式字段有值不等于独立核实，旧标签不充当新研究证据。
 
-独立复核发布按字段合并：本次未提交的字段保留原结论、证据、核实时间及来源批次；本次显式提交的未决字段仍按未决更新。相同字段的更早结论或相同时间的冲突结论不得覆盖现有复核。历史字段不计入本轮完成数。
+独立复核发布按字段合并：本次未提交的字段保留原结论、证据、核实时间及来源批次；独立复核入口仅发布批准的已核实字段，未决判断保存在维护队列，不阻塞其他字段。经明确授权的首版入口可以发布待复核初值或“已搜索但无可用事实”的类型合法占位，并保存单独批次与状态；后续独立复核按字段升级或纠正，不影响同公司的其他首版字段。相同字段的更早结论或相同时间的冲突结论不得覆盖现有复核。历史字段不计入本轮完成数。静态字段发布保留当前招聘源和城市，不夹带其他维护域的重建差异。
 
 数据补充不改变产品入口和匹配业务规则，也不要求每次常规维护重新申请许可；在已有授权范围内执行。若公开说明中的数量或覆盖事实发生变化，推送前同步检查 README 与 GitHub About，按实际受影响内容更新。
 

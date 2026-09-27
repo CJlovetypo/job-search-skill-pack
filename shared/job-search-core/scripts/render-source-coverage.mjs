@@ -1,15 +1,16 @@
 import fs from 'node:fs';
 import {INDUSTRIES} from './lib/industry-routing.mjs';
+import {loadCompanyContext} from './lib/company-records.mjs';
 
-const registry=JSON.parse(fs.readFileSync(new URL('../assets/sources.json',import.meta.url),'utf8'));
+const {registry,records}=await loadCompanyContext();
 const companies=registry.companies.length,configurations=registry.companies.reduce((n,c)=>n+(c.recruitment_sources?.length||1),0);
-const date=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai'}).format(new Date(registry.updated_at));
+const date=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai'}).format(new Date(records.generated_at));
 const counts=INDUSTRIES.map(t=>({...t,count:registry.companies.filter(c=>c.industry_tags?.includes(t.id)).length}));
 const number=n=>n.toLocaleString('en-US');
 const readme=new URL('../../../README.md',import.meta.url);
 let text=fs.readFileSync(readme,'utf8').replace(/[\d,]+ 个公司／招聘主体/g,number(companies)+' 个公司／招聘主体').replace(/[\d,]+ 个招聘接口配置/g,number(configurations)+' 个招聘接口配置').replace(/[\d,]+ 个接口配置/g,number(configurations)+' 个接口配置');
-text=text.replace(/统计于 \*\*\d{4}-\d{2}-\d{2}\*\*/,`统计于 **${date}**`).replace(/来源库快照更新时间为 \d{4}-\d{2}-\d{2}/,`来源库快照更新时间为 ${date}`);
-for(const t of counts){const label=t.label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');text=text.replace(new RegExp(`(\\| ${label} \\| )[\\d,]+( \\|)`),`$1${t.count}$2`);}
+text=text.replace(/统计于 \*\*\d{4}-\d{2}-\d{2}\*\*/,`统计于 **${date}**`);
+for(const t of counts){const label=t.label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const examples=registry.companies.filter(c=>c.industry_tags?.includes(t.id)).slice(0,3).map(c=>c.display_name.replaceAll('|','\\|')).join('、');text=text.replace(new RegExp(`\\| ${label} \\| [\\d,]+ \\| [^\\n]+`),`| ${t.label} | ${t.count} | ${examples} |`);}
 fs.writeFileSync(readme,text);
 const top=counts.sort((a,b)=>b.count-a.count).slice(0,10),title=`招聘来源覆盖：${number(companies)} 个公司／招聘主体、${number(configurations)} 个接口配置、${INDUSTRIES.length} 个行业大类`;
 const bars=top.map((t,i)=>{const y=238+39*i,w=Math.round(570*t.count/top[0].count);return `<text x="58" y="${y+19}" class="label">${t.label}</text><rect x="360" y="${y}" width="${w}" height="24" rx="5" fill="url(#logo-blue)"/><text x="${372+w}" y="${y+18}" class="value">${t.count}</text>`;}).join('');

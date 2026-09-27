@@ -1,6 +1,7 @@
 import {datasetPath,COMPANY_SIZE_FILE,SEARCH_CAPABILITIES_FILE} from '../registry.mjs';
 import {PACK_ROOT} from '../runtime-context.mjs';
 import {loadCompanyContext} from './lib/company-records.mjs';
+import {normalizeBusinessFilters,businessMatchMode,businessMatches,canonicalBusiness} from './lib/business-taxonomy.mjs';
 import {validateSearchPlan,searchPlanFingerprint} from './lib/targeted-search.mjs';
 import {collectTargeted} from './lib/collect-targeted.mjs';
 import {refreshedCityTag} from './lib/city-index.mjs';
@@ -29,6 +30,7 @@ const [command,...args]=process.argv.slice(2);
 const BATCH_HELP='batch-create --run 运行目录 [--limit 50] [--max-chars 160000] [--concurrency 4] [--jobs 岗位键数组.json]\nbatch-start --run 运行目录 --batch ID --agent ID\nbatch-submit --run 运行目录 --batch ID --agent ID --file 草稿.json\nbatch-merge --run 运行目录 --batch ID\nbatch-close --run 运行目录 --batch ID --agent ID --stopped [--usage-log 会话.jsonl]\nbatch-status --run 运行目录 [--refresh]\nstart/close 可传实际工具调用 --tool-started-at ISO时间 --tool-finished-at ISO时间';
 const flags={};for(let i=0;i<args.length;i++){if(!args[i].startsWith('--'))throw new Error('未知参数 '+args[i]);const key=args[i].slice(2);flags[key]=args[i+1]&&!args[i+1].startsWith('--')?args[++i]:true;}
 const companyContext=await loadCompanyContext();
+const companyRecordsById=new Map(companyContext.records.companies.map(c=>[c.company_id,c]));
 const originalSources=companyContext.registry.companies;
 const directionValidation=SEARCH_MODE.id==='campus'?null:await readJson(path.join(SKILL_ROOT,'data/source-direction-validation.json'),null);
 const registryGate=validatedDirectionRegistry(originalSources,directionValidation,SEARCH_MODE.id),sources=registryGate.companies;
@@ -46,10 +48,10 @@ function enrich(job,source) {
 function businessAlignment(source,tag,profile) {
  const wanted=profile.business_preferences||[],avoided=profile.avoid_business_tags||[],actual=tag?.business_tags||[];
  if (!wanted.length&&!avoided.length)return {status:'not_set',reason:'未设置公司业务倾向'};
- if (actual.some(t=>avoided.includes(t)))return {status:'mismatch',reason:'命中用户不希望优先的业务标签'};
+ if (avoided.some(t=>businessMatches(actual,[canonicalBusiness(t)||t])))return {status:'mismatch',reason:'命中用户不希望优先的业务标签'};
  if (!actual.length||tag?.status==='unknown')return {status:'unknown',reason:'公司业务标签尚未确认'};
  if (!wanted.length)return {status:'aligned',reason:'未命中用户不希望优先的业务标签'};
- const matches=wanted.filter(t=>actual.includes(t));const aligned=profile.business_match==='all'?matches.length===wanted.length:matches.length>0;
+ const matches=wanted.filter(t=>businessMatches(actual,[canonicalBusiness(t)||t]));const aligned=profile.business_match==='all'?matches.length===wanted.length:matches.length>0;
  return {status:aligned?'aligned':'mismatch',reason:aligned?'业务标签符合：'+matches.join('、'):'公司业务标签与本次倾向不符'};
 }
 function ownershipChoices(value) {
@@ -64,29 +66,52 @@ function ownershipAlignment(entry,profile) {
  if(actual==='待核实')return {status:'unknown',reason:'公司性质待核实'};
  return wanted.includes(actual)?{status:'aligned',reason:'公司性质符合：'+actual}:{status:'mismatch',reason:'公司性质与本次倾向不符：'+actual};
 }
+function staticChoices(value,label) {
+ if(value==null)return [];
+ const values=Array.isArray(value)?value:String(value).split(',');
+ if(values.some(x=>typeof x!=='string'||!x.trim()))throw Error(label+'筛选需要非空字符串数组');
+ return [...new Set(values.map(x=>x.trim()))];
+}
+function staticFieldValue(companyId,field) {
+ const record=companyRecordsById.get(companyId);
+ return record?.tags?.[field]??null;
+}
 const preferenceRank=company=>(company.ownership_alignment?.status==='aligned'?0:company.ownership_alignment?.status==='unknown'?1:2)+(company.business_alignment?.status==='aligned'?0:company.business_alignment?.status==='unknown'?1:2);
 async function collect(source,options) {
  try {const result=options.searchPlan?await collectTargeted(source,options.searchPlan,options,await (searchCapabilities??=readJson(SEARCH_CAPABILITIES_FILE,{configurations:[]}))):await collectCompanySources(source,options);result.jobs=(result.jobs||[]).map(j=>enrich(j,source));return result;}
  catch(e){return {company_id:source.company_id,display_name:source.display_name,checked_at:new Date().toISOString(),jobs:[],coverage:{status:'failed',pages:0,server_total:null,jobs_observed:0,reason:String(e.message||e)},requests:[]};}
 }
-function chooseSources(industryFilters,companyFilters,ownershipFilters) {
+function chooseSources(industryFilters,companyFilters,ownershipFilters,headquartersFilters,listingFilters,businessFilters=[],businessMode='any') {
  const only=flags.only?String(flags.only).split(','):companyFilters?.length?companyFilters:null;
  let chosen=sources;if(only){const ids=new Set();chosen=only.map(name=>{const hits=sources.filter(s=>s.company_id===name||s.display_name===name||(s.aliases||[]).includes(name));if(hits.length!==1||ids.has(hits[0].company_id))throw Error('--only / company_filters 含未识别、歧义或重复公司：'+name);ids.add(hits[0].company_id);return hits[0];});}
  const filters=industryFilters||flags.industries&&normalizeIndustries(String(flags.industries));if(filters){if(only&&chosen.some(s=>!industryMatches(s,filters)))throw Error('指定公司与行业范围冲突，请先确认行业选择；不会绕过行业筛选。');chosen=chosen.filter(s=>industryMatches(s,filters));}
  const ownershipWanted=ownershipChoices(ownershipFilters);if(ownershipWanted.length){const owners=new Map(companyContext.ownership.companies.map(c=>[c.company_id,c]));if(only&&chosen.some(s=>!ownershipWanted.includes(ownershipDisplayTag(owners.get(s.company_id)))))throw Error('指定公司与公司性质范围冲突');chosen=chosen.filter(s=>ownershipWanted.includes(ownershipDisplayTag(owners.get(s.company_id))));}
+ const headquartersWanted=staticChoices(headquartersFilters,'总部国家');if(headquartersWanted.length){if(only&&chosen.some(s=>!headquartersWanted.includes(staticFieldValue(s.company_id,'headquarters_country'))))throw Error('指定公司与总部国家范围冲突');chosen=chosen.filter(s=>headquartersWanted.includes(staticFieldValue(s.company_id,'headquarters_country')));}
+ const listingWanted=staticChoices(listingFilters,'上市状态');if(listingWanted.length){if(only&&chosen.some(s=>!listingWanted.includes(staticFieldValue(s.company_id,'listing_status'))))throw Error('指定公司与上市状态范围冲突');chosen=chosen.filter(s=>listingWanted.includes(staticFieldValue(s.company_id,'listing_status')));}
+ const wanted=normalizeBusinessFilters(businessFilters),match=businessMatchMode(businessMode);
+ const matches=s=>businessMatches(staticFieldValue(s.company_id,'business'),wanted,match);
+ if(only&&wanted.length&&chosen.some(s=>!matches(s)))throw Error('指定公司与业务范围冲突');
+ chosen=chosen.filter(matches);
  if(flags.providers)chosen=chosen.filter(s=>String(flags.providers).split(',').some(p=>p===s.provider||s.recruitment_sources?.some(c=>c.provider===p)));return chosen;
 }
 async function catalog(){
- const profile=flags.profile?await readJson(path.resolve(String(flags.profile))):{},filters=normalizeIndustries(flags.industries||profile.industry_filters),cityFilters=normalizeCityFilters(flags.cities?String(flags.cities).split(','):profile.city_filters||[]);
+ const profile=flags.profile?await readJson(path.resolve(String(flags.profile))):{},filters=normalizeIndustries(flags.industries||profile.industry_filters||(normalizeBusinessFilters(flags.businesses??profile.business_filters).length?['all']:undefined)),cityFilters=normalizeCityFilters(flags.cities?String(flags.cities).split(','):profile.city_filters||[]);
  ownershipChoices(profile.ownership_preferences);
+ const headquartersFilters=staticChoices(flags['headquarters-countries']||profile.headquarters_country_filters,'总部国家'),listingFilters=staticChoices(flags['listing-statuses']||profile.listing_status_filters,'上市状态');
  const industryCount=chooseSources(filters,profile.company_filters).length;
- let candidates=chooseSources(filters,profile.company_filters,profile.ownership_filters);const ownershipCount=candidates.length;
+ const ownershipCount=chooseSources(filters,profile.company_filters,profile.ownership_filters).length;
+ let candidates=chooseSources(filters,profile.company_filters,profile.ownership_filters,headquartersFilters,listingFilters);const staticFilterCount=candidates.length;
+ const businessFilters=normalizeBusinessFilters(flags.businesses??profile.business_filters),businessMode=businessMatchMode(flags['business-match']??profile.business_filter_match);
+ candidates=chooseSources(filters,profile.company_filters,profile.ownership_filters,headquartersFilters,listingFilters,businessFilters,businessMode);
+ const businessCount=candidates.length;
  const rawPlan=flags['search-plan']?await readJson(path.resolve(String(flags['search-plan']))):profile.search_plan;
  const searchPlan=rawPlan?validateSearchPlan(rawPlan,sources):null;
  if(searchPlan){const allowed=new Set(candidates.map(c=>c.company_id));if(searchPlan.company_ids.some(id=>!allowed.has(id)))throw Error('定向候选与行业或明确公司范围冲突');candidates=candidates.filter(c=>searchPlan.company_ids.includes(c.company_id));}
  const city=await readJson(cityFile,{companies:[]}),byId=new Map(city.companies.map(c=>[c.company_id,c])),selected=candidates.filter(c=>companyCityMatches(byId.get(c.company_id),cityFilters));
- const ownership=companyContext.ownership,ownershipById=new Map(ownership.companies.map(c=>[c.company_id,c])),businessById=new Map(companyContext.business.companies.map(c=>[c.company_id,c])),result={industries:industryLabels(filters),industry_filters:filters,ownership_filters:ownershipChoices(profile.ownership_filters),city_filters:cityFilters,industry_candidates:industryCount,excluded_by_ownership:industryCount-ownershipCount,selected_companies:selected.length,excluded_by_city:candidates.length-selected.length,ownership_pending:selected.filter(c=>!['verified','verified_unresolved','api_supported'].includes(ownershipById.get(c.company_id)?.status)).map(c=>({company_id:c.company_id,display_name:c.display_name,problem:'现有性质标签待核实，不阻塞使用'})),ownership_api_supported:selected.filter(c=>ownershipById.get(c.company_id)?.status==='api_supported').map(c=>({company_id:c.company_id,display_name:c.display_name,review_state:'待独立核实'})),source_validation:{...registryGate,companies:undefined},companies:selected.map(c=>({company_id:c.company_id,display_name:c.display_name,industry_tags:c.industry_tags,ownership_tag:ownershipDisplayTag(ownershipById.get(c.company_id)),ownership_status:ownershipById.get(c.company_id)?.status||'unknown',ownership_alignment:ownershipAlignment(ownershipById.get(c.company_id),profile),business_tags:businessById.get(c.company_id)?.business_tags||[],business_alignment:businessAlignment(c,businessById.get(c.company_id),profile),cities:byId.get(c.company_id)?.cities||[],city_index_updated_at:byId.get(c.company_id)?.updated_at||null})).sort((a,b)=>preferenceRank(a)-preferenceRank(b)),next_step:'可 prepare 后采集岗位，再沿用评估范围确认流程；公司标签直接使用已有记录。'};
+const ownership=companyContext.ownership,ownershipById=new Map(ownership.companies.map(c=>[c.company_id,c])),businessById=new Map(companyContext.business.companies.map(c=>[c.company_id,c])),result={industries:industryLabels(filters),industry_filters:filters,ownership_filters:ownershipChoices(profile.ownership_filters),headquarters_country_filters:headquartersFilters,listing_status_filters:listingFilters,city_filters:cityFilters,industry_candidates:industryCount,excluded_by_ownership:industryCount-ownershipCount,excluded_by_static_company_filters:ownershipCount-staticFilterCount,selected_companies:selected.length,excluded_by_city:candidates.length-selected.length,ownership_pending:selected.filter(c=>!['verified','verified_unresolved','api_supported','demo_unreviewed'].includes(ownershipById.get(c.company_id)?.status)).map(c=>({company_id:c.company_id,display_name:c.display_name,problem:'现有性质标签待核实，不阻塞使用'})),ownership_api_supported:selected.filter(c=>['api_supported','demo_unreviewed'].includes(ownershipById.get(c.company_id)?.status)).map(c=>({company_id:c.company_id,display_name:c.display_name,review_state:ownershipById.get(c.company_id)?.status==='demo_unreviewed'?'首版画像，待独立复核':'待独立核实'})),source_validation:{...registryGate,companies:undefined},companies:selected.map(c=>({company_id:c.company_id,display_name:c.display_name,industry_tags:c.industry_tags,headquarters_country:staticFieldValue(c.company_id,'headquarters_country'),listing_status:staticFieldValue(c.company_id,'listing_status'),ownership_tag:ownershipDisplayTag(ownershipById.get(c.company_id)),ownership_status:ownershipById.get(c.company_id)?.status||'unknown',ownership_alignment:ownershipAlignment(ownershipById.get(c.company_id),profile),business_tags:businessById.get(c.company_id)?.business_tags||[],business_alignment:businessAlignment(c,businessById.get(c.company_id),profile),cities:byId.get(c.company_id)?.cities||[],city_index_updated_at:byId.get(c.company_id)?.updated_at||null})).sort((a,b)=>preferenceRank(a)-preferenceRank(b)),next_step:'可 prepare 后采集岗位，再沿用评估范围确认流程；公司标签直接使用已有记录。'};
  const size=companyContext.size,sizeById=new Map(size.companies.map(c=>[c.company_id,c]));
+ Object.assign(result,{business_filters:businessFilters,business_filter_match:businessMode,excluded_by_business:staticFilterCount-businessCount});
+ for(const company of result.companies)company.business_status=companyRecordsById.get(company.company_id).governance.fields['tags.business'].status;
  for(const company of result.companies)company.size_tag=sizeById.get(company.company_id)||{label:'待核实',reason:'暂无规模证据'};
  result.retrieval_mode=searchPlan?'targeted':'exhaustive';if(searchPlan){result.search_plan=searchPlan;result.excluded_by_targeted_plan=ownershipCount-candidates.length;}
  if(flags.out)await writeJson(workspacePath(path.resolve(String(flags.out))),result);console.log(JSON.stringify(result));
@@ -132,8 +157,11 @@ async function prepare() {
  if(!discovery){profile.assessment_model_version=MODEL_VERSION;profile.evidence??=[];}
  if(!discovery&&SEARCH_MODE.id!=='campus'){const problem=modeProfileProblem(profile);if(problem)throw Error(problem);profile.search_mode=SEARCH_MODE.id;}
  if(profile.search_mode&&profile.search_mode!==SEARCH_MODE.id)throw Error('画像招聘方向与当前 Skill 不一致');
- profile.industry_filters=normalizeIndustries(profile.industry_filters);
- let candidates=chooseSources(profile.industry_filters,profile.company_filters,profile.ownership_filters);
+ profile.industry_filters=normalizeIndustries(profile.industry_filters||(normalizeBusinessFilters(profile.business_filters).length?['all']:undefined));
+ profile.headquarters_country_filters=staticChoices(profile.headquarters_country_filters,'总部国家');profile.listing_status_filters=staticChoices(profile.listing_status_filters,'上市状态');
+ profile.business_filters=normalizeBusinessFilters(profile.business_filters);profile.business_filter_match=businessMatchMode(profile.business_filter_match);
+ if(flags.businesses||flags['business-match'])throw Error('prepare 的业务硬筛选请写入 profile.business_filters/business_filter_match');
+ let candidates=chooseSources(profile.industry_filters,profile.company_filters,profile.ownership_filters,profile.headquarters_country_filters,profile.listing_status_filters,profile.business_filters,profile.business_filter_match);
  const rawPlan=flags['search-plan']?await readJson(path.resolve(String(flags['search-plan']))):profile.search_plan;
  const searchPlan=rawPlan?validateSearchPlan(rawPlan,sources):null;
  if(searchPlan){const allowed=new Set(candidates.map(c=>c.company_id));if(searchPlan.company_ids.some(id=>!allowed.has(id)))throw Error('定向候选与行业或明确公司范围冲突');candidates=candidates.filter(c=>searchPlan.company_ids.includes(c.company_id));profile.search_plan=searchPlan;}
@@ -155,6 +183,8 @@ async function prepare() {
  for(const company of companies)company.ownership_origin=ownershipOrigins.get(company.company_id)||'legacy_import';
  const run={schema_version:2,created_at:new Date().toISOString(),profile,profile_fingerprint:profileFingerprint(profile),companies,selection_summary:{industry_filters:profile.industry_filters,industry_labels:industryLabels(profile.industry_filters),ownership_filters:ownershipChoices(profile.ownership_filters),ownership_preferences:ownershipChoices(profile.ownership_preferences),registered_companies:sources.length,industry_candidates:sources.filter(s=>industryMatches(s,profile.industry_filters)).length,excluded_by_industry:sources.filter(s=>!industryMatches(s,profile.industry_filters)).length,company_filters:profile.company_filters||flags.only?.split(',')||[],city_excluded:companies.filter(c=>!c.selected).length},city_index_updated_at:city?.updated_at||null,status:'prepared',is_test:profile.is_test===true};
  run.purpose=discovery?'discover':'match';
+ Object.assign(run.selection_summary,{business_filters:profile.business_filters,business_filter_match:profile.business_filter_match});
+ for(const company of companies)company.business_status=companyRecordsById.get(company.company_id).governance.fields['tags.business'].status;
  if(task){run.task_snapshot=task;run.task_fingerprint=taskFingerprint(task);}
  if(SEARCH_MODE.id!=='campus')run.search_mode=SEARCH_MODE.id;
  if(searchPlan){run.search_plan=searchPlan;run.search_plan_fingerprint=searchPlanFingerprint(searchPlan);run.retrieval_mode='targeted';run.selection_summary.targeted_company_excluded=sources.length-candidates.length;}

@@ -11,7 +11,7 @@ const webUrl = value => {try {return ['http:', 'https:'].includes(new URL(value)
 export const emptyFact = () => ({value: '', status: 'missing', entity: '', as_of: '', checked_at: '', evidence: []});
 
 export function factProblem(fact) {
-  if (!fact || !['verified', 'api_supported', 'missing', 'not_disclosed'].includes(fact.status)) return '资料状态无效';
+  if (!fact || !['verified', 'api_supported', 'demo_unreviewed', 'missing', 'not_disclosed'].includes(fact.status)) return '资料状态无效';
   if (fact.status === 'missing') return fact.value || fact.evidence?.length ? '缺失资料不能含未经核实的数值、简介或来源' : null;
   if (!text(fact.value) || !text(fact.entity) || !date(fact.checked_at)) return '有值资料需要内容、主体口径和资料日期';
   if (!Array.isArray(fact.evidence) || !fact.evidence.length || fact.evidence.some(e => !webUrl(e.url) || !text(e.title) || !text(e.note))) return '有值资料需要可访问的来源 URL、标题和具体依据';
@@ -83,7 +83,7 @@ export function companyProfileSheet(snapshot) {
     const fact = c[field];
     const urls = [...new Set((fact.evidence || []).map(e => e.url))];
     const sizeNote=field==='workforce'&&c.size_tag?`\n求职组织规模：${c.size_tag.label}；${c.size_tag.reason}`:'';
-    sheet.rows.push([c.display_name, label, (fact.status === 'missing' ? '暂无已核实资料' : fact.value+(fact.status==='api_supported'?'（API资料，待独立核实）':''))+sizeNote, fact.entity || '—', fact.as_of || (fact.checked_at ? '统计时点未注明；资料日期 ' + fact.checked_at.slice(0, 10) : '—'), urls.join('\n') || '—']);
+    sheet.rows.push([c.display_name, label, (fact.status === 'missing' ? '暂无已核实资料' : fact.value+(fact.status==='api_supported'?'（API资料，待独立核实）':fact.status==='demo_unreviewed'?'（首版画像，待独立复核）':''))+sizeNote, fact.entity || '—', fact.as_of || (fact.checked_at ? '统计时点未注明；资料日期 ' + fact.checked_at.slice(0, 10) : '—'), urls.join('\n') || '—']);
     if (urls.length === 1) sheet.links.push({row: sheet.rows.length + 1, column: 6, url: urls[0], label: urls[0]});
   }
   return sheet;

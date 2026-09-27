@@ -46,7 +46,7 @@ test('archived search findings attach to the company without becoming verified t
 });
 test('qualified API fields become runtime tags while retaining unverified provenance and reviewed precedence',()=>{
  const data=inputs(),evidence=[{url:'https://example.com/about',title:'About Synthetic',note:'Synthetic provides cybersecurity services',checked_at:now,provider:'linkup'}];
- data.business.companies[0].business_tags.push('网络安全');
+ data.business.companies[0].business_tags=['网络安全'];
  const decision=(value)=>({status:'api_supported',value,entity:'Synthetic Ltd',checked_at:now,reason:'API source says so',provider:'linkup',source_record:'artifact.json',evidence});
  data.apiLabels={companies:[{company_id:'a',decisions:{'tags.industry':decision(['industrial']),'tags.business':decision(['网络安全']),'tags.ownership':decision('外企'),'descriptions.business_summary':decision('提供网络安全服务')}}]};
  let row=buildCompanyRecords(data,{now}).companies[0],runtime=projectCompanyRecords({companies:[row]},data);
@@ -65,6 +65,18 @@ test('qualified API fields become runtime tags while retaining unverified proven
  assert.equal(row.descriptions.business_summary,'提供网络安全产品');
  assert(validApiValue('tags.business',['网络安全'],new Set(['网络安全'])));
  assert(!validApiValue('tags.business',['未知新词'],new Set(['网络安全'])));
+});
+test('demo fields are formal runtime values, keep their unreviewed state, and never replace verified review',()=>{
+ const data=inputs(),decision=value=>({status:'demo_unreviewed',value,entity:'Synthetic Ltd',checked_at:now,reason:'Archived search candidate',demo_batch:'demo',evidence:[]});
+ data.business.companies[0].business_tags=['网络安全'];
+ data.demoLabels={companies:[{company_id:'a',decisions:{'tags.business':decision(['网络安全']),'tags.ownership':decision('外企'),'tags.listing_status':decision('待核实'),'descriptions.business_summary':decision('提供网络安全服务'),'descriptions.customers':decision('未公开披露明确客户信息')}}]};
+ let built=buildCompanyRecords(data,{now}),row=built.companies[0];
+ assert.deepEqual(row.tags.business,['网络安全']);assert.equal(row.tags.ownership,'外企');assert.equal(row.tags.listing_status,'待核实');
+ assert.equal(row.governance.fields['tags.ownership'].status,'demo_unreviewed');assert.equal(row.governance.fields['tags.ownership'].origin,'demo_search');
+ const projected=projectCompanyRecords(built,data);
+ assert.equal(projected.ownership.companies[0].status,'demo_unreviewed');assert.equal(projected.profiles.companies[0].business.status,'demo_unreviewed');
+ data.reviews={companies:[review()]};data.demoLabels.companies[0].decisions['tags.business']=decision(['游戏']);
+ row=buildCompanyRecords(data,{now}).companies[0];assert.deepEqual(row.tags.business,['网络安全']);assert.equal(row.governance.fields['tags.business'].status,'verified');
 });
 test('API publication rejects a conflicting field but still publishes an independent field for the same company',async()=>{
  const dir=path.join(PACK_ROOT,'job-search/artifacts/api-publish-test-'+randomUUID());await fs.mkdir(dir,{recursive:true});
@@ -113,10 +125,10 @@ test('unresolved research is distinct from untouched fields and never fabricates
  assert.equal(projected.ownership.companies[0].ownership_tag,'待核实');assert.equal(projected.ownership.companies[0].status,'verified_unresolved');
  assert.equal(progress.searched,1);assert.equal(progress.static_complete,0);assert.equal(progress.fully_reviewed,0);assert.equal(progress.companies[0].reviewed_fields,3);
 });
-test('complete static research alone cannot count as all-dimensional completion; every mode needs new acquisition',()=>{
+test('unresolved placeholders cannot count as completed static research',()=>{
  const r=review();for(const key of STATIC_FIELDS)r.decisions[key]??={value:null,status:'unresolved',reason:'检索后未取得可靠资料',entity:'Synthetic',checked_at:now,citations:[]};
  assert(validateReview(r,campaign(),{now}));const reviews={companies:[r]};
- assert.equal(campaignProgress(campaign(),reviews).static_complete,1);assert.equal(campaignProgress(campaign(),reviews).fully_reviewed,0);
+ assert.equal(campaignProgress(campaign(),reviews).static_complete,0);assert.equal(campaignProgress(campaign(),reviews).fully_reviewed,0);
  const cities=Object.fromEntries(['campus','internship','social'].map(mode=>[mode,{companies:[{company_id:'a',last_refresh_at:now,last_refresh_status:'partial'}]}]));
- assert.equal(campaignProgress(campaign(),reviews,cities).fully_reviewed,1);
+ assert.equal(campaignProgress(campaign(),reviews,cities).fully_reviewed,0);
 });

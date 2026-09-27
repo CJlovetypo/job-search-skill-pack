@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {CORE_ROOT} from '../../runtime-context.mjs';
+import {commitPublication,withPublicationLock} from './company-publication-transaction.mjs';
 
 const pick=(row,keys)=>Object.fromEntries(keys.filter(k=>row?.[k]!==undefined).map(k=>[k,structuredClone(row[k])]));
 export function publicUrl(value){
@@ -12,7 +13,7 @@ export function publicUrl(value){
 export function publicEvidence(items=[]){return items.flatMap(item=>{const url=publicUrl(item.url);return url?[{url,...pick(item,['title','checked_at','provider','evidence_type']),note:'公开来源索引；完整研究证据保存在维护数据集。'}]:[];});}
 function fieldMetadata(row={}){
  const result=pick(row,['status','entity','as_of','checked_at','origin','review_state','provider','providers','model_version','dependencies']);
- result.reason=row.status==='api_supported'?'API 有公开来源支持，尚未独立核实。':row.origin==='fresh_web_review'?'维护流程已独立复核；状态以字段结论为准。':'沿用既有字段结论；来源状态未升级。';
+ result.reason=row.status==='api_supported'?'API 有公开来源支持，尚未独立核实。':row.status==='demo_unreviewed'?'首版正式画像值，已可供 Skill 使用，尚未独立复核。':row.origin==='fresh_web_review'?'维护流程已独立复核；状态以字段结论为准。':'沿用既有字段结论；来源状态未升级。';
  result.evidence=publicEvidence(row.evidence);return result;
 }
 export function publicCompanyRecords(records){
@@ -25,11 +26,31 @@ export function publicCompanyRecords(records){
    recruitment:Object.fromEntries(Object.entries(row.governance.recruitment||{}).map(([mode,value])=>[mode,pick(value,['status','origin','review_state','updated_at','last_refresh_at','last_refresh_status','city_coverage_complete','source_config_fingerprint'])]))}
  }))};
 }
-export async function publishPublicRecords(records,compatibility){
- const data=publicCompanyRecords(records),file=path.join(CORE_ROOT,'data/company-records.json');
- await fs.writeFile(file,JSON.stringify(data)+'\n');
- if(compatibility)for(const [key,name] of [['business','company-business-tags'],['ownership','company-ownership-tags'],['profiles','company-profiles'],['size','company-size-tags']])await fs.writeFile(path.join(CORE_ROOT,'data',name+'.json'),JSON.stringify(publicCompatibility(key,compatibility[key]))+'\n');
+export function publicRecordWrites(records,compatibility){
+ const writes=[];
+ if(compatibility)for(const [key,name]of [['business','company-business-tags'],['ownership','company-ownership-tags'],['profiles','company-profiles'],['size','company-size-tags']])writes.push({file:path.join(CORE_ROOT,'data',name+'.json'),bytes:JSON.stringify(publicCompatibility(key,compatibility[key]))+'\n'});
+ writes.push({file:path.join(CORE_ROOT,'data/company-records.json'),bytes:JSON.stringify(publicCompanyRecords(records))+'\n'});return writes;
+}
+export async function publishPublicRecords(records,compatibility,{extraWrites=[],inputs={},metadata={}}={}){
+ return withPublicationLock(async()=>{
+ const data=publicCompanyRecords(records);
+ // Rebuilding existing data or adding API support cannot introduce unchecked
+ // independent-review decisions through a second publication entrypoint.
+ let previous;try{previous=JSON.parse(await fs.readFile(path.join(CORE_ROOT,'data/company-records.json'),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
+ assertIndependentReviewsUnchanged(previous,data);
+ await commitPublication([...extraWrites,...publicRecordWrites(records,compatibility)],{inputs,metadata});
  return data;
+ });
+}
+export function assertIndependentReviewsUnchanged(previous,data) {
+ const old=new Map((previous?.companies||[]).map(c=>[c.company_id,c])),next=new Map(data.companies.map(c=>[c.company_id,c]));
+ for(const id of new Set([...old.keys(),...next.keys()])) {
+  const prior=old.get(id),row=next.get(id),fields=new Set([...Object.keys(prior?.governance.fields||{}),...Object.keys(row?.governance.fields||{})]);
+  for(const field of fields)if(prior?.governance.fields[field]?.origin==='fresh_web_review'&&prior.governance.fields[field].status==='verified'||!prior?.governance.fields[field]&&row?.governance.fields[field]?.origin==='fresh_web_review') {
+   const get=r=>field.split('.').reduce((v,k)=>v?.[k],r);
+   if(JSON.stringify(get(row))!==JSON.stringify(get(prior))||JSON.stringify(row?.governance.fields[field])!==JSON.stringify(prior?.governance.fields[field]))throw Error('Independent review change must use approved field publication: '+id+' '+field);
+  }
+ }
 }
 export function publicCompatibility(kind,data){
  const headers=pick(data,['schema_version','updated_at','model','counts']);

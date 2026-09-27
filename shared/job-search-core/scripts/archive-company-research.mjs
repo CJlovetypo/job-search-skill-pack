@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {gzipSync,gunzipSync} from 'node:zlib';
 import {CORE_ROOT,PACK_ROOT} from '../runtime-context.mjs';
 import {INDUSTRIES} from './lib/industry-routing.mjs';
+import {businessVocabulary} from './lib/business-taxonomy.mjs';
 import {STATIC_FIELDS, loadCompanyInputs, buildCompanyRecords} from './lib/company-records.mjs';
 
 const ROOT=path.join(PACK_ROOT,'job-search/artifacts');
@@ -64,7 +65,7 @@ function supplemental(doc,provider,record) {
 
 export async function archiveAll({write=true}={}) {
   const inputs=await loadCompanyInputs();
-  const vocabulary=new Set(inputs.business.companies.flatMap(c=>c.business_tags||[]));
+  const vocabulary=new Set([...businessVocabulary(),...inputs.business.companies.flatMap(c=>c.business_tags||[])]);
   const companies=[];
   const metrics={companies:0,structured_company_records:0,supported_fields:0,candidate_fields:0,unresolved_skipped:0,issue_counts:{},supplemental_records:0};
   for(const company of inputs.registry.companies) {

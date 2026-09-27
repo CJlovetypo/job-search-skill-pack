@@ -73,12 +73,12 @@ test('CLI routes before preparation, excludes unrelated industry metadata gaps, 
  p.industry_filters=['automotive_oem'];await writeJson(file,p);await assert.rejects(()=>run('prepare','--profile',file,'--out',path.join(dir,'conflict')),/行业范围冲突/);
  const both=await run('catalog','--industries','internet,smart_hardware','--only','科大讯飞');assert.equal(both.selected_companies,1);assert.equal(both.ownership_pending.length,0);
 });
-test('researched but unresolved ownership stays explicit and does not block city exclusions',async()=>{
+test('demo ownership stays explicit and does not block city exclusions',async()=>{
  const catalog=await run('catalog','--industries','smart_hardware','--only','格力');assert.equal(catalog.selected_companies,1);assert.equal(catalog.ownership_pending.length,0);
  const dir=await fs.mkdtemp(path.join(SKILL_ROOT,'artifacts/industry-merge/test-')),file=path.join(dir,'profile.json'),p={...profile(),industry_filters:['smart_hardware'],company_filters:['格力']};await writeJson(file,p);
- await run('prepare','--profile',file,'--out',path.join(dir,'researched'));const researched=await readJson(path.join(dir,'researched/run.json'));assert.equal(researched.companies[0].selected,true);assert.equal(researched.companies[0].ownership_status,'verified_unresolved');
+ await run('prepare','--profile',file,'--out',path.join(dir,'researched'));const researched=await readJson(path.join(dir,'researched/run.json'));assert.equal(researched.companies[0].selected,true);assert.equal(researched.companies[0].ownership_status,'demo_unreviewed');
  const absentCity=['北京','上海','拉萨','哈尔滨','武汉'].find(city=>!catalog.companies[0].cities.includes(city));assert(absentCity);
- p.city_filters=[absentCity];await writeJson(file,p);await run('prepare','--profile',file,'--out',path.join(dir,'excluded'));const prepared=await readJson(path.join(dir,'excluded/run.json'));assert.equal(prepared.companies[0].selected,false);assert.equal(prepared.companies[0].ownership_status,'verified_unresolved');
+ p.city_filters=[absentCity];await writeJson(file,p);await run('prepare','--profile',file,'--out',path.join(dir,'excluded'));const prepared=await readJson(path.join(dir,'excluded/run.json'));assert.equal(prepared.companies[0].selected,false);assert.equal(prepared.companies[0].ownership_status,'demo_unreviewed');
 });
 test('deliberately skipped non-target city bodies and list-only collection preserve coverage',()=>{
  const company={company_id:'test',display_name:'测试',provider:'moka'},source={provider:'moka',source_id:'a'};
