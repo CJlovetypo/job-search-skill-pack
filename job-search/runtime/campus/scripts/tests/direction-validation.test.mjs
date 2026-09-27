@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {directionSourceKey,validatedDirectionRegistry,DIRECTION_VALIDATION_POLICY} from '../lib/direction-validation.mjs';

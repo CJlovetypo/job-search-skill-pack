@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {sourceFromEntry} from '../source-discovery.mjs';
 test('source discovery retains Moka tenant and site and uses only public request templates',()=>{

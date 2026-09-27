@@ -1,3 +1,5 @@
+import {MODE_ROOTS} from '../../../../scripts/runtime.mjs';
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -5,7 +7,7 @@ import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
-import {PACK_ROOT,MODE_ROOTS} from '../../../../../shared/job-search-core/runtime-context.mjs';
+import {PACK_ROOT} from '../../../../../shared/job-search-core/runtime-context.mjs';
 import {validateTask,decideTask,reviseTask,taskFingerprint,assertTaskExecution,assertTaskScope,assertScopeRevision} from '../../../../../shared/job-search-core/scripts/lib/task-decision.mjs';
 import {sourceConfigFingerprint} from '../lib/source-collector.mjs';
 import {readSourceRegistry} from '../../../../../shared/job-search-core/registry.mjs';
@@ -74,9 +76,12 @@ test('only high value first-turn questions are shown, scope is deferred',()=>{
  const result=decideTask(task({goal:'match',conditions:{},materials:{profile:'missing'},issues:[{field:'material_conflict',reason:'两份冲突',question:'核对时间线？',blocks:['assess']}]}));
  assert.equal(result.questions_now.length,3);assert(result.questions_later.length>=2);
 });
-test('radar role-only targeting does not ask industry, resume, cities, or a known schedule',()=>{
+test('radar role-only targeting asks scope but not resume, cities, or a known schedule',()=>{
  const result=decideTask(task({goal:'radar',radar_action:'create',conditions:{recruitment:condition('social'),roles:condition(['数据分析']),schedule:condition({time:'09:00',timezone:'Asia/Shanghai'})},materials:{profile:'not_needed'}}));
- assert.deepEqual(result.questions_now,[]);assert.deepEqual(result.gates.schedule,[]);assert.equal(result.route,'job-radar');
+ assert.deepEqual(result.questions_now.map(q=>q.field),['industries']);assert.deepEqual(result.gates.schedule,['industries']);assert.equal(result.route,'job-radar');
+ assert.equal(result.can_collect,false);
+ const ready=decideTask(task({goal:'radar',radar_action:'create',conditions:{recruitment:condition('social'),industries:condition(['all']),roles:condition(['数据分析']),schedule:condition({time:'09:00',timezone:'Asia/Shanghai'})},materials:{profile:'not_needed'}}));
+ assert.equal(ready.can_collect,true);assert.deepEqual(ready.gates.schedule,[]);
 });
 test('radar pause/mute/history does not demand search criteria again',()=>{
  for(const action of ['pause','mute','history']){
@@ -175,11 +180,14 @@ for(const mode of ['campus','internship','social'])test(`real ${mode} CLI: disco
   {job_id:'test-1',company_id:source.company_id,title:'项目管理（合成）',description:'负责项目进度跟踪和跨部门协调。',requirements:'具有沟通能力和项目实践。',body_complete:true,formal_status:mode==='campus'?'formal':mode,open_status:'open',cities:['上海'],city_status:'included',evaluation_status:'to_assess',official_url:'https://example.invalid/jobs/1'},
   {job_id:'test-2',company_id:source.company_id,title:'待核实（合成）',description:'缺要求',requirements:'',body_complete:false,formal_status:'unknown',open_status:'unknown',cities:[],city_status:'unknown',evaluation_status:'needs_verification',official_url:'javascript:bad()'}]};
  await write(path.join(dir,'companies',source.company_id+'.json'),snapshot);
- const collected=JSON.parse((await cli('collect','--mode',mode,'--run',dir)).stdout.trim().split('\n').at(-1));assert.match(collected.next_step,/render-discovery/);
+ const collected=JSON.parse((await cli('collect','--mode',mode,'--run',dir)).stdout.trim().split('\n').at(-1));assert.match(collected.next_step,/role-review-export/);assert.equal(collected.role_review_pending,2);
  const report=JSON.parse((await cli('render-discovery','--mode',mode,'--run',dir)).stdout),result=JSON.parse(await fs.readFile(report.json,'utf8'));
  assert.equal(result.jobs.length,2);assert(result.jobs.every(j=>j.assessment_status==='not_assessed'));assert.equal(result.jobs[1].url,null);assert.equal(result.coverage[0].checked_at,snapshot.checked_at);
  assert.match(await fs.readFile(report.markdown,'utf8'),/尚未进行个人匹配/);
  for(const command of ['batch-create','plan-assessment','render'])await assert.rejects(cli(command,'--mode',mode,'--run',dir),e=>/岗位发现未做个人匹配/.test(e.stderr));
+ const request=JSON.parse((await cli('role-review-export','--mode',mode,'--run',dir)).stdout);
+ const submission=path.join(dir,'roles.json');await write(submission,{items:request.items.map(r=>({...r,status:r.body_complete?'related':'uncertain',reason:r.body_complete?'职责体现项目协调。':'正文不足，不能否定相关性。',evidence:r.body_complete?[r.description]:[]}))});
+ const reviewed=JSON.parse((await cli('role-review-submit','--mode',mode,'--run',dir,'--file',submission)).stdout);assert.equal(reviewed.pending,0);
  // Snapshot tampering must fail before another collection can run.
  const mutated=JSON.parse(await fs.readFile(path.join(dir,'run.json'),'utf8'));mutated.task_snapshot.user_request+=' changed';await write(path.join(dir,'run.json'),mutated);
  await assert.rejects(cli('collect','--mode',mode,'--run',dir),e=>/快照已变化/.test(e.stderr));

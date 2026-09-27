@@ -8,7 +8,7 @@ const inside=(root,file)=>{const rel=path.relative(root,file);return rel&&!rel.s
 
 // Checks the archive chain, not semantic truth. The Agent still owns identity and entailment.
 export async function verifyReviewEvidence(review,{root=PACK_ROOT,readLedger=true}={}) {
-  const allowed=await Promise.all(['datasets','job-search/artifacts'].map(async p=>fs.realpath(path.join(root,p)).catch(()=>path.join(root,p))));
+  const allowed=await Promise.all(['datasets','shared/job-search-core/state','job-search/artifacts'].map(async p=>fs.realpath(path.join(root,p)).catch(()=>path.join(root,p))));
   const records=[],seen=new Map();let db,state;
   try {
     for(const doc of review.documents||[]) {

@@ -6,8 +6,8 @@ import {PACK_ROOT} from '../runtime-context.mjs';
 const flags=Object.fromEntries(process.argv.slice(2).map(arg=>{const [key,...value]=arg.replace(/^--/,'').split('=');return [key,value.join('=')||true];}));
 const input=path.resolve(flags.input||''),out=path.resolve(flags.out||path.join(path.dirname(input),'fetch'));
 const concurrency=Math.max(1,Math.min(8,Number(flags.concurrency||4))),limit=Number(flags.limit||Infinity);
-const allowedRoot=path.join(PACK_ROOT,'job-search/artifacts');
-for(const directory of [input,out]){const relative=path.relative(allowedRoot,directory);if(!relative||relative.startsWith('..')||path.isAbsolute(relative))throw Error('input/out must be below job-search/artifacts');}
+const allowedRoot=path.join(PACK_ROOT,'shared/job-search-core/state/maintenance');
+for(const directory of [input,out]){const relative=path.relative(allowedRoot,directory);if(!relative||relative.startsWith('..')||path.isAbsolute(relative))throw Error('input/out must be below shared/job-search-core/state/maintenance');}
 const mcporterCli='C:\\Users\\11793\\AppData\\Roaming\\npm\\node_modules\\mcporter\\dist\\cli.js';
 const exaKey=process.env.EXA_API_KEY||'';
 const redact=value=>String(value||'').replaceAll(exaKey||'__NO_KEY__','[REDACTED]');

@@ -9,7 +9,7 @@ import {INDUSTRIES} from './lib/industry-routing.mjs';
 import {businessVocabulary} from './lib/business-taxonomy.mjs';
 import {STATIC_FIELDS, loadCompanyInputs, buildCompanyRecords} from './lib/company-records.mjs';
 
-const ROOT=path.join(PACK_ROOT,'job-search/artifacts');
+const ROOT=path.join(PACK_ROOT,'datasets/company-research/raw');
 const BATCHES=[
   ['perplexity_agent','perplexity-static-20260923',id=>`${id}.json`],
   ['linkup','search-providers-20260924',id=>`company-${id}.json`],

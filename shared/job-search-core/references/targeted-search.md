@@ -66,7 +66,7 @@
 # 只读查看全部待办，不受每平台默认抽样数量限制
 node shared/job-search-core/scripts/audit-search-capabilities.mjs --maintenance --dry-run
 # 执行所有当前待办；有界实测默认使用 deep 预算，断点证据保存在指定目录
-node shared/job-search-core/scripts/audit-search-capabilities.mjs --maintenance --out=job-search/artifacts/keyword-maintenance-本批次
+node shared/job-search-core/scripts/audit-search-capabilities.mjs --maintenance --out=shared/job-search-core/state/maintenance/keyword-maintenance-本批次
 # 收尾检查：仍有未处理项返回退出码 2；全部已有判定返回 0
 node shared/job-search-core/scripts/audit-search-capabilities.mjs --maintenance --check
 ```

@@ -1,5 +1,6 @@
 // The agent interprets language. This module validates declared decisions and
 // computes stage gates; it deliberately contains no prompt/keyword classifier.
+import {retrievalIssues} from './query-selection.mjs';
 import {createHash} from 'node:crypto';
 import {isV5} from './assessment-v5.mjs';
 import {normalizeBusinessFilters,businessMatchMode} from './business-taxonomy.mjs';
@@ -75,13 +76,12 @@ export function decideTask(task) {
     for(const stage of stages)if(!gates[stage].includes(field))gates[stage].push(field);
   };
   const searching=['discover','match','explore'].includes(task.goal);
-  if(searching&&specified(c.roles)&&c.roles.value.length&&task.retrieval.selection==='default')need('retrieval','请选择岗位标题相关定向搜索，还是全量 JD 后结合标题和正文判断相关性：定向通常更快但可能漏掉标题不同的相关岗位；全量覆盖更充分，但采集和分析耗时更长。',['collect','assess']);
   if(task.goal==='clarify')need('goal','请明确本轮要继续哪项任务。',['collect','assess','schedule','repair']);
   const radarSearch=task.goal==='radar'&&['create','update'].includes(task.radar_action);
   if(searching||task.goal==='compare'||radarSearch){
     if(!mode)need('recruitment','这次找校招、实习还是社招？',['collect','assess',...(task.goal==='radar'?['schedule']:[])]);
   }
-  if(searching&&!(specified(c.industries)||specified(c.companies)&&c.companies.value.length||specified(c.businesses)&&c.businesses.value.length))need('industries','想看哪些行业？可以多选或明确不限。',['collect','assess']);
+  if(searching||radarSearch)for(const issue of retrievalIssues({roles:specified(c.roles)?c.roles.value:[],retrieval:task.retrieval,scopeKnown:!!(specified(c.industries)||specified(c.companies)&&c.companies.value.length||specified(c.businesses)&&c.businesses.value.length)}))need(issue.field,issue.question,['collect',...(radarSearch?['schedule']:['assess'])]);
   if(radarSearch&&!['industries','businesses','companies','roles'].some(k=>specified(c[k])&&c[k].value.length&&!(k==='industries'&&c[k].value.includes('all'))))need('radar_target','想持续关注哪些岗位、行业、业务或公司？',['collect','schedule']);
   for(const [key,value] of Object.entries(c))if(value.state==='conflict'&&!nonBlockingConditions.has(key))need(key,'请明确 '+key+' 中冲突的条件。',['collect','assess']);
   if(['match','compare','explore'].includes(task.goal)&&task.materials.profile!=='available')need('profile','请提供可核对的实际职责、个人行动与产出；已有文字或脱敏材料即可。',['assess']);
@@ -115,7 +115,7 @@ export function decideTask(task) {
     retrieval:task.retrieval.mode,city_policy:specified(c.cities)?'user_defined':'unrestricted_this_run_not_user_preference',
     gates,questions_now:now.slice(0,3),questions_later:[...now.slice(3),...questions.filter(q=>q.field==='evaluation_scope')],
     independent_actions:independent,change_actions:actions,
-    can_collect:searching&&gates.collect.length===0,can_assess:['match','compare','explore'].includes(task.goal)&&gates.assess.length===0,
+    can_collect:(searching||radarSearch)&&gates.collect.length===0,can_assess:['match','compare','explore'].includes(task.goal)&&gates.assess.length===0,
     can_review_partial:['match','compare','explore'].includes(task.goal)&&gates.assess.filter(x=>x!=='profile').length===0,
     assessment_limitations:gates.assess.includes('profile')?['个人事实不足时按v5保留不确定，仅判断有依据的维度；不虚构经历，不把缺证当作不符。']:[],
     required_notices:[...(c.salary&&c.salary.state!=='unspecified'?['招聘信息中的薪资可能不准确，仅供参考，不代表实际录用待遇；不按薪资硬筛岗位。']:[]),...(['commute','office_distance'].some(k=>c[k]&&c[k].state!=='unspecified')?['本包只匹配城市，不支持同城距离或通勤要求；这些要求会被忽略，不作为后续执行目标。']:[])],

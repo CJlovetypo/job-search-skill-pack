@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {collectRound3,normalizeRound3} from '../lib/providers-round3.mjs';

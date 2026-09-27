@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from'node:test';import assert from'node:assert/strict';
 import{collectLightbolt,normalizeLightboltJob}from'../lib/provider-lightbolt.mjs';
 import{extractRawBody}from'../lib/body-review.mjs';

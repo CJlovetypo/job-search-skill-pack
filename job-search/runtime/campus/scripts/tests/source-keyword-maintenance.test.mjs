@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -19,11 +20,11 @@ async function fixture(t,provider='fixture_public'){
 }
 test('repair registers every direction; old proofs and superseded configurations cannot close new work',async t=>{
  const f=await fixture(t),before=keywordConfigurations(f.registry),oldCaps={configurations:before.map(r=>({...r,status:'verified_native_keyword',support_status:'supported',maintenance_checked_at:'2026-01-01',reason:'verified'}))};
- assert.equal((await pendingKeywordReviews(f.registry,oldCaps,{registryFile:f.registryFile})).length,0);
- const result=await commitSourceRepair(f.source,{...f.source,primary_entry_url:'https://example.org/new'},{reason:'verified new contract'},{registryFile:f.registryFile});
+ assert.equal((await pendingKeywordReviews(f.registry,oldCaps,{access:'maintenance',registryFile:f.registryFile})).length,0);
+ const result=await commitSourceRepair(f.source,{...f.source,primary_entry_url:'https://example.org/new'},{reason:'verified new contract'},{access:'maintenance',registryFile:f.registryFile});
  assert.equal(result.keyword_review.required,true);assert.equal(result.keyword_review.configurations,3);
- const current=JSON.parse(await fs.readFile(f.registryFile,'utf8'));assert.equal((await pendingKeywordReviews(current,oldCaps,{registryFile:f.registryFile})).length,3);
- assert.equal((await queueKeywordReviews(current,current,{registryFile:f.registryFile})).required,false);
+ const current=JSON.parse(await fs.readFile(f.registryFile,'utf8'));assert.equal((await pendingKeywordReviews(current,oldCaps,{access:'maintenance',registryFile:f.registryFile})).length,3);
+ assert.equal((await queueKeywordReviews(current,current,{access:'maintenance',registryFile:f.registryFile})).required,false);
 });
 test('maintenance unknown adapter is recorded, dry run and no-publish cannot close the workflow',async t=>{
  const f=await fixture(t);await assert.rejects(f.run('--check'),e=>e.code===2);
@@ -51,7 +52,7 @@ test('unsupported requires reviewed explicit official contract evidence, not a m
 
 test('maintenance includes more than ten sources per provider without sampling',async t=>{
  const f=await fixture(t,'moka'),registry={companies:Array.from({length:12},(_,i)=>({...f.source,company_id:'c'+i,source_id:'s'+i}))};
- await write(f.registryFile,registry);await queueKeywordReviews({companies:[]},registry,{registryFile:f.registryFile});
+ await write(f.registryFile,registry);await queueKeywordReviews({companies:[]},registry,{access:'maintenance',registryFile:f.registryFile});
  const {stdout}=await f.run('--dry-run'),stats=JSON.parse(stdout.trim());assert.equal(stats.planned,36);assert.equal(stats.maintenance_required,36);
 });
 test('publication lock refuses concurrent audits and leaves pending work intact',async t=>{

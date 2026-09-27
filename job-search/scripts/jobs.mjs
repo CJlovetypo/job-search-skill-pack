@@ -38,7 +38,7 @@ async function main(){
     if(args[i]==='--mode'){i++;continue;}
     forwarded.push(args[i]==='--scope-mode'?'--mode':args[i]);
   }
-  const entry=path.join(PACK_ROOT,'shared/job-search-core/cli.mjs');
+  const entry=path.join(PACK_ROOT,'job-search/scripts/cli.mjs');
   const child=spawn(process.execPath,[entry,mode,command,...forwarded],{stdio:'inherit',windowsHide:true});
   process.exitCode=await new Promise((resolve,reject)=>{child.once('error',reject);child.once('exit',code=>resolve(code??1));});
 }

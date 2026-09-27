@@ -40,7 +40,7 @@ export async function auditOfficialDiscovery(discoveryDirectory, outputDirectory
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const [discoveryDirectory, outputDirectory] = process.argv.slice(2);
   if (!discoveryDirectory) throw Error('Usage: node audit-waiqi-official-discovery.mjs discovery-directory [output-directory]');
-  const protectedPaths = ['shared/job-search-core/assets/sources.json', 'job-search/runtime/campus/data/company-city-index.json'].map(file => path.resolve(file));
+  const protectedPaths = ['shared/job-search-core/assets/sources.json', 'shared/job-search-core/data/recruitment/campus/company-city-index.json'].map(file => path.resolve(file));
   if (outputDirectory && protectedPaths.includes(path.resolve(outputDirectory))) throw Error('Audit output cannot overwrite a formal source or data index');
   console.log(JSON.stringify(await auditOfficialDiscovery(discoveryDirectory, outputDirectory), null, 2));
 }

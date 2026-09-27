@@ -1,3 +1,5 @@
+import {assertAutomaticRepair} from './repair-policy.mjs';
+import {publicUrl} from './public-company-data.mjs';
 import {queueKeywordReviews} from './source-keyword-maintenance.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -70,28 +72,52 @@ export async function discoverRepairCandidates(source,options={}){
  }
  return {candidates:[...new Map(candidates.map(c=>[repairConfigKey(c.source),c])).values()].slice(0,3),notes:[...new Set(notes)],requests:client.records};
 }
-export async function commitSourceRepair(old,candidate,evidence,{registryFile=SOURCE_REGISTRY_FILE,append=false}={}){
+export async function commitSourceRepair(old,candidate,evidence,{registryFile=SOURCE_REGISTRY_FILE,append=false,access,verification}={}){
+ if(access==='safe_existing'){if(append)throw Error('automatic_repair_cannot_append');assertAutomaticRepair(old,candidate,verification);}
+ else if(access!=='maintenance')throw Error('修复写入需要明确 safe_existing 或 maintenance 策略');
  const lock=registryFile+'.repair.lock';let handle;
  for(let n=0;n<50;n++){try{handle=await fs.open(lock,'wx');break;}catch(e){if(e.code!=='EEXIST')throw e;await new Promise(r=>setTimeout(r,100));}}
  if(!handle)return {updated:false,reason:'registry_busy'};
- try{const registry=await read(registryFile),company=registry.companies.find(c=>c.company_id===old.company_id);if(!company)return {updated:false,reason:'company_missing'};
-  const beforeRegistry=structuredClone(registry);
-  const configs=company.recruitment_sources?.length?company.recruitment_sources:[company],index=configs.findIndex(s=>repairConfigKey({...s,company_id:company.company_id})===repairConfigKey(old));if(index<0)return {updated:false,reason:'configuration_changed_concurrently'};
+ try{
+  const registry=await read(registryFile),company=registry.companies.find(c=>c.company_id===old.company_id);if(!company)return {updated:false,reason:'company_missing'};
+  const beforeRegistry=structuredClone(registry),configs=company.recruitment_sources?.length?company.recruitment_sources:[company];
+  const index=configs.findIndex(s=>repairConfigKey({...s,company_id:company.company_id})===repairConfigKey(old));if(index<0)return {updated:false,reason:'configuration_changed_concurrently'};
+  const previous=configs[index];
+  if(access==='safe_existing')assertAutomaticRepair({...previous,company_id:company.company_id,display_name:company.display_name},{...candidate,company_id:company.company_id,display_name:company.display_name},verification);
   if(append){
-     if(!candidate.source_id||candidate.company_id!==company.company_id)return {updated:false,reason:'new_source_identity_required'};
-     if(configs.some(s=>s.source_id===candidate.source_id||s.provider===candidate.provider&&s.primary_entry_url===candidate.primary_entry_url))return {updated:false,reason:'source_already_present'};
-     const added={...candidate,repair_history:[...candidate.repair_history||[],{checked_at:new Date().toISOString(),evidence}]};delete added.target_mode;delete added.direction_route_evidence;
-     const existing=configs.map((s,i)=>{const copy=structuredClone(s);delete copy.recruitment_sources;copy.source_id??=String(i);return copy;});
-     company.recruitment_sources=[...existing,added];const keyword_review=await queueKeywordReviews(beforeRegistry,registry,{registryFile});await save(registryFile,registry);return {updated:true,company_id:company.company_id,source_id:added.source_id,appended:true,keyword_review};
-    }
-    const previous=configs[index],next={...previous,...candidate};delete next.target_mode;delete next.direction_route_evidence;
-  next.repair_history=[...previous.repair_history||[],{checked_at:new Date().toISOString(),previous_config:structuredClone(Object.fromEntries(['provider','primary_entry_url','api_config','validated_api_request_examples','public_bootstrap_requests'].filter(k=>previous[k]!==undefined).map(k=>[k,previous[k]]))),evidence}];
-  if(company.recruitment_sources?.length){company.recruitment_sources[index]=next;if(index===0)for(const k of ['verification_status','verified_at','source_verification','verified_samples','identity_verification','admitted','provider','primary_entry_url','api_config','validated_api_request_examples','public_bootstrap_requests'])if(next[k]!==undefined)company[k]=next[k];}else Object.assign(company,next);
-  const keyword_review=await queueKeywordReviews(beforeRegistry,registry,{registryFile});await save(registryFile,registry);return {updated:true,company_id:company.company_id,keyword_review};
+   if(!candidate.source_id||candidate.company_id!==company.company_id)return {updated:false,reason:'new_source_identity_required'};
+   if(configs.some(s=>s.source_id===candidate.source_id||s.provider===candidate.provider&&s.primary_entry_url===candidate.primary_entry_url))return {updated:false,reason:'source_already_present'};
+  }
+  const id=randomUUID(),folder=path.resolve(registryFile)===path.resolve(SOURCE_REGISTRY_FILE)?path.join(CORE_ROOT,'state/source-repairs'):registryFile+'.repairs',recordFile=path.join(folder,id+'.json');
+  const summary={repair_id:id,checked_at:new Date().toISOString(),kind:access,previous_fingerprint:repairConfigKey(old),current_fingerprint:repairConfigKey(candidate),scope:verification?.mode||'maintenance',validation:'sample_only',evidence_urls:[...new Set([old.primary_entry_url,candidate.primary_entry_url].map(publicUrl).filter(Boolean))]};
+  const history=(previous.repair_history||[]).map(h=>({...Object.fromEntries(['repair_id','checked_at','kind','previous_fingerprint','current_fingerprint','scope','validation'].filter(k=>h[k]!==undefined).map(k=>[k,h[k]])),repair_id:h.repair_id||'legacy',kind:h.kind||'legacy_archived',evidence_urls:(h.evidence_urls||[]).map(publicUrl).filter(Boolean)}));
+  let next=access==='safe_existing'?{...previous,primary_entry_url:candidate.primary_entry_url,validated_api_request_examples:candidate.validated_api_request_examples,public_bootstrap_requests:candidate.public_bootstrap_requests}:{...previous,...candidate};
+  delete next.target_mode;delete next.direction_route_evidence;next.repair_history=[...history,summary];
+  if(append){next={...candidate,repair_history:[summary]};delete next.target_mode;delete next.direction_route_evidence;const existing=configs.map((s,i)=>{const copy=structuredClone(s);delete copy.recruitment_sources;copy.source_id??=String(i);return copy;});company.recruitment_sources=[...existing,next];}
+  else if(company.recruitment_sources?.length){company.recruitment_sources[index]=next; if(index===0)for(const k of access==='safe_existing'?['primary_entry_url','validated_api_request_examples','public_bootstrap_requests']:['verification_status','verified_at','source_verification','verified_samples','identity_verification','admitted','provider','primary_entry_url','api_config','validated_api_request_examples','public_bootstrap_requests'])if(next[k]!==undefined)company[k]=next[k];}
+  else Object.assign(company,next);
+  const digest=x=>createHash('sha256').update(JSON.stringify(stable(x))).digest('hex');
+  const record={id,status:'prepared',registry_file:path.resolve(registryFile),before_hash:digest(beforeRegistry),after_hash:digest(registry),before_registry:beforeRegistry,after_registry:registry,evidence,verification,created_at:summary.checked_at};
+  await save(recordFile,record);
+  const keyword_review=await queueKeywordReviews(beforeRegistry,registry,{registryFile});
+  if(digest(await read(registryFile))!==record.before_hash)return {updated:false,reason:'configuration_changed_concurrently',record:recordFile};
+  await save(registryFile,registry);await save(recordFile,{...record,status:'committed'});
+  return {updated:true,company_id:company.company_id,source_id:next.source_id,appended:append,keyword_review,record:recordFile,effective_source:{...next,company_id:company.company_id,display_name:company.display_name}};
  }finally{await handle.close();await fs.unlink(lock).catch(()=>{});}
 }
+export async function recoverSourceRepair(recordFile,{rollback=false,registryFile=SOURCE_REGISTRY_FILE}={}){
+ const record=await read(recordFile);if(!record||record.registry_file!==path.resolve(registryFile))throw Error('修复记录不属于目标来源库');
+ const lock=registryFile+'.repair.lock',handle=await fs.open(lock,'wx');
+ try{const digest=x=>createHash('sha256').update(JSON.stringify(stable(x))).digest('hex');
+  if(digest(record.before_registry)!==record.before_hash||digest(record.after_registry)!==record.after_hash)throw Error('修复恢复记录哈希不一致');
+  const current=await read(registryFile),actual=digest(current);if(![record.before_hash,record.after_hash].includes(actual))throw Error('来源库已变化，不能用旧修复记录覆盖');
+  const desired=rollback?record.before_registry:record.after_registry;await queueKeywordReviews(current,desired,{registryFile});
+  if(digest(desired)!==actual)await save(registryFile,desired);
+  await save(recordFile,{...record,status:rollback?'rolled_back':'committed'});return {status:rollback?'rolled_back':'committed',record:recordFile};
+ }finally{await handle.close();await fs.unlink(lock);}
+}
 export async function maintainSource(source,result,options,collector){
- if(options.repair===false)return result;
+ if(options.repair===false||options.repairPolicy==='off')return result;
  const key=repairConfigKey(source),mode=options.targetMode||SEARCH_MODE.id,stateFile=path.join(CORE_ROOT,'state/source-health',key+'-'+mode+'.json'),previous=await read(stateFile,{}),now=new Date().toISOString(),kind=sourceFailureKind(result);
  const schema=(result.requests||[]).filter(q=>/list|detail/.test(q.purpose||'')).map(q=>({url:new URL(q.url).pathname,keys:q.response_schema_keys||[]}));
  const health={...previous,key,company_id:source.company_id,provider:source.provider,entry_url:source.primary_entry_url,mode,checked_at:now,status:kind,last_success_at:['healthy','empty'].includes(kind)?now:previous.last_success_at||null,last_failure:['healthy','empty'].includes(kind)?null:kind,consecutive_failures:['healthy','empty'].includes(kind)?0:(previous.consecutive_failures||0)+1,jobs:result.jobs?.length||0,list_observed:!!result.coverage?.pages,full_jds:(result.jobs||[]).filter(j=>j.body_complete).length,pagination:result.coverage?.status,schema_fingerprint:createHash('sha256').update(JSON.stringify(schema)).digest('hex')};
@@ -104,11 +130,11 @@ export async function maintainSource(source,result,options,collector){
   const candidates=bound.length===1?bound:discovery.candidates.length===1?discovery.candidates:[];
   if(!candidates.length&&discovery.candidates.length>1)discovery.notes.push('multiple_possible_replacement_projects_require_review');
   for(const candidate of candidates){try{const check=await collector(candidate.source,repairOpts),proof=repairCandidateAccepted(source,candidate.source,check,candidate.identity);await save(path.join(repairDir,'verification-'+repairConfigKey(candidate.source)+'.json'),{source:candidate.source,proof,result:check});attempts.push({...candidate.evidence,entry:candidate.source.primary_entry_url,...proof});if(!proof.accepted)continue;
-    const committed=await commitSourceRepair(source,candidate.source,{...candidate.evidence,...proof});if(!committed.updated){attempts.at(-1).reason=committed.reason;continue;}
+    const committed=await commitSourceRepair(source,candidate.source,{...candidate.evidence,...proof},{registryFile:options.registryFile||SOURCE_REGISTRY_FILE,access:'safe_existing',verification:{identity:candidate.identity,result:check,mode,kind:candidate.evidence.kind}});if(!committed.updated){attempts.at(-1).reason=committed.reason;continue;}
     health.repair={status:'adopted',keyword_review:committed.keyword_review,previous_entry:source.primary_entry_url,current_entry:candidate.source.primary_entry_url,evidence:candidate.evidence,proof};
     // Verification is a small sample. Re-run the user's original query before returning.
     let repaired;try{repaired=await collector(candidate.source,{...options,repair:false});}catch(e){repaired={jobs:[],requests:[],coverage:{status:'failed',pages:0,reason:'repaired_contract_recollection_failed: '+e.message}};}
-    result={...repaired,repair:health.repair,effective_source:candidate.source};break;
+    result={...repaired,repair:health.repair,effective_source:committed.effective_source};break;
    }catch(e){attempts.push({entry:candidate.source.primary_entry_url,accepted:false,reason:e.message});}}
   health.repair||={status:'needs_rediscovery',notes:discovery.notes,attempts};result.repair||=health.repair;
  }

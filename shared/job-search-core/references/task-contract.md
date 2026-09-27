@@ -84,3 +84,5 @@ node job-search/scripts/jobs.mjs plan-assessment --mode social --run job-search/
 样本范围内若限定公司，记录在 evaluation_scope.value.companies，不能仅通过 --only 改变已承诺母集。传 --jobs 时会核对当前母集数量：应为 min(承诺样本数, 当前范围可评估数)，防止有足够岗位却静默少传；真实母集不足时记录实际数量。
 
 任务快照保存在 run.json 内并有指纹。task-check/show 的阶段输出不是自动调度器；实际执行前仍检查材料、原范围和当前状态。纯发现运行不能创建评估批次或渲染匹配Excel；改为匹配需新运行、真实画像和新任务修订，可复用合规JD。
+
+雷达 create/update 与求职共用检索选择和公司范围闸门。全量岗位目标采集后新增 role-review-export / role-review-submit（均需要 --mode、--run，提交另需 --file）；记录契约见[搜索策略](search-strategy.md#通用职能相关性审阅)。未审可交付候选中间清单，不能宣称已完成职能筛选。

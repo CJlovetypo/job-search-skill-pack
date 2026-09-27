@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {readJson,writeJson,workspacePath,SKILL_ROOT} from './io.mjs';
+import {readJson,writeJson,workspacePath,SKILL_ROOT} from '../../shared/job-search-core/scripts/lib/io.mjs';
 
 const cell=value=>String(value??'').replace(/\\/g,'\\\\').replace(/[\[\]`*_]/g,'\\$&').replace(/\|/g,'\\|').replace(/[\r\n]+/g,' ').replace(/[<>]/g,'');
 function link(url){
@@ -22,7 +22,7 @@ export async function renderDiscovery(directory){
         cities:job.cities||[],recruitment:job.formal_status,open_status:job.open_status,
         data_status:job.evaluation_status,body_complete:job.body_complete===true,
         url:link(job.official_url),verification_issues:job.verification_issues||[],
-        assessment_status:'not_assessed',raw_file:job.raw_file||null});
+        role_relevance:job.role_relevance||null,assessment_status:'not_assessed',raw_file:job.raw_file||null});
     }
   }
   const result={schema_version:1,is_test:run.is_test===true,purpose:'discover',generated_at:new Date().toISOString(),
@@ -30,13 +30,13 @@ export async function renderDiscovery(directory){
     task:run.task_snapshot?{task_id:run.task_snapshot.task_id,revision:run.task_snapshot.revision}:null,
     retrieval_mode:run.retrieval_mode||'exhaustive',search_plan:run.search_plan||null,
     role_intent:run.task_snapshot?.conditions?.roles?.value||[],
-    selection_summary:run.selection_summary,jobs,coverage};
+    selection_summary:run.selection_summary,role_review:run.role_review||null,jobs,coverage};
   const out=path.join(SKILL_ROOT,'outputs',path.basename(dir));await fs.mkdir(out,{recursive:true});
   const json=path.join(out,'岗位候选.json'),markdown=path.join(out,'岗位候选.md');
   await writeJson(json,result);
   const lines=['# 岗位候选','',result.notice,'',
     `岗位 ${jobs.length} 条；采集来源 ${coverage.length} 个。范围仅限已收录来源与本轮条件。`,
-    `目标职能：${cell(result.role_intent.join('、'))||'未指定'}。本清单尚未逐条确认职能相关性；全量模式没有用标题过滤。`,
+    `目标职能：${cell(result.role_intent.join('、'))||'未指定'}。${run.role_review?`全文相关性已审 ${run.role_review.reviewed} 条，待审 ${run.role_review.pending} 条；待确认结论保留在清单。`:'本清单尚未逐条确认职能相关性。'}全量模式没有用标题过滤。`,
     `城市过滤：${cell(run.profile.city_filters?.join('、'))||'本轮未设过滤'}；公司城市标签未命中排除 ${run.selection_summary?.city_excluded||0} 个，并不证明这些公司没有招聘。`,
     ...(run.search_plan?[`定向标题词：${cell(run.search_plan.keywords.join('、'))}。可能遗漏标题未体现的机会。`]:[]),'',
     '| 公司 | 岗位 | 城市 | 资料状态 | 官方入口 |','| --- | --- | --- | --- | --- |',

@@ -13,7 +13,7 @@ export async function main(args=process.argv.slice(2)) {
     if(!args[i+1]||args[i+1].startsWith('--'))throw Error('--'+key+' 缺少值');
     options[key]=args[++i];
   }
-  if(options.help){console.log('联网回答：--question 问题 | --company 公司ID；可选 --preset low、--model 模型、--previous-response-id ID、--schema 文件、--out job-search/artifacts/结果.json；--smoke 仅输出状态和响应结构。');return;}
+  if(options.help){console.log('联网回答：--question 问题 | --company 公司ID；可选 --preset low、--model 模型、--previous-response-id ID、--schema 文件、--out shared/job-search-core/state/maintenance/结果.json；--smoke 仅输出状态和响应结构。');return;}
   if(options.question&&options.company)throw Error('question 与 company 请选择一个');
   let input=options.question;
   if(options.company) {
@@ -26,8 +26,8 @@ export async function main(args=process.argv.slice(2)) {
   if(options.smoke)input??='Search the official Perplexity documentation. What is the Agent API POST endpoint? Reply in one sentence with a source.';
   let target;
   if(options.out) {
-    target=path.resolve(options.out);const rel=path.relative(path.join(PACK_ROOT,'job-search/artifacts'),target);
-    if(!rel||rel==='..'||rel.startsWith('..'+path.sep)||path.isAbsolute(rel))throw Error('输出必须位于 job-search/artifacts 内');
+    target=path.resolve(options.out);const rel=path.relative(path.join(PACK_ROOT,'shared/job-search-core/state/maintenance'),target);
+    if(!rel||rel==='..'||rel.startsWith('..'+path.sep)||path.isAbsolute(rel))throw Error('输出必须位于 shared/job-search-core/state/maintenance 内');
     try {await fs.access(target);throw Error('输出已存在，请选择新文件');}catch(error){if(error.code!=='ENOENT')throw error;}
   }
   const schema=options.schema?JSON.parse(await fs.readFile(path.resolve(options.schema),'utf8')):undefined;

@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {publicCompanyRecords,publicUrl,publicCompatibility} from '../../../../../shared/job-search-core/scripts/lib/public-company-data.mjs';
 test('publication retains usable decisions and strips research even when nested',()=>{

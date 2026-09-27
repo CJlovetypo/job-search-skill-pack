@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -14,14 +15,14 @@ test('adding a channel preserves the original source and primary metadata, inclu
  const folder=await fs.mkdtemp(path.resolve('job-search/runtime/campus/artifacts/append-test-')),file=path.join(folder,'registry.json');
  const old={...company,recruitment_sources:[]},added={...company,source_id:'new-social',primary_entry_url:'https://test.zhiye.com/social'};
  await fs.writeFile(file,JSON.stringify({companies:[old]}));
- assert.equal((await commitSourceRepair(old,added,{reason:'official_social_link'},{registryFile:file,append:true})).updated,true);
+ assert.equal((await commitSourceRepair(old,added,{reason:'official_social_link'},{access:'maintenance',registryFile:file,append:true})).updated,true);
  const saved=JSON.parse(await fs.readFile(file,'utf8')).companies[0];
  assert.equal(saved.primary_entry_url,old.primary_entry_url);assert.equal(saved.recruitment_sources.length,2);
  assert.equal(saved.recruitment_sources[0].primary_entry_url,old.primary_entry_url);assert.equal(saved.recruitment_sources[0].recruitment_sources,undefined);
  assert.equal(saved.recruitment_sources[0].source_id,'0');
- assert.equal((await commitSourceRepair(saved.recruitment_sources[0],added,{},{registryFile:file,append:true})).reason,'source_already_present');
- assert.equal((await commitSourceRepair(old,added,{},{registryFile:file,append:true})).reason,'configuration_changed_concurrently');
- assert.equal((await commitSourceRepair({...old,primary_entry_url:'https://stale.invalid'}, {...added,source_id:'other'},{},{registryFile:file,append:true})).reason,'configuration_changed_concurrently');
+ assert.equal((await commitSourceRepair(saved.recruitment_sources[0],added,{},{access:'maintenance',registryFile:file,append:true})).reason,'source_already_present');
+ assert.equal((await commitSourceRepair(old,added,{},{access:'maintenance',registryFile:file,append:true})).reason,'configuration_changed_concurrently');
+ assert.equal((await commitSourceRepair({...old,primary_entry_url:'https://stale.invalid'}, {...added,source_id:'other'},{},{access:'maintenance',registryFile:file,append:true})).reason,'configuration_changed_concurrently');
 });
 const fact=value=>({value,status:'verified',as_of:'2025-12-31',entity:'测试公司',evidence:[{url:'https://example.org/annual-report'}]});
 const owner={status:'verified',ownership_tag:'私企'},now='2026-09-19T00:00:00Z';
@@ -71,14 +72,14 @@ test('shared employer-size and direction-specific city indexes cover the current
  const read=async p=>JSON.parse(await fs.readFile(path.resolve(p),'utf8')),root='shared/job-search-core';
  const sources=(await read(root+'/assets/sources.json')).companies;
  const ids=sources.map(c=>c.company_id).sort();assert.deepEqual((await read(root+'/data/company-size-tags.json')).companies.map(c=>c.company_id).sort(),ids);
- for(const skill of ['job-search/runtime/campus','job-search/runtime/internship','job-search/runtime/social'])assert.deepEqual((await read(skill+'/data/company-city-index.json')).companies.map(c=>c.company_id).sort(),ids);
+ for(const skill of ['shared/job-search-core/data/recruitment/campus','shared/job-search-core/data/recruitment/internship','shared/job-search-core/data/recruitment/social'])assert.deepEqual((await read(skill+'/company-city-index.json')).companies.map(c=>c.company_id).sort(),ids);
 });
 test('repair commits only unchanged expected config, preserves history and refuses concurrent replacement',async()=>{
  const folder=path.resolve('job-search/runtime/campus/artifacts/implementation/tests/repair-'+Date.now()),file=path.join(folder,'registry.json');await fs.mkdir(folder,{recursive:true});await fs.writeFile(file,JSON.stringify({companies:[company]}));
  const next={...company,primary_entry_url:'https://test.zhiye.com/new'};
- assert((await commitSourceRepair(company,next,{reason:'fixture_verified'},{registryFile:file})).updated);
- const saved=JSON.parse(await fs.readFile(file,'utf8')).companies[0];assert.equal(saved.repair_history[0].previous_config.primary_entry_url,company.primary_entry_url);assert.equal(repairConfigKey(saved),repairConfigKey(next));
- assert.equal((await commitSourceRepair(company,next,{}, {registryFile:file})).reason,'configuration_changed_concurrently');
+ assert((await commitSourceRepair(company,next,{reason:'fixture_verified'},{access:'maintenance',registryFile:file})).updated);
+ const saved=JSON.parse(await fs.readFile(file,'utf8')).companies[0];assert.equal(saved.repair_history[0].previous_fingerprint,repairConfigKey(company));assert.equal(saved.repair_history[0].previous_config,undefined);assert.equal(repairConfigKey(saved),repairConfigKey(next));
+ assert.equal((await commitSourceRepair(company,next,{}, {access:'maintenance',registryFile:file})).reason,'configuration_changed_concurrently');
 });
 test('Moka repair discovers observed project tuple and confirms tenant and channel',async()=>{
  const old={...company,provider:'moka',primary_entry_url:'https://app.mokahr.com/campus-recruitment/test/1',validated_api_request_examples:[{purpose:'job_list',url:'https://app.mokahr.com/api/outer/ats-apply/website/jobs/v2',body:{orgId:'test',siteId:'1',site:'campus-recruitment'}}]};
@@ -92,7 +93,7 @@ test('identity corrections synchronize primary metadata and reject stale repairs
  const original={...company,source_id:'original',identity_verification:{identity_verified:true}},other={...original,source_id:'other'};
  await fs.writeFile(file,JSON.stringify({companies:[{...company,recruitment_sources:[original,other]}]}));
  const next={...original,admitted:false,identity_verification:{identity_verified:false,basis:'wrong employer'},verified_samples:[]};
- assert((await commitSourceRepair(original,next,{reason:'identity_corrected'},{registryFile:file})).updated);
+ assert((await commitSourceRepair(original,next,{reason:'identity_corrected'},{access:'maintenance',registryFile:file})).updated);
  const saved=JSON.parse(await fs.readFile(file,'utf8')).companies[0];assert.equal(saved.identity_verification.identity_verified,false);assert.equal(saved.admitted,false);assert.deepEqual(saved.verified_samples,[]);assert.equal(saved.recruitment_sources[1].identity_verification.identity_verified,true);
- assert.equal((await commitSourceRepair(original,{...original,primary_entry_url:'https://test.zhiye.com/new'},{},{registryFile:file})).reason,'configuration_changed_concurrently');
+ assert.equal((await commitSourceRepair(original,{...original,primary_entry_url:'https://test.zhiye.com/new'},{},{access:'maintenance',registryFile:file})).reason,'configuration_changed_concurrently');
 });

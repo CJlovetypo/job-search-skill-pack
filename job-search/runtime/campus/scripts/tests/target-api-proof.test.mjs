@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {targetApiProof,reconcileTargetJob} from '../lib/target-api-proof.mjs';
 // All fixtures below are OFFLINE SYNTHETIC; they are never live source evidence.

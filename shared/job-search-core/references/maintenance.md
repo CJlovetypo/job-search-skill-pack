@@ -1,6 +1,6 @@
 # 共享来源与标签维护
 
-job-search 的三个招聘方向共用 assets/sources.json、采集实现及公司业务、性质、规模资料。城市索引、招聘方向证明和个人运行分别归属对应 runtime 目录。日常匹配读取已保存资料，不自动启动全库维护。
+job-search 的三个招聘方向共用 assets/sources.json、采集实现及公司业务、性质、规模资料。城市索引和招聘方向证明归共享 data/recruitment/<mode>；个人运行留在产品目录。日常匹配读取已保存资料，不自动启动全库维护。
 
 ## 主动维护入口
 
@@ -10,7 +10,7 @@ job-search 的三个招聘方向共用 assets/sources.json、采集实现及公�
 
 ```sh
 # 只读盘点：输出已有行业目录、业务词表、证据缺口和三方向城市覆盖
-node shared/job-search-core/scripts/company-maintenance.mjs audit --out job-search/artifacts/company-label-audit.json
+node shared/job-search-core/scripts/company-maintenance.mjs audit --out shared/job-search-core/state/maintenance/company-label-audit.json
 # 主动城市更新，写指定方向索引并保存旧索引（不受旧城市过滤排除）
 node shared/job-search-core/scripts/company-maintenance.mjs cities --mode social --only 公司ID
 # 性质维护默认仅预览；明确写入时附 --apply，沿用原维护器备份和优先级
@@ -20,7 +20,7 @@ node shared/job-search-core/scripts/company-maintenance.mjs ownership --source w
 node job-search/scripts/jobs.mjs company-profiles --mode social status
 ```
 
-audit 不联网、不重标，输出不可覆盖且限定在 job-search/artifacts。cities 的 --out 为对应方向目录内的采集证据目录，可搭配 --resume；ownership 的 --out 为 job-search/artifacts 内的独立证据目录。原 refresh-cities 与独立维护脚本仍可在明确维护任务中使用。业务/行业维护按证据逐项更新，分类词表迁移另行审核。
+audit 不联网、不重标，输出不可覆盖且限定在 shared/job-search-core/state/maintenance。cities 的 --out 是显式指定的本地采集证据目录，默认 shared/job-search-core/state/city-refresh/<mode>，可搭配 --resume；ownership 的 --out 为 shared/job-search-core/state/maintenance 内的独立证据目录。原 refresh-cities 与独立维护脚本仍可在明确维护任务中使用。业务/行业维护按证据逐项更新，分类词表迁移另行审核。
 
 catalog/prepare 不初始化城市索引，collect（包括 --refresh）不更新共享标签；prepare/render 不将性质缺口变成必须维护的阻塞。unknown 保持未知，不能为继续使用伪造 verified。
 
@@ -32,7 +32,7 @@ catalog/prepare 不初始化城市索引，collect（包括 --refresh）不更�
 
 新增 Waiqi 发现并经官网核验的来源后，可离线补种三个招聘方向的城市索引：从仓库根目录运行 `node shared/job-search-core/scripts/seed-waiqi-city-index.mjs`。默认仅在本轮 `city-seed/` 生成计划、三方向补丁及官方 JD 证据汇总，不改现有索引；可用 `--input=` 指定该轮存有官方 admitted 清单的归档目录。来源正式合并后加 `--apply` 才将最小增量写入索引，并保留旧索引备份。补种复用日常招聘类型审查、目标 API 证据核对、城市规范化和跨入口冲突规则，仅使用官方开放岗位，不采用第三方城市提示。此为历史样本补充，覆盖始终标为 partial，保留旧城市；没有已证实招聘类型或地点的方向保持空或 unknown，不能宣称已完成全量城市刷新。
 
-全库城市刷新：从仓库根目录运行 node job-search/runtime/campus/scripts/refresh-all-city-tags.mjs --mode=campus --concurrency=2；mode 也可为 internship、social。按配置指纹续跑，--retry=true 重试非完整结果。不要同时对三个方向启动密集刷新；共享 ATS 平台也可能按 IP 限流，分租户并发限制不等于整个平台限速。
+全库城市刷新：从仓库根目录运行 node shared/job-search-core/scripts/refresh-cities.mjs --mode campus --concurrency 2；mode 也可为 internship、social。指定相同 --out 并加 --resume 按配置指纹续跑，非完整结果会重试。不要同时对三个方向启动密集刷新；共享 ATS 平台也可能按 IP 限流，分租户并发限制不等于整个平台限速。
 
 每家公司默认最多 180 次请求和 60 秒，Workday/SmartRecruiters 最多补取 20 个详情用于确认岗位类型。未取全时记部分覆盖；失败和部分采集保留历史城市。原始结果留在 artifacts，索引只保留摘要及少量地点例证。维护前确认 Python 等必要依赖可用。
 

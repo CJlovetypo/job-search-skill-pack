@@ -5,7 +5,7 @@ import {pathToFileURL} from 'node:url';
 import {INDUSTRIES} from './lib/industry-routing.mjs';
 import {planWaiqiIntegration} from './lib/waiqi-integration.mjs';
 
-const ROOT=path.resolve('job-search/runtime/campus/artifacts/waiqi-2026-09-20');
+const ROOT=path.resolve('shared/job-search-core/state/maintenance/waiqi-2026-09-20');
 const CLEAN=path.join(ROOT,'zero-position-official-clean');
 const OUTPUT=path.join(ROOT,'official-zero-api-verification');
 const REGISTRY=path.resolve('shared/job-search-core/assets/sources.json');

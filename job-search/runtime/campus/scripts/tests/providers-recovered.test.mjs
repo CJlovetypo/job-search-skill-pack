@@ -1,3 +1,4 @@
+import './context.mjs';
 // Offline contract fixtures: entirely synthetic; no raw captures, network, or credentials.
 // RECOVERED_ADAPTER_DIR may point at the production lib directory after integration.
 import test from 'node:test';

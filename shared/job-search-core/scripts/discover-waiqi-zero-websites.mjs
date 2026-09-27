@@ -6,12 +6,12 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 import {createClient} from './lib/http.mjs';
-import {sourceFromEntry} from '../../../job-search/runtime/campus/scripts/source-discovery.mjs';
+import {sourceFromEntry} from './source-discovery.mjs';
 import {collectCommon} from './lib/providers-common.mjs';
 
 const DEFAULT_INPUT=path.resolve('datasets/recruitment-links/catalog/waiqi-source-candidates.json');
 const publicCareerHosts=new Set(JSON.parse(readFileSync(new URL('../assets/public-career-hosts.json',import.meta.url),'utf8')).hosts.map(x=>x.host));
-const DEFAULT_OUTPUT=path.resolve('job-search/runtime/campus/artifacts/waiqi-2026-09-20/zero-position-official-discovery');
+const DEFAULT_OUTPUT=path.resolve('shared/job-search-core/state/maintenance/waiqi-2026-09-20/zero-position-official-discovery');
 const locale=/^(?:en|en-us|en-gb|zh|zh-cn|zh-hans|de|fr|ja|ko)$/i;
 const atsHost=/(?:myworkdayjobs\.com|myworkdaysite\.com|smartrecruiters\.com|greenhouse\.io|ashbyhq\.com|mokahr\.com|zhiye\.com|hotjob\.cn|jobs\.(?:feishu\.cn|f\.mioffice\.cn)|oraclecloud\.com|careers\.bissell\.com)$/i;
 const isAtsHost=host=>atsHost.test(host)||publicCareerHosts.has(host.toLowerCase())||host.toLowerCase()==='www.ajinga.com';

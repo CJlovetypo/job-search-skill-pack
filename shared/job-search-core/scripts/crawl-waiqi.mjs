@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {requestSlot,retryAfterMs,recruitmentLink} from './lib/waiqi-utils.mjs';
 
 // Anonymous public read endpoints observed in waiqi.com's company frontend.
-const output=path.resolve(process.argv[2]||'job-search/runtime/campus/artifacts/waiqi-2026-09-20');
+const output=path.resolve(process.argv[2]||'shared/job-search-core/state/maintenance/waiqi-2026-09-20');
 const base='https://backservice.offerxiansheng.com/api/position-service';
 const concurrency=Number(process.env.WAIQI_CONCURRENCY||3);
 const interval=Number(process.env.WAIQI_INTERVAL_MS||750);

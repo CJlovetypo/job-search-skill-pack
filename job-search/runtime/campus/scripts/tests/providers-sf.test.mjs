@@ -1,3 +1,4 @@
+import './context.mjs';
 import nodeTest from 'node:test';import assert from 'node:assert/strict';import {collectSf,normalizeSfJob} from '../lib/providers-sf.mjs';
 const source={company_id:'fixture-sf',display_name:'SF fixture',primary_entry_url:'https://campus.sf-express.com/',validated_api_request_examples:[{url:'https://campus.sf-express.com/api/web/position/query?intern=2&pageNum=1&pageSize=2',purpose:'job_list'}]};
 const row=(id,extra={})=>({id,positionName:'研发工程师',postDuty:'研发系统并维护服务。',jobRequirement:'2027届毕业生，可提前到岗实习。',demandCity:'武汉市,深圳市',seasonType:'2',...extra});

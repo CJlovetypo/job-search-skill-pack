@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {directionSources} from '../../../../../shared/job-search-core/scripts/lib/source-directions.mjs';
 test('audit pins discovery inside one comparison while new comparisons discover afresh',async()=>{

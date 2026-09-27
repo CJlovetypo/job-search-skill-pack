@@ -18,8 +18,8 @@ async function save(p,value,{exclusive=false,compact=false}={}) {
   const tmp=p+'.'+randomUUID()+'.tmp';await fs.writeFile(tmp,body);await fs.rename(tmp,p);
 }
 function artifactPath(p) {
-  const root=path.join(PACK_ROOT,'job-search/artifacts'),full=path.resolve(p),rel=path.relative(root,full);
-  if(!rel||rel==='..'||rel.startsWith('..'+path.sep)||path.isAbsolute(rel))throw Error('复核工作目录必须位于 job-search/artifacts');
+  const root=path.join(PACK_ROOT,'shared/job-search-core/state/maintenance'),full=path.resolve(p),rel=path.relative(root,full);
+  if(!rel||rel==='..'||rel.startsWith('..'+path.sep)||path.isAbsolute(rel))throw Error('复核工作目录必须位于 shared/job-search-core/state/maintenance');
   return full;
 }
 async function documentsFromFiles(review,root) {
@@ -34,7 +34,7 @@ async function documentsFromFiles(review,root) {
 export async function main(argv=process.argv.slice(2)) {
   const [command,...args]=argv,opts={};
   for(let i=0;i<args.length;i++){if(!args[i].startsWith('--')||!args[i+1]||args[i+1].startsWith('--'))throw Error('参数必须为 --key value');const key=args[i].slice(2);if(Object.hasOwn(opts,key))throw Error('重复参数 '+key);opts[key]=args[++i];}
-  if(!command||command==='help'){console.log('公司画像维护：init --campaign ID --out job-search/artifacts/目录 [--scope all|gaps] [--selection JSON]；export --out 画像.json；next --work 目录 [--limit 4]；record --work 目录 --file 复核记录.json；approve --work 目录 --file 批准清单.json；calibrate --file 独立样本.json --out job-search/artifacts/报告.json；preflight --work 目录 [--trial true]；publish --work 目录；status --work 目录；recover [--mode rollback]；unlock。先本地分析，可复用真实归档正文；按需联网；新发布必须有字段评分、批准清单、通过校准的样本及未变更预检。');return;}
+  if(!command||command==='help'){console.log('公司画像维护：init --campaign ID --out shared/job-search-core/state/maintenance/目录 [--scope all|gaps] [--selection JSON]；export --out 画像.json；next --work 目录 [--limit 4]；record --work 目录 --file 复核记录.json；approve --work 目录 --file 批准清单.json；calibrate --file 独立样本.json --out shared/job-search-core/state/maintenance/报告.json；preflight --work 目录 [--trial true]；publish --work 目录；status --work 目录；recover [--mode rollback]；unlock。先本地分析，可复用真实归档正文；按需联网；新发布必须有字段评分、批准清单、通过校准的样本及未变更预检。');return;}
   if(command==='calibrate') {
     if(!opts.file||!opts.out)throw Error('calibrate需要--file 样本.json和--out 报告.json');
     const dataset=await read(path.resolve(opts.file)),report=evaluateCalibration(dataset);report.source_hashes=await verifyCalibrationSources(dataset);report.archive_verification='passed';await save(artifactPath(opts.out),report);console.log(JSON.stringify(report));return;

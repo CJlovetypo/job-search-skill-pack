@@ -6,13 +6,11 @@ export const SEARCH_MODES = Object.freeze({
   internship: {id:'internship', status:'internship', label:'实习', report:'实习岗位匹配.xlsx'},
   social: {id:'social', status:'social', label:'社招', report:'社招岗位匹配.xlsx'},
 });
-const configured=runtimeContext().mode;
-export function searchMode(value=configured) {
+export function searchMode(value=runtimeContext().mode) {
   if(!Object.hasOwn(SEARCH_MODES,value))throw Error('未知招聘方向：'+value);
   return SEARCH_MODES[value];
 }
-export const SEARCH_MODE=searchMode();
-export const TARGET_STATUS=SEARCH_MODE.status;
+export const SEARCH_MODE=new Proxy({}, {get:(_,key)=>searchMode()[key]});
 export const MODE_POLICY_VERSION='2026-09-19-direction-v2-target-api-proof';
 export function isTargetJob(job,mode=SEARCH_MODE.id) { return job.formal_status===searchMode(mode).status; }
 export function knownOtherType(job,mode=SEARCH_MODE.id) {

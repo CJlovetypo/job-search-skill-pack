@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {applySupplierOwnership, extractSupplierNatures, resolveSupplierNatures} from '../../../../../shared/job-search-core/scripts/tag-supplier-ownership.mjs';

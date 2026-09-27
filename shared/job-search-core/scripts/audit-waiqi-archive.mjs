@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 
-const root=path.resolve(process.argv[2]||'job-search/runtime/campus/artifacts/waiqi-2026-09-20');
+const root=path.resolve(process.argv[2]||'shared/job-search-core/state/maintenance/waiqi-2026-09-20');
 const read=async file=>JSON.parse(await fs.readFile(path.join(root,file),'utf8'));
 const listFiles=async dir=>(await fs.readdir(path.join(root,dir))).filter(x=>x.endsWith('.json')).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
 const walk=async dir=>{const base=path.join(root,dir);try{const out=[];for(const entry of await fs.readdir(base,{withFileTypes:true})){const relative=path.join(dir,entry.name);if(entry.isDirectory())out.push(...await walk(relative));else out.push(relative);}return out.sort();}catch(error){if(error.code==='ENOENT')return [];throw error;}};

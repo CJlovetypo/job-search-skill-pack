@@ -1,0 +1,26 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {PACK_ROOT} from '../../../shared/job-search-core/runtime-context.mjs';
+const exec=promisify(execFile);
+test('shared and radar operate without any job-search product or private maintenance files',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'standalone-radar-')),core=path.join(root,'shared/job-search-core');await fs.mkdir(core,{recursive:true});
+ for(const name of ['scripts','assets','data','runtime-context.mjs','registry.mjs','maintenance-paths.mjs'])await fs.cp(path.join(PACK_ROOT,'shared/job-search-core',name),path.join(core,name),{recursive:true});
+ await fs.cp(path.join(PACK_ROOT,'job-radar/scripts'),path.join(root,'job-radar/scripts'),{recursive:true});
+ await assert.rejects(fs.access(path.join(root,'job-search')));
+ const script=`import {loadCompanyContext} from './shared/job-search-core/scripts/lib/company-records.mjs';
+ import {sourceFromEntry} from './shared/job-search-core/scripts/source-discovery.mjs';
+ import {configureRuntime} from './shared/job-search-core/runtime-context.mjs';
+ import {openDb,subscribe,normalizeConfig,runSubscription,renderReport} from './job-radar/scripts/radar.mjs';
+ globalThis.fetch=()=>{throw Error('Network forbidden')};configureRuntime({mode:'social',outputRoot:'job-radar'});
+ const context=await loadCompanyContext();const source=context.registry.companies[0];
+ const db=openDb();const c=normalizeConfig({id:'offline',mode:'social',company_ids:[source.company_id]},context.registry.companies,{context});subscribe(db,c);
+ const run=await runSubscription(db,c.id,context.registry.companies,async()=>({jobs:[],coverage:{status:'complete',pages:1}}),{context});
+ console.log(JSON.stringify({companies:context.registry.companies.length,status:db.prepare('SELECT status FROM runs WHERE id=?').get(run).status,report:renderReport(db,run).includes('没有新发现')}));db.close();`;
+ const output=JSON.parse((await exec(process.execPath,['--input-type=module','-e',script],{cwd:root,windowsHide:true,maxBuffer:2e6})).stdout);
+ assert(output.companies>0);assert.equal(output.status,'complete');assert(output.report);
+});

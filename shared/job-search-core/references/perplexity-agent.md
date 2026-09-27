@@ -21,7 +21,7 @@ Remove-Item Env:PERPLEXITY_API_KEY
 从仓库根目录调用：
 
 ```powershell
-node shared/job-search-core/scripts/perplexity-answer.mjs --question '请查阅三六零官网，概述其主营业务并提供来源' --out job-search/artifacts/perplexity/360-answer.json
+node shared/job-search-core/scripts/perplexity-answer.mjs --question '请查阅三六零官网，概述其主营业务并提供来源' --out shared/job-search-core/state/maintenance/perplexity/360-answer.json
 node shared/job-search-core/scripts/perplexity-answer.mjs --company company-f93e5a384c54 --preset low
 node shared/job-search-core/scripts/perplexity-answer.mjs --question '哪些来源直接支持这个结论？' --previous-response-id resp_FROM_PREVIOUS_RESULT
 ```

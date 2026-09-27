@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {directionEndpointProof as check} from '../lib/direction-endpoint-proof.mjs';
 test('明确招聘方向的成功空接口可确认，不要求当前JD',()=>{

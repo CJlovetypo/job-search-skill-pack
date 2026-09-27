@@ -60,11 +60,11 @@
 内置搜索正文须与成功请求账本、文件及 SQLite 原件一致，并关联目标公司。请求关联其他主体时先调查关联错误；不按名称相似自动合并。供应商直读正文须能定位原始 `fetch_url_results`；结构化答案和搜索摘要不升级为正文。
 
 ```sh
-node shared/job-search-core/scripts/company-records.mjs init --campaign ID --out job-search/artifacts/WORK --scope all --selection selection.json
-node shared/job-search-core/scripts/company-records.mjs record --work job-search/artifacts/WORK --file review.json
-node shared/job-search-core/scripts/company-records.mjs approve --work job-search/artifacts/WORK --file approval.json
-node shared/job-search-core/scripts/company-records.mjs calibrate --file calibration-samples.json --out job-search/artifacts/WORK/calibration-report.json
-node shared/job-search-core/scripts/company-records.mjs preflight --work job-search/artifacts/WORK --trial true
+node shared/job-search-core/scripts/company-records.mjs init --campaign ID --out shared/job-search-core/state/maintenance/WORK --scope all --selection selection.json
+node shared/job-search-core/scripts/company-records.mjs record --work shared/job-search-core/state/maintenance/WORK --file review.json
+node shared/job-search-core/scripts/company-records.mjs approve --work shared/job-search-core/state/maintenance/WORK --file approval.json
+node shared/job-search-core/scripts/company-records.mjs calibrate --file calibration-samples.json --out shared/job-search-core/state/maintenance/WORK/calibration-report.json
+node shared/job-search-core/scripts/company-records.mjs preflight --work shared/job-search-core/state/maintenance/WORK --trial true
 ```
 
 `selection.json` 使用 `{companies:[{company_id,requested_fields}]}`；`all` 包含API支持及旧标签，`gaps` 仅补缺，两种范围分别统计。批准清单逐字段绑定完整候选哈希、字段决策哈希、证据、规则及审核时间。`pilot` 限50家公司；`calibrated` 用于后续批次。两者都需提供 `calibration_file` 与 `calibration_sha256` 指向独立复核样本，不能指向汇总报告。
@@ -72,8 +72,8 @@ node shared/job-search-core/scripts/company-records.mjs preflight --work job-sea
 通过校准并完成审核后，重新生成正式预检，再发布：
 
 ```sh
-node shared/job-search-core/scripts/company-records.mjs preflight --work job-search/artifacts/WORK
-node shared/job-search-core/scripts/company-records.mjs publish --work job-search/artifacts/WORK
+node shared/job-search-core/scripts/company-records.mjs preflight --work shared/job-search-core/state/maintenance/WORK
+node shared/job-search-core/scripts/company-records.mjs publish --work shared/job-search-core/state/maintenance/WORK
 ```
 
 试运行预检的 `publishable:false` 不能用于发布。正式预检固定候选、批准、原件、各输入层及目标文件哈希，发布前重算；变化则重新预检。只替换批准字段及其必要规模派生，不夹带招聘源、城市或其他字段变化。规模派生使用更新后的实际依赖；`size_eligible:false` 在后续重建时继续生效。

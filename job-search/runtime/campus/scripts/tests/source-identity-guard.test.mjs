@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {collectEndpoint,collectCompanySources,sourceConfigFingerprint,sourceCacheMatches} from '../../../../../shared/job-search-core/scripts/lib/source-collector.mjs';
 import {collectTargeted} from '../../../../../shared/job-search-core/scripts/lib/collect-targeted.mjs';

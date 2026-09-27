@@ -13,9 +13,9 @@ const DEFAULTS = Object.freeze({
   sizes: path.join(ROOT, 'datasets/company-research/inputs/company-size-tags.json'),
   profiles: path.join(ROOT, 'datasets/company-research/inputs/company-profiles.json'),
   candidates: path.join(ROOT, 'datasets/recruitment-links/catalog/waiqi-source-candidates.json'),
-  contexts: path.join(ROOT, 'job-search/runtime/campus/artifacts/waiqi-2026-09-20/zero-position-official-clean/duplicates-existing.json'),
+  contexts: path.join(ROOT, 'shared/job-search-core/state/maintenance/waiqi-2026-09-20/zero-position-official-clean/duplicates-existing.json'),
   index: path.join(ROOT, 'datasets/company-research/reviews/waiqi-foreign-company-index.json'),
-  artifacts: path.join(ROOT, 'job-search/runtime/campus/artifacts/waiqi-2026-09-20/waiqi-ownership-tagging'),
+  artifacts: path.join(ROOT, 'shared/job-search-core/state/maintenance/waiqi-2026-09-20/waiqi-ownership-tagging'),
 });
 
 const readJson = async file => JSON.parse(await fs.readFile(file, 'utf8'));

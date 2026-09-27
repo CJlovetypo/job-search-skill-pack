@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {extractCareerLinks,atsConfiguration} from '../../../../../shared/job-search-core/scripts/discover-waiqi-zero-websites.mjs';

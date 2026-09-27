@@ -18,7 +18,7 @@ export function resolveResearchRecord(record){
  const parts=relative.split('/');
  if(parts[0]==='job-search'&&parts[1]==='artifacts'&&batches.has(parts[2]))relative='datasets/company-research/raw/'+parts.slice(2).join('/');
  const file=path.resolve(PACK_ROOT,relative);
- const allowed=[RESEARCH_ROOT,path.join(PACK_ROOT,'job-search/artifacts')];
+ const allowed=[RESEARCH_ROOT,path.join(PACK_ROOT,'shared/job-search-core/state'),path.join(PACK_ROOT,'job-search/artifacts')];
  if(!allowed.some(root=>file.startsWith(root+path.sep)))throw Error('Research record outside local maintenance roots');
  return file;
 }

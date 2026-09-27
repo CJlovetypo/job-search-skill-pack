@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {csvCell} from './lib/waiqi-utils.mjs';
 
-const root = path.resolve(process.argv[2] || 'job-search/runtime/campus/artifacts/waiqi-2026-09-20');
+const root = path.resolve(process.argv[2] || 'shared/job-search-core/state/maintenance/waiqi-2026-09-20');
 const read = async name => JSON.parse(await fs.readFile(path.join(root, name), 'utf8'));
 const summary = await read('summary.json');
 const integration = await read('integration-result.json');

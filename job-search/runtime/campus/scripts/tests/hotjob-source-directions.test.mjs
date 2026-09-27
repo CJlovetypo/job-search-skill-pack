@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {directionSources,routeKnownSource,requestObject} from '../lib/source-directions.mjs';

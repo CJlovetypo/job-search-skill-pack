@@ -2,6 +2,7 @@ import {createHash} from 'node:crypto';
 import path from 'node:path';
 import {createClient} from './http.mjs';
 import {SKILL_ROOT,readJson,writeJson} from './io.mjs';
+import {runtimeContext} from '../../runtime-context.mjs';
 import {SEARCH_MODE,MODE_POLICY_VERSION} from './search-mode.mjs';
 import {mokaSiteCandidates,confirmMokaSiteCandidate} from './public-site-candidates.mjs';
 
@@ -58,7 +59,7 @@ async function discoverSites(source,options) {
  const mode=options.targetMode,sourceKey=JSON.stringify([MODE_POLICY_VERSION,'public-site-tuples-v2',mode,source.provider,source.primary_entry_url,source.validated_api_request_examples]);
  const key=createHash('sha256').update(sourceKey).digest('hex');
  if(options.directionDiscoveryMemo?.has(key))return {...clone(options.directionDiscoveryMemo.get(key)),audit_scope_reused:true};
- const cache=path.join(SKILL_ROOT,'artifacts','channel-discovery',key+'.json');
+ const cache=path.join(options.cacheRoot||runtimeContext().cacheRoot,key+'.json');
  const cached=options.refresh?null:await readJson(cache,null);
  if(cached){options.directionDiscoveryMemo?.set(key,clone(cached));return {...cached,cache_reused:true};}
  const client=options.discoveryClient||createClient({...options,evidenceDir:options.evidenceDir?path.join(options.evidenceDir,'channel-discovery'):undefined});

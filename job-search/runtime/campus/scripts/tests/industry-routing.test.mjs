@@ -1,3 +1,5 @@
+import './context.mjs';
+import {recruitmentFile} from '../../../../../shared/job-search-core/runtime-context.mjs';
 import {datasetPath} from '../../../../../shared/job-search-core/registry.mjs';
 import {PACK_ROOT} from '../../../../../shared/job-search-core/runtime-context.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import path from 'node:path';import fs from 'node:fs/promises';import {execFile} from 'node:child_process';import {promisify} from 'node:util';
@@ -41,7 +43,7 @@ test('catalog uses published API ownership and business labels for company prefe
 test('company metadata keys agree and known duplicate employer aliases remain merged',async()=>{
  const companies=(await readJson(datasetPath(SKILL_ROOT,'assets/sources.json'))).companies;
  const ids=companies.map(c=>c.company_id).sort();for(const file of ['company-city-index','company-business-tags','company-ownership-tags','company-profiles']){
-  const rows=(await readJson(path.join(SKILL_ROOT,'data/'+file+'.json'))).companies;assert.deepEqual(rows.map(c=>c.company_id).sort(),ids,file);
+  const rows=(await readJson(file==='company-city-index'?recruitmentFile('campus'):datasetPath(SKILL_ROOT,'data/'+file+'.json'))).companies;assert.deepEqual(rows.map(c=>c.company_id).sort(),ids,file);
  }
  // Recovered public suite config identifies both Hotjob portals as one 中冶长天 tenant.
  const zhongye=companies.filter(c=>c.display_name==='中冶长天');assert.equal(zhongye.length,1);assert.equal(zhongye[0].company_id,'co_f99d8a693504e99ccc83');assert.equal(zhongye[0].recruitment_sources.length,2);

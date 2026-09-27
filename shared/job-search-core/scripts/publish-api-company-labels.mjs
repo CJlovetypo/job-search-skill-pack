@@ -12,7 +12,7 @@ import {INDUSTRIES} from './lib/industry-routing.mjs';
 import {businessVocabulary} from './lib/business-taxonomy.mjs';
 import {STATIC_FIELDS,loadCompanyInputs,buildCompanyRecords,projectCompanyRecords,indexById} from './lib/company-records.mjs';
 
-const ARCHIVE_ROOT=path.join(PACK_ROOT,'job-search/artifacts');
+const ARCHIVE_ROOT=path.join(PACK_ROOT,'datasets/company-research/raw');
 const clean=value=>String(value??'').replace(/\s+/g,' ').trim();
 const normal=value=>clean(value).toLowerCase().replace(/[\s（）()·・.,，。\-—_]/g,'');
 const webUrl=value=>{try{return ['http:','https:'].includes(new URL(value).protocol);}catch{return false;}};

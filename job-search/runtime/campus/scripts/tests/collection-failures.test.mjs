@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -5,7 +6,8 @@ import fs from 'node:fs/promises';
 import {collectCustom} from '../lib/providers-custom.mjs';
 import {collectCommon} from '../lib/providers-common.mjs';
 import {SKILL_ROOT} from '../lib/io.mjs';
-import {PACK_ROOT,MODE_ROOTS} from '../../../../../shared/job-search-core/runtime-context.mjs';
+import {MODE_ROOTS} from '../../../../scripts/runtime.mjs';
+import {PACK_ROOT} from '../../../../../shared/job-search-core/runtime-context.mjs';
 
 test('bulk page-size hints stay within Baidu and Ant public request limits',async()=>{
  const previous=globalThis.fetch,seen=[];
@@ -54,6 +56,6 @@ test('retired direction Skills have no discoverable instructions or agent metada
   await assert.rejects(fs.access(path.join(PACK_ROOT,name,'agents')));
  }
  const cli=await fs.readFile(path.join(PACK_ROOT,'job-search/scripts/jobs.mjs'),'utf8');
- assert(cli.includes('shared/job-search-core/cli.mjs'));
+ assert(cli.includes('job-search/scripts/cli.mjs'));
  assert(!/campus-job-fit|internship-job-fit|social-job-fit/.test(cli));
 });

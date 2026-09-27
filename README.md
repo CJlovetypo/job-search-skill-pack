@@ -35,7 +35,7 @@ cd JobScope_CN
 ```text
 JobScope_CN/
   job-search/              # 统一意图判断、任务记录和执行入口
-    runtime/              # 内部规则、数据和维护工具，不是独立 Skill
+    runtime/              # 方向规则、兼容入口和个人运行，不是独立 Skill
       campus/             # 正式校招
       internship/         # 实习
       social/             # 社招
@@ -128,7 +128,7 @@ JobScope_CN 是面向中文求职场景的 AI Agent 技能包。通过 [job-sear
 
 ## 从统一入口开始，按招聘方向判断
 
-统一入口负责理解需求、必要补问、搜索策略与评估范围；共享核心维护业务判断、招聘采集、公司标签、证据匹配与报告。校招、实习、社招使用各自的差异规则，运行记录和城市缓存按方向隔离。正式校招中的提前实习要求、普通实习与社招会分别识别，类型不明确的岗位保留为待核实。
+统一入口负责理解需求、必要补问、搜索策略与评估范围；共享核心维护业务判断、招聘采集、公司标签、证据匹配与报告。校招、实习、社招使用各自的差异规则，个人运行按方向隔离，正式城市索引和方向证明位于共享 data/recruitment/<方向>。正式校招中的提前实习要求、普通实习与社招会分别识别，类型不明确的岗位保留为待核实。
 
 | 你的需求 | 入口／方向 | 重点判断 | 交付 |
 | --- | --- | --- | --- |
@@ -202,7 +202,7 @@ JobScope_CN 是面向中文求职场景的 AI Agent 技能包。通过 [job-sear
 
 ## 岗位雷达：让关注的机会定时送到你面前
 
-找工作常常持续数周甚至数月。把关注条件交给 [job-radar](job-radar/SKILL.md)，就能定时检索，并保留每次看到的岗位与变化历史。**开启雷达不需要简历**，提供岗位方向、意向行业或公司中的至少一项即可，再确定招聘类型和执行时间。
+找工作常常持续数周甚至数月。把关注条件交给 [job-radar](job-radar/SKILL.md)，就能定时检索，并保留每次看到的岗位与变化历史。**开启雷达不需要简历**，先确定行业、业务或公司范围，再确定招聘类型和执行时间；也可明确不限行业。有岗位目标时选择“标题定向”或“全量 JD 综合判断”。
 
 > 使用 job-radar，关注上海游戏公司的社招项目经理岗位，每天北京时间上午 9 点检索，有新岗位或变化时告诉我。
 
@@ -210,7 +210,7 @@ JobScope_CN 是面向中文求职场景的 AI Agent 技能包。通过 [job-sear
 
 > 暂停这条订阅，帮我回看最近发现的岗位。
 
-雷达会先完成一次检索，再建立宿主定时任务。后续日报默认展示十条岗位变化及链接，完整记录保存在本地，可以回看历史。
+求职与雷达共用公司筛选、按招聘方向的城市索引预筛和逐岗位城市核对。相同查询与正式数据快照得到相同公司范围。标题定向优先使用已验证的 API 关键词能力，否则完整分页取列表后本地筛选；全量模式由 Agent 读取 JD 提交职能相关性判断，待审状态可以续接。雷达会先完成一次检索，再建立宿主定时任务。后续日报默认展示十条岗位变化及链接，完整记录保存在本地，可以回看历史。
 
 | 变化 | 提醒内容 |
 | --- | --- |
@@ -236,10 +236,10 @@ JobScope_CN 是面向中文求职场景的 AI Agent 技能包。通过 [job-sear
 
 ```sh
 node job-search/scripts/jobs.mjs industries
-node --test job-search/runtime/campus/scripts/tests/*.test.mjs job-radar/scripts/tests/radar.test.mjs recruitment-link-repair/scripts/history.test.mjs
+node --test job-search/runtime/campus/scripts/tests/*.test.mjs job-radar/scripts/tests/*.test.mjs recruitment-link-repair/scripts/history.test.mjs
 ```
 
-项目回归测试在 `shared/job-search-core` 运行 `npm test`，发布边界检查运行 `npm run check:distribution`。真实模拟回复、审核记录和过程报告保留在本地 `docs`，不随 GitHub 分发。
+项目回归测试在 `shared/job-search-core` 运行 `npm test`，发布边界检查运行 `npm run check:distribution`，共享依赖检查运行 `npm run check:boundaries`。回归包含移除求职产品目录后的共享层与雷达测试。真实模拟回复、审核记录和过程报告保留在本地 `docs`，不随 GitHub 分发。
 
 三个招聘方向通过统一 CLI 完成候选发现和 v5 匹配 Excel 链路；内部 runtime 目录不作为 Skill 加载。
 
@@ -262,6 +262,8 @@ node --test job-search/runtime/campus/scripts/tests/*.test.mjs job-radar/scripts
 需要修复失效入口时，加载独立的 [recruitment-link-repair](recruitment-link-repair/SKILL.md)：
 
 > 使用 recruitment-link-repair，查这家公司的历史招聘入口，修复失效链接，并核实雇主、招聘方向及岗位获取能力。
+
+日常求职与雷达共用有限自动修复：仅对 Moka／飞书的同主体、同平台、同方向入口参数作白名单写入，可能更新本机正式来源库，不自动提交或推送 GitHub。公开库保留必要摘要，完整证据与恢复记录存于共享 `state/source-repairs/`；公司画像和城市索引仍只在主动维护中更新。
 
 该维护 Skill 与求职和雷达入口并列，保留整个仓库相对目录即可使用。原始数据、冻结快照、索引和哈希清单仅保存在本地 `datasets/recruitment-links/`，不随 Git 分发；需要历史资料检索的新机器应单独恢复数据集，正常求职与正式标签读取不依赖这些原件。历史收录不代表当前可用，修复采用前必须重新验证。 新增或修复 API 在基本取数验证之外，还必须逐配置、逐招聘方向验证关键词能力并保存结论；未证实支持时继续使用本地筛选。
 

@@ -9,9 +9,9 @@ const save=async(file,value)=>{await fs.mkdir(path.dirname(file),{recursive:true
 const flags=Object.fromEntries(process.argv.slice(2).map(arg=>{const [key,...value]=arg.replace(/^--/,'').split('=');return [key,value.join('=')||true];}));
 const scope=flags.scope||'business-missing',concurrency=Math.max(1,Math.min(8,Number(flags.concurrency||4))),limit=Number(flags.limit||Infinity);
 if(!['business-missing','business-partial','ownership','all'].includes(scope))throw Error('scope must be business-missing, business-partial, ownership or all');
-const out=path.resolve(flags.out||path.join(PACK_ROOT,'job-search/artifacts/company-label-research-20260922',scope));
-const allowedRoot=path.join(PACK_ROOT,'job-search/artifacts'),relative=path.relative(allowedRoot,out);
-if(!relative||relative.startsWith('..')||path.isAbsolute(relative))throw Error('out must be below job-search/artifacts');
+const out=path.resolve(flags.out||path.join(PACK_ROOT,'shared/job-search-core/state/maintenance/company-label-research-20260922',scope));
+const allowedRoot=path.join(PACK_ROOT,'shared/job-search-core/state/maintenance'),relative=path.relative(allowedRoot,out);
+if(!relative||relative.startsWith('..')||path.isAbsolute(relative))throw Error('out must be below shared/job-search-core/state/maintenance');
 const mcporterCli='C:\\Users\\11793\\AppData\\Roaming\\npm\\node_modules\\mcporter\\dist\\cli.js';
 const exaKey=process.env.EXA_API_KEY||'';
 const redact=value=>String(value||'').replaceAll(exaKey||'__NO_KEY__','[REDACTED]');

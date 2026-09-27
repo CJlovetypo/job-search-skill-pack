@@ -9,10 +9,10 @@ import {normalizeOracleNowcoder} from './lib/providers-oracle-nowcoder.mjs';
 import {collectCommon} from './lib/providers-common.mjs';
 import {reviewJobBody} from './lib/body-review.mjs';
 import {publicSiteConfig} from './lib/source-directions.mjs';
-import {sourceFromEntry} from '../../../job-search/runtime/campus/scripts/source-discovery.mjs';
+import {sourceFromEntry} from './source-discovery.mjs';
 import {atsConfiguration} from './discover-waiqi-zero-websites.mjs';
 
-const ROOT=path.resolve('job-search/runtime/campus/artifacts/waiqi-2026-09-20');
+const ROOT=path.resolve('shared/job-search-core/state/maintenance/waiqi-2026-09-20');
 const DEFAULT_INPUT=path.join(ROOT,'zero-position-official-discovery/verified-api-candidates.json');
 const DEFAULT_OUTPUT=path.join(ROOT,'zero-position-official-clean');
 const DEFAULT_COMPANIES=path.resolve('datasets/recruitment-links/catalog/waiqi-source-candidates.json');

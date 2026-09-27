@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {smartRecruitersOpenStatus,additionalRequirements} from '../lib/normalization-additions.mjs';
 import {mainlandLocationQueries} from '../lib/workday-mainland-facets.mjs';

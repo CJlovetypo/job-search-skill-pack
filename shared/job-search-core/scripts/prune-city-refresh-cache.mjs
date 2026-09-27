@@ -7,7 +7,7 @@ if(!modes.length||modes.some(mode=>!MODE_ROOTS[mode]))throw Error('Usage: node p
 
 let removed=0;
 for(const mode of modes){
-  const root=path.resolve(PACK_ROOT,MODE_ROOTS[mode],'artifacts','city-refresh-20260919');
+  const root=path.resolve(PACK_ROOT,'shared/job-search-core/state/city-refresh',mode);
   const relative=path.relative(PACK_ROOT,root);
   if(relative.startsWith('..')||path.isAbsolute(relative))throw Error(`Unsafe artifact root: ${root}`);
   let entries=[];

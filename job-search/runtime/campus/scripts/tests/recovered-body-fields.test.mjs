@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {normalizeOracleNowcoder} from '../lib/providers-oracle-nowcoder.mjs';import {splitCommonBody} from '../lib/providers-common.mjs';
 const source={provider:'oracle_recruiting',company_id:'fixture',display_name:'测试',api_config:{origin:'https://example.invalid',site:'CX_1'}};

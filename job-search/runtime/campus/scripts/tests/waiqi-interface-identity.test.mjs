@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {companyNameMatches,interfaceMatchesUrl} from '../../../../../shared/job-search-core/scripts/lib/waiqi-interface-identity.mjs';

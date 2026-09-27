@@ -14,7 +14,7 @@ import {isIndividualJobRoute} from './lib/career-link-scope.mjs';
 
 const DEFAULT_INPUT=path.resolve('datasets/recruitment-links/catalog/waiqi-interface-catalog.json');
 const DEFAULT_COMPANIES=path.resolve('datasets/recruitment-links/catalog/waiqi-source-candidates.json');
-const DEFAULT_OUTPUT=path.resolve('job-search/runtime/campus/artifacts/waiqi-interface-deep-review/standard-ats');
+const DEFAULT_OUTPUT=path.resolve('shared/job-search-core/state/maintenance/waiqi-interface-deep-review/standard-ats');
 const providers=new Set(['workday','oracle_recruiting','smartrecruiters','greenhouse','ashby','tupu360','moseeker_public','phenom_public','eightfold_public','avature_public','beisen','moka','feishu','hotjob','jobs2web_public']);
 const read=file=>fs.readFile(file,'utf8').then(JSON.parse);
 const write=async(file,value)=>{await fs.mkdir(path.dirname(file),{recursive:true});const temp=file+'.tmp-'+process.pid;await fs.writeFile(temp,JSON.stringify(value,null,2)+'\n');await fs.rename(temp,file);};

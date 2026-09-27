@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {isMainlandChinaCountry, collectInternational} from '../../../../../shared/job-search-core/scripts/lib/providers-international.mjs';

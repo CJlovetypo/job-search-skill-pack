@@ -108,7 +108,7 @@ async function main() {
     console.log(JSON.stringify(await publishClassification(process.argv[classificationAt+1],{publish:process.argv.includes('--publish')}),null,2));return;
   }
   const publish=process.argv.includes('--publish'),inputs=await loadCompanyInputs({includeResearch:true}),formal=JSON.parse(await fs.readFile(path.join(CORE_ROOT,'data/company-records.json'),'utf8'));
-  const {labels,records,audit}=buildDemoLabels(inputs,{formal}),artifact=path.join(PACK_ROOT,'job-search/artifacts/company-profile-demo-20260927-audit.json');
+  const {labels,records,audit}=buildDemoLabels(inputs,{formal}),artifact=path.join(PACK_ROOT,'shared/job-search-core/state/maintenance/company-profile-demo-20260927-audit.json');
   if(!publish){console.log(JSON.stringify(audit,null,2));return;}
   const hashes=await companyInputHashes();hashes[ARCHIVE_FILE]=bytesHash(await fs.readFile(ARCHIVE_FILE));hashes[path.join(CORE_ROOT,'data/company-records.json')]=bytesHash(await fs.readFile(path.join(CORE_ROOT,'data/company-records.json')));
   const compatibility=projectCompanyRecords(records,inputs);

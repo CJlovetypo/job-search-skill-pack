@@ -5,7 +5,7 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {requestSlot, retryAfterMs} from './lib/waiqi-utils.mjs';
 
-const root = path.resolve(process.argv[2] || 'job-search/runtime/campus/artifacts/waiqi-2026-09-20');
+const root = path.resolve(process.argv[2] || 'shared/job-search-core/state/maintenance/waiqi-2026-09-20');
 const base = 'https://backservice.offerxiansheng.com/api/position-service';
 const concurrency = Number(process.env.WAIQI_CONCURRENCY || 3);
 const interval = Number(process.env.WAIQI_INTERVAL_MS || 750);

@@ -18,7 +18,7 @@ const set=(o,k,v)=>{const [a,b]=k.split('.');o[a][b]=structuredClone(v);};
 export const companyPublicationTargets=()=>[REVIEWS_FILE,API_LABELS_FILE,DEMO_LABELS_FILE,INTERNAL_RECORDS_FILE,publicFile('company-records'),...Object.values(names).map(publicFile)];
 export async function companyInputHashes() {
   const files=[...companyPublicationTargets(),publicFile('business-taxonomy'),path.join(CORE_ROOT,'assets/sources.json'),...Object.values(names).map(n=>path.join(RESEARCH_ROOT,'inputs',n+'.json')),
-    ...Object.values(MODE_ROOTS).map(p=>path.join(PACK_ROOT,p,'data/company-city-index.json'))];
+    ...Object.values(MODE_ROOTS).map(p=>path.join(PACK_ROOT,p,'company-city-index.json'))];
   return Object.fromEntries(await Promise.all(files.map(async f=>[f,bytesHash(await fs.readFile(f))])));
 }
 

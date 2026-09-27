@@ -1,3 +1,5 @@
+import {MODE_ROOTS} from '../../../../scripts/runtime.mjs';
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -5,7 +7,7 @@ import fs from 'node:fs/promises';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {pathToFileURL} from 'node:url';
-import {PACK_ROOT,MODE_ROOTS} from '../../../../../shared/job-search-core/runtime-context.mjs';
+import {PACK_ROOT,recruitmentFile} from '../../../../../shared/job-search-core/runtime-context.mjs';
 import {SOURCE_REGISTRY_FILE,CUSTOM_PROVIDERS_FILE,datasetPath,readSourceRegistry} from '../../../../../shared/job-search-core/registry.mjs';
 import {sourceConfigFingerprint} from '../../../../../shared/job-search-core/scripts/lib/source-collector.mjs';
 import {validatedDirectionRegistry} from '../../../../../shared/job-search-core/scripts/lib/direction-validation.mjs';
@@ -48,7 +50,7 @@ test('compatibility imports use the same collector implementation and preserve m
 test('each isolated runtime has its own mode, profile requirements and output boundary',async()=>{
  await Promise.all(Object.entries(MODE_ROOTS).map(async([mode,name])=>{
   const script=`import {configureRuntime} from ${JSON.stringify(pathToFileURL(path.join(PACK_ROOT,'shared/job-search-core/runtime-context.mjs')).href)};
-    configureRuntime({mode:${JSON.stringify(mode)}});
+    configureRuntime({mode:${JSON.stringify(mode)},outputRoot:${JSON.stringify(path.join(PACK_ROOT,name))}});
     const io=await import(${JSON.stringify(pathToFileURL(path.join(PACK_ROOT,'shared/job-search-core/scripts/lib/io.mjs')).href)});
     const policy=await import(${JSON.stringify(pathToFileURL(path.join(PACK_ROOT,'shared/job-search-core/scripts/lib/search-mode.mjs')).href)});
     let refused=false;try{configureRuntime({mode:${JSON.stringify(mode==='social'?'campus':'social')}});}catch{refused=true;}
@@ -73,7 +75,7 @@ test('cross-skill run paths are rejected before reading, collecting, planning or
 test('new or changed shared source configs remain enabled without inheriting stale direction proof',async()=>{
  const registry=await readSourceRegistry();
  for(const mode of ['internship','social']){
-  const proof=JSON.parse(await fs.readFile(path.join(PACK_ROOT,MODE_ROOTS[mode],'data/source-direction-validation.json'),'utf8'));
+  const proof=JSON.parse(await fs.readFile(recruitmentFile(mode,'source-direction-validation.json'),'utf8'));
   const before=validatedDirectionRegistry(registry.companies,proof,mode),changed=structuredClone(registry.companies);
   changed.push({company_id:'shared-source-regression-fixture',display_name:'Fixture',provider:'beisen',primary_entry_url:'https://example.invalid'});
   const after=validatedDirectionRegistry(changed,proof,mode);

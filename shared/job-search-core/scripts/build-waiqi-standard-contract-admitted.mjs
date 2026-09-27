@@ -6,7 +6,7 @@ import {INDUSTRIES} from './lib/industry-routing.mjs';
 import {planWaiqiIntegration,sourceKey} from './lib/waiqi-integration.mjs';
 import {evidenceFile,industryMap,officialCrawlIdentity,waiqiOutboundIdentity} from './build-waiqi-standard-list-admitted.mjs';
 
-const ROOT=path.resolve('job-search/runtime/campus/artifacts/waiqi-interface-deep-review/standard-ats'),REGISTRY=path.resolve('shared/job-search-core/assets/sources.json'),CANDIDATES=path.resolve('datasets/recruitment-links/catalog/waiqi-source-candidates.json'),CATALOG=path.resolve('datasets/recruitment-links/catalog/waiqi-interface-catalog.json');
+const ROOT=path.resolve('shared/job-search-core/state/maintenance/waiqi-interface-deep-review/standard-ats'),REGISTRY=path.resolve('shared/job-search-core/assets/sources.json'),CANDIDATES=path.resolve('datasets/recruitment-links/catalog/waiqi-source-candidates.json'),CATALOG=path.resolve('datasets/recruitment-links/catalog/waiqi-interface-catalog.json');
 const paths={workday:'jobPostings',oracle_recruiting:'items[].requisitionList',smartrecruiters:'content',greenhouse:'jobs',ashby:'jobs',tupu360:'result.positions',beisen:'Data',moka:'data.jobs',feishu:'data.job_post_list',hotjob:'data.pageForm.pageData'};
 const read=file=>fs.readFile(file,'utf8').then(JSON.parse),write=async(file,value)=>{await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,JSON.stringify(value,null,2)+'\n');},hash=value=>createHash('sha256').update(value).digest('hex');
 const normalize=value=>String(value||'').normalize('NFKC').toLowerCase().replace(/(?:有限责任公司|股份有限公司|有限公司|公司|集团|中国|china|limited|ltd|inc|corporation|corp|group)/gi,'').replace(/[^\p{L}\p{N}]+/gu,'');

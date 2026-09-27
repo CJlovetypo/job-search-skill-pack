@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {mokaSiteCandidates,confirmMokaSiteCandidate} from '../lib/public-site-candidates.mjs';
 // Offline fixtures. The first preserves the field shape observed in 58's saved

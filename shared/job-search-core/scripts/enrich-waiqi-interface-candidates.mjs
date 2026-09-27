@@ -4,8 +4,8 @@ import {createClient} from './lib/http.mjs';
 import {extractCareerLinks,atsConfiguration} from './discover-waiqi-zero-websites.mjs';
 import {isIndividualJobRoute as detail} from './lib/career-link-scope.mjs';
 
-const input=path.resolve(process.argv[2]||'job-search/runtime/campus/artifacts/waiqi-candidate-review/website-discovery-review.json');
-const output=path.resolve(process.argv[3]||'job-search/runtime/campus/artifacts/waiqi-expansion-followup/career-revisit');
+const input=path.resolve(process.argv[2]||'shared/job-search-core/state/maintenance/waiqi-candidate-review/website-discovery-review.json');
+const output=path.resolve(process.argv[3]||'shared/job-search-core/state/maintenance/waiqi-expansion-followup/career-revisit');
 const queue=JSON.parse(await fs.readFile(input,'utf8')).filter(c=>c.state==='career_link_found_no_supported_ats');
 const family=(url,html='')=>{
   const h=new URL(url).hostname;

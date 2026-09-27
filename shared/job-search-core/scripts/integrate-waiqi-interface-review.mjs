@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {INDUSTRIES} from './lib/industry-routing.mjs';
 import {planWaiqiIntegration} from './lib/waiqi-integration.mjs';
 
-const ROOT=path.resolve('job-search/runtime/campus/artifacts/waiqi-interface-deep-review/standard-ats');
+const ROOT=path.resolve('shared/job-search-core/state/maintenance/waiqi-interface-deep-review/standard-ats');
 const REGISTRY=path.resolve('shared/job-search-core/assets/sources.json');
 const apply=process.argv.includes('--apply');
 const read=file=>fs.readFile(file,'utf8').then(JSON.parse);

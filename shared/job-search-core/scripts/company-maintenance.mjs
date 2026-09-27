@@ -57,19 +57,19 @@ export function maintenanceCommand(command, options={}) {
   }
   if(command==='ownership'){
     if(!['supplier','waiqi'].includes(options.source))throw Error('性质维护需要 --source supplier|waiqi');
-    return {entry:path.join(PACK_ROOT,'shared/job-search-core/scripts',`tag-${options.source}-ownership.mjs`),args:[`--artifacts=${artifactPath(options.out||path.join(PACK_ROOT,'job-search/artifacts/company-maintenance',randomUUID()))}`,...(options.apply?['--apply']:[])]};
+    return {entry:path.join(PACK_ROOT,'shared/job-search-core/scripts',`tag-${options.source}-ownership.mjs`),args:[`--artifacts=${artifactPath(options.out||path.join(PACK_ROOT,'shared/job-search-core/state/maintenance/company-maintenance',randomUUID()))}`,...(options.apply?['--apply']:[])]};
   }
   if(!['audit','review'].includes(command))throw Error('维护命令必须为 audit、review、cities 或 ownership');
   return null;
 }
 function artifactPath(value){
-  const full=path.resolve(value),root=path.join(PACK_ROOT,'job-search/artifacts'),rel=path.relative(root,full);
-  if(!rel||rel==='..'||rel.startsWith('..'+path.sep)||path.isAbsolute(rel))throw Error('维护盘点/性质证据输出必须位于 job-search/artifacts 内');
+  const full=path.resolve(value),root=path.join(PACK_ROOT,'shared/job-search-core/state/maintenance'),rel=path.relative(root,full);
+  if(!rel||rel==='..'||rel.startsWith('..'+path.sep)||path.isAbsolute(rel))throw Error('维护盘点/性质证据输出必须位于 shared/job-search-core/state/maintenance 内');
   return full;
 }
 export async function main(argv=process.argv.slice(2)){
   const [command,...args]=argv,options={};
-  if(!command||command==='help'){console.log('主动公司标签维护：audit [--out job-search/artifacts/audit.json]；review [--out job-search/artifacts/review.json]；cities --mode campus|internship|social [--only 公司ID]；ownership --source supplier|waiqi [--apply]。日常搜索不调用本入口。');return;}
+  if(!command||command==='help'){console.log('主动公司标签维护：audit [--out shared/job-search-core/state/maintenance/audit.json]；review [--out shared/job-search-core/state/maintenance/review.json]；cities --mode campus|internship|social [--only 公司ID]；ownership --source supplier|waiqi [--apply]。日常搜索不调用本入口。');return;}
   for(let i=0;i<args.length;i++){
     if(!args[i].startsWith('--'))throw Error('未知参数 '+args[i]);
     const key=args[i].slice(2);if(Object.hasOwn(options,key))throw Error('重复参数 --'+key);

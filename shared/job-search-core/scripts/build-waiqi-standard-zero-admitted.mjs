@@ -6,12 +6,12 @@ import {INDUSTRIES} from './lib/industry-routing.mjs';
 import {planWaiqiIntegration,sourceKey} from './lib/waiqi-integration.mjs';
 import {companyNameMatches,interfaceMatchesUrl} from './lib/waiqi-interface-identity.mjs';
 
-const ROOT=path.resolve('job-search/runtime/campus/artifacts/waiqi-interface-deep-review/standard-ats');
-const SNAPSHOT=path.resolve('job-search/runtime/campus/artifacts/waiqi-2026-09-20');
+const ROOT=path.resolve('shared/job-search-core/state/maintenance/waiqi-interface-deep-review/standard-ats');
+const SNAPSHOT=path.resolve('shared/job-search-core/state/maintenance/waiqi-2026-09-20');
 const REGISTRY=path.resolve('shared/job-search-core/assets/sources.json');
 const CANDIDATES=path.resolve('datasets/recruitment-links/catalog/waiqi-source-candidates.json');
 const CATALOG=path.resolve('datasets/recruitment-links/catalog/waiqi-interface-catalog.json');
-const DEEP_REVIEW=path.resolve('job-search/runtime/campus/artifacts/waiqi-interface-deep-review/no-interface-websites');
+const DEEP_REVIEW=path.resolve('shared/job-search-core/state/maintenance/waiqi-interface-deep-review/no-interface-websites');
 const read=file=>fs.readFile(file,'utf8').then(JSON.parse);
 const write=async(file,value)=>{await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,JSON.stringify(value,null,2)+'\n');};
 const hash=value=>createHash('sha256').update(value).digest('hex');

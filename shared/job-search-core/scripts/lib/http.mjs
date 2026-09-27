@@ -5,7 +5,6 @@ import { createHash, randomUUID } from 'node:crypto';
 import nodeHttp from 'node:http';
 import nodeHttps from 'node:https';
 
-const skillRoot = runtimeContext().skillRoot;
 const userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 const sensitiveHeader = /^(cookie|authorization|proxy-authorization|set-cookie)$/i;
 const dynamicHeader = /csrf|xsrf/i;
@@ -85,7 +84,7 @@ class AnonymousCookies {
 /** Fresh anonymous HTTP only. Cookie values never enter persisted request records. */
 export function createClient({ evidenceDir, timeoutMs = 20000, signal: externalSignal, requestBudget } = {}) {
   const session = randomUUID().slice(0, 12);
-  const directory = path.resolve(evidenceDir || path.join(skillRoot, 'artifacts/runs', `http-${Date.now()}-${session}`));
+  const directory = path.resolve(evidenceDir || path.join(runtimeContext().evidenceRoot, 'runs', `http-${Date.now()}-${session}`));
   const jar = new AnonymousCookies();
   const records = [];
   return {

@@ -54,7 +54,7 @@ export async function verifyCalibrationSources(dataset,{root=PACK_ROOT}={}) {
   for(const sample of dataset.samples) {
     if(!sample.review_file||!/^[a-f0-9]{64}$/.test(sample.review_sha256||''))throw Error('Calibration sample needs a hashed source review');
     const file=await fs.realpath(path.resolve(root,sample.review_file)),rel=path.relative(root,file);
-    if(!rel.startsWith('datasets'+path.sep)&&!rel.startsWith(path.join('job-search','artifacts')+path.sep))throw Error('Calibration source outside maintenance archives');
+    if(!rel.startsWith(path.join('shared','job-search-core','state')+path.sep)&&!rel.startsWith('datasets'+path.sep)&&!rel.startsWith(path.join('job-search','artifacts')+path.sep))throw Error('Calibration source outside maintenance archives');
     let review=cache.get(file);
     if(!review){const bytes=await fs.readFile(file);files[file]=bytesHash(bytes);review=JSON.parse(bytes);cache.set(file,review);}
     if(files[file]!==sample.review_sha256||review.company_id!==sample.company_id||reviewHash(review.decisions?.[sample.field])!==reviewHash(sample.decision))throw Error('Calibration source decision changed');

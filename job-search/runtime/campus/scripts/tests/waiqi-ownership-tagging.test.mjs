@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {applyWaiqiOwnership, buildWaiqiForeignIndex, extractWaiqiCompanyIds, findRegistryMatches} from '../../../../../shared/job-search-core/scripts/tag-waiqi-ownership.mjs';

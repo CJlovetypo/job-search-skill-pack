@@ -1,10 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {runtimeContext} from '../../runtime-context.mjs';
-import {datasetPath} from '../../registry.mjs';
+import {runtimeRoot as SKILL_ROOT} from '../../runtime-context.mjs';
 import {randomUUID} from 'node:crypto';
-export const SKILL_ROOT=runtimeContext().skillRoot;
-const resolveDataset=p=>datasetPath(SKILL_ROOT,path.relative(SKILL_ROOT,path.resolve(p))); 
+export {SKILL_ROOT};
+const resolveDataset=p=>path.resolve(p);
 export async function readJson(p,fallback) {try{return JSON.parse(await fs.readFile(resolveDataset(p),'utf8'));}catch(e){if(e.code==='ENOENT'&&fallback!==undefined)return fallback;throw e;}}
 export async function writeJson(p,value) {p=resolveDataset(p);await fs.mkdir(path.dirname(p),{recursive:true});const tmp=p+'.'+randomUUID()+'.tmp';await fs.writeFile(tmp,JSON.stringify(value,null,2)+'\n','utf8');await fs.rename(tmp,p);}
 export function workspacePath(p) {const full=path.resolve(p);const rel=path.relative(SKILL_ROOT,full);if(rel.startsWith('..')||path.isAbsolute(rel))throw new Error('输出必须位于本 skill 文件夹内：'+full);return full;}

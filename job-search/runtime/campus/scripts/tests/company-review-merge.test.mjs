@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mergePublishedReview,buildCompanyRecords,campaignProgress,contentHash,validateReview} from '../../../../../shared/job-search-core/scripts/lib/company-records.mjs';

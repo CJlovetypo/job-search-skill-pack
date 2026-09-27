@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeBusinessFilters,businessMatches,businessMatchMode,BUSINESS_TAXONOMY} from '../../../../../shared/job-search-core/scripts/lib/business-taxonomy.mjs';
@@ -35,8 +36,8 @@ test('radar supports business-only target, any/all, old subscriptions and no mat
  const c=normalizeConfig({id:'games',mode:'social',business_filters:['游戏研发','游戏发行'],business_filter_match:'all'},companies);
  assert.deepEqual(selectCompanies(c,companies).map(x=>x.company_id),['a']);
  assert.equal(selectCompanies({...c,business_filter_match:'any'},companies).length,2);
- assert.equal(selectCompanies({company_ids:[],industries:['all']},companies).length,3);
- assert.throws(()=>normalizeConfig({...c,business_filters:['商业银行']},companies),/交集为空/);
+ assert.equal(selectCompanies({mode:'social',company_ids:[],industries:['all']},companies).length,3);
+ assert.equal(selectCompanies(normalizeConfig({...c,business_filters:['商业银行']},companies),companies).length,0);
 });
 test('business-only scope binds task execution and changing any/all requires a new run',()=>{
  const condition=value=>({state:'explicit',value,basis:'synthetic user request'});

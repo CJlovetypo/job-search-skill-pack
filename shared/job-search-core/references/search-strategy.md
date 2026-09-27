@@ -24,3 +24,11 @@ targeted 的计划、语义扩词、公司依据和能力核验按 [定向检索
 “前N个”必须以展示顺序固定岗位键；“抽样N个”可用现有轮流公司抽样；“最适合N个”需要说明比较母集、完成该范围评估再选，不能抽样冒称最佳。批次只是把已承诺工作分段，不降低全文要求。“继续下一批”先读取剩余，不重采相同快照；用户说最新则刷新。
 
 任务变化：新范围 prepare 新运行，可 reuse-run 复用同方向/配置/策略的JD，不复用变更画像后的评级。定向计划有独立指纹；不能把定向快照当全量或写入全量城市缓存。输出目录由方向运行隔离。
+
+## 通用职能相关性审阅
+
+求职与雷达使用同一 `role-relevance.mjs` 契约：岗位键、JD 指纹、目标/排除条件指纹、规则版本，结论 related/unrelated/uncertain、解释及 JD 原文引文。正文不足只能 uncertain。Agent 阅读全文作判断；CLI 不用标题词替代全文语义。
+
+求职全量有岗位目标时，collect 后执行 `role-review-export --mode 方向 --run 目录`，将返回 items 加入判断字段，再 `role-review-submit --mode 方向 --run 目录 --file 判断.json`。两者前缀均为 `node job-search/scripts/jobs.mjs`。未完成前可 render-discovery 交付待审中间清单；进入个人评估必须先完成职能审阅。不相关岗位排除，uncertain 留待确认，个人匹配仍独立按 v5 执行。
+
+雷达使用 review-export/review-submit/finalize，见[运行约定](../../../job-radar/references/operations.md)。相同目标与未变 JD 复用判断，改正文或目标后重审；每轮仍重新采集列表。缺失正式城市索引且存在城市硬条件时报告数据不可用，不当成零公司或自动初始化。

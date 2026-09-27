@@ -91,7 +91,7 @@ async function main() {
   let backupDirectory = null;
   const apply = process.argv.includes('--apply');
   if (apply && metadataKeys.some(key => plan[key + 'Added'].length)) {
-    backupDirectory = path.join(root, 'job-search/runtime/campus/artifacts/metadata-placeholder-backups', now.replaceAll(':', '-'));
+    backupDirectory = path.join(root, 'shared/job-search-core/state/maintenance/metadata-placeholder-backups', now.replaceAll(':', '-'));
     await fs.mkdir(backupDirectory, {recursive:true});
     for (const key of metadataKeys) await fs.writeFile(path.join(backupDirectory, path.basename(files[key])), raw[key], {flag:'wx'});
     for (const key of Object.keys(files)) assert.equal(await fs.readFile(files[key], 'utf8'), raw[key], `${key}: changed concurrently`);

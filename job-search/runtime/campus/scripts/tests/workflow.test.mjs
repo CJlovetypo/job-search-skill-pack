@@ -1,3 +1,4 @@
+import './context.mjs';
 import {datasetPath} from '../../../../../shared/job-search-core/registry.mjs';
 import {sourceConfigFingerprint} from '../lib/source-collector.mjs';
 import test from 'node:test';

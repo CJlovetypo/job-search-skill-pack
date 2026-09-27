@@ -12,7 +12,7 @@ const DEFAULTS = Object.freeze({
   ownership: path.join(ROOT, 'datasets/company-research/inputs/company-ownership-tags.json'),
   sizes: path.join(ROOT, 'datasets/company-research/inputs/company-size-tags.json'),
   profiles: path.join(ROOT, 'datasets/company-research/inputs/company-profiles.json'),
-  artifacts: path.join(ROOT, 'job-search/runtime/campus/artifacts/supplier-ownership-refresh-2026-09-20'),
+  artifacts: path.join(ROOT, 'shared/job-search-core/state/maintenance/supplier-ownership-refresh-2026-09-20'),
   apply: false,
 });
 

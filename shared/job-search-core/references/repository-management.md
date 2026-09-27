@@ -8,7 +8,7 @@
 | `shared/job-search-core/data/company-records.json` | 正式公司画像，是日常读取入口 | 是 |
 | `shared/job-search-core/data/company-{business-tags,ownership-tags,profiles,size-tags}.json` | 从同一正式画像生成的兼容数据 | 是 |
 | `shared/job-search-core/data/business-taxonomy.json` | 业务词表、同义词和归类定义；求职与雷达共用 | 是 |
-| `job-search/runtime/*/data/company-city-index.json` | 各招聘方向的正式城市索引 | 是 |
+| `shared/job-search-core/data/recruitment/<mode>/company-city-index.json` | 各招聘方向的正式城市索引 | 是 |
 | `datasets/recruitment-links/` | 原始寻源文档、历史快照、索引和候选目录 | 否 |
 | `datasets/company-research/` | 搜索原件、候选字段、复核过程、完整内部导出 | 否 |
 | `docs/` | PRD、审核、真实行为模拟、过程报告 | 否 |
@@ -95,7 +95,7 @@ docs：设计、审核与过程报告
 
 日常求职型 Skill 不得隐式触发公司标签搜索或更新；维护型 Skill 只在明确触发的维护任务中更新数据。正常产品使用不依赖维护者的私有资料，私人输入和运行产物继续保存在既有私有位置。
 
-架构职责或公开使用方式发生变化时，同步修改受影响的公开说明，设计和实施记录留在 `docs`。本次规范未新增公司字段、数据契约版本机制或架构自动化检查与测试要求；已有工具与下方验证说明保持现状。
+架构职责或公开使用方式发生变化时，同步修改受影响的公开说明，设计和实施记录留在 `docs`。共享运行上下文由产品显式注入招聘方向、输出、证据、缓存目录及修复策略；不从产品路径猜模式。正式城市索引、已有方向证明及派生摘要统一归共享 data/recruitment/<mode>。产品保留自己的编排、个人状态和报告；共享层不启动产品 CLI。
 
 ## 历史证据与恢复
 
@@ -106,3 +106,7 @@ docs：设计、审核与过程报告
 ## 验证
 
 在 `shared/job-search-core` 运行 `npm test` 和 `npm run check:distribution`。后者检查拟分发文件及正式画像的字段白名单，防止将私人研究资料重新加入项目。发布前还应从仅包含拟分发文件的干净副本运行测试，并验证公司倾向性搜索和城市覆盖数量一致。
+
+共享查询模块 query-selection、采集入口 job-retrieval、职能相关性 role-relevance、健康修复 source-repair/repair-policy 是产品通用能力。普通查询只读标签和城市；有限日常参数修复的正式来源写入按[接口修复](source-repair.md)执行。维护原件默认写 shared/job-search-core/state/maintenance；历史证据路径仅通过显式恢复兼容处理。
+
+`npm run check:boundaries` 检查共享生产代码的导入与产品路径；回归包含没有 job-search 产品目录的共享层和雷达副本。`check:distribution` 还检查维护/state 私有路径及公开修复摘要白名单。

@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {collectTupu360} from '../../../../../shared/job-search-core/scripts/lib/provider-tupu360.mjs';

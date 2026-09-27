@@ -4,7 +4,7 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {INDUSTRIES} from './lib/industry-routing.mjs';
 import {planWaiqiIntegration} from './lib/waiqi-integration.mjs';
-const root=path.resolve('job-search/runtime/campus/artifacts/waiqi-2026-09-20');
+const root=path.resolve('shared/job-search-core/state/maintenance/waiqi-2026-09-20');
 const registryFile=path.resolve('shared/job-search-core/assets/sources.json');
 const apply=process.argv.includes('--apply');
 const read=async f=>JSON.parse(await fs.readFile(f,'utf8'));

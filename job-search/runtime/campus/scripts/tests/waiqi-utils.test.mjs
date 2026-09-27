@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {requestSlot, retryAfterMs, csvCell, recruitmentLink} from '../../../../../shared/job-search-core/scripts/lib/waiqi-utils.mjs';

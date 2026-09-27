@@ -106,7 +106,7 @@ export function mergeSourceResults(company,results,options={}){
  return {company_id:company.company_id,display_name:company.display_name,checked_at:new Date().toISOString(),jobs,requests,coverage:{status,collection_complete:contexts.length>0&&contexts.every(c=>c.status==='complete'||c.collection_complete===true)&&!incomplete,pages:contexts.reduce((n,c)=>n+(typeof c.pages==='number'?c.pages:c.pages?.length||0),0),server_total:null,jobs_observed:jobs.length,contexts,reason:contexts.map(c=>`${c.provider}/${c.source_id}: ${c.reason||c.status}`).join('; ')+(incomplete?`; ${incomplete} observed jobs have incomplete or unresolved JD sections`:''),details_failed:contexts.reduce((n,c)=>n+(c.details_failed||0),0)}};
 }
 export async function collectCompanySources(company,options={},collector=collectEndpoint){
- options={targetMode:SEARCH_MODE.id,...options};
+ options={...options,targetMode:options.targetMode||SEARCH_MODE.id};
  const fingerprint=sourceConfigFingerprint(company,options.targetMode);
  if(!company.recruitment_sources?.length){const result=await collector(company,options);return {...result,source_config_fingerprint:result.effective_source?sourceConfigFingerprint(result.effective_source,options.targetMode):fingerprint};}
  const results=[];for(const config of company.recruitment_sources){const source={...config,company_id:company.company_id,display_name:company.display_name};try{results.push({source,result:await collector(source,{...options,evidenceDir:options.evidenceDir?path.join(options.evidenceDir,source.source_id):undefined})});}catch(e){results.push({source,result:{jobs:[],requests:[],coverage:{status:'failed',reason:String(e.message||e),pages:0}}});}}

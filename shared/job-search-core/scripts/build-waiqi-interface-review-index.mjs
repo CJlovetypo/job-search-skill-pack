@@ -3,10 +3,10 @@ import path from 'node:path';
 
 const CANDIDATES=path.resolve('datasets/recruitment-links/catalog/waiqi-source-candidates.json');
 const CATALOG=path.resolve(process.argv[2]||'datasets/recruitment-links/catalog/waiqi-interface-catalog.json');
-const DEEP=path.resolve(process.argv[3]||'job-search/runtime/campus/artifacts/waiqi-interface-deep-review/no-interface-websites');
-const SEARCH=path.resolve(process.argv[4]||'job-search/runtime/campus/artifacts/waiqi-2026-09-20/zero-position-source-discovery');
+const DEEP=path.resolve(process.argv[3]||'shared/job-search-core/state/maintenance/waiqi-interface-deep-review/no-interface-websites');
+const SEARCH=path.resolve(process.argv[4]||'shared/job-search-core/state/maintenance/waiqi-2026-09-20/zero-position-source-discovery');
 const OUTPUT=path.resolve(process.argv[5]||'datasets/recruitment-links/catalog/waiqi-interface-review-index.json');
-const EXTRA_SEARCH=path.resolve(process.argv[6]||'job-search/runtime/campus/artifacts/waiqi-2026-09-20/missing-source-discovery');
+const EXTRA_SEARCH=path.resolve(process.argv[6]||'shared/job-search-core/state/maintenance/waiqi-2026-09-20/missing-source-discovery');
 const read=file=>fs.readFile(file,'utf8').then(JSON.parse);
 const optional=async(file,fallback)=>{try{return await read(file);}catch(error){if(error.code==='ENOENT')return fallback;throw error;}};
 

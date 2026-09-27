@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {appendMissingTags, appendMissingProfileTags} from '../../../../../shared/job-search-core/scripts/seed-missing-company-tags.mjs';

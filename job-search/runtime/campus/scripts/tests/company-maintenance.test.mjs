@@ -1,10 +1,12 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {promisify} from 'node:util';
 import {execFile} from 'node:child_process';
-import {PACK_ROOT,MODE_ROOTS} from '../../../../../shared/job-search-core/runtime-context.mjs';
+import {MODE_ROOTS} from '../../../../scripts/runtime.mjs';
+import {PACK_ROOT} from '../../../../../shared/job-search-core/runtime-context.mjs';
 import {auditLabels,reviewLabels,maintenanceCommand} from '../../../../../shared/job-search-core/scripts/company-maintenance.mjs';
 const exec=promisify(execFile),read=async p=>JSON.parse(await fs.readFile(p,'utf8'));
 const write=async(p,v)=>{await fs.mkdir(path.dirname(p),{recursive:true});await fs.writeFile(p,JSON.stringify(v));};
@@ -23,11 +25,11 @@ test('maintenance audit records gaps without reclassifying supplied facts; comma
  const review=reviewLabels({registry,business,ownership});
  assert.equal(review.summary.companies,2);assert.equal(review.summary.business_partial,1);assert.equal(review.summary.business_missing,1);
  assert.equal(review.companies[0].industry.status,'current_routing_retained');assert.equal(review.companies[0].business.status,'partial_evidence');
- assert.equal(maintenanceCommand('review',{out:'job-search/artifacts/review.json'}),null);
+ assert.equal(maintenanceCommand('review',{out:'shared/job-search-core/state/maintenance/review.json'}),null);
 });
 
 test('all three product directions consume labels read-only; explicit maintenance alone updates city index',async()=>{
- const base=path.join(PACK_ROOT,'job-search/artifacts/label-isolation-tests');await fs.mkdir(base,{recursive:true});
+ const base=path.join(PACK_ROOT,'shared/job-search-core/state/maintenance/label-isolation-tests');await fs.mkdir(base,{recursive:true});
  const root=await fs.mkdtemp(path.join(base,'pack-'));
  const core=path.join(root,'shared/job-search-core');
  await fs.mkdir(core,{recursive:true});
@@ -60,13 +62,13 @@ test('all three product directions consume labels read-only; explicit maintenanc
    const name=mode==='campus'?'campus.mjs':'jobs.mjs';await fs.copyFile(path.join(PACK_ROOT,skill,'scripts',name),path.join(skillRoot,'scripts',name));
    await write(path.join(skillRoot,'assets/search-mode.json'),{mode});
    const input=path.join(skillRoot,'runs/input.json');await write(input,{is_test:true,industry_filters:['internet'],city_filters:['上海'],evidence:[]});
-   const entry=path.join(skillRoot,'scripts',name),city=path.join(skillRoot,'data/company-city-index.json');
-   const missing=JSON.parse((await cli(main,'catalog','--mode',mode,'--industries','internet','--cities','上海')).stdout);assert.equal(missing.selected_companies,0);
+   const entry=path.join(skillRoot,'scripts',name),city=path.join(core,'data/recruitment',mode,'company-city-index.json');
+   await assert.rejects(cli(main,'catalog','--mode',mode,'--industries','internet','--cities','上海'),/城市索引不可用/);
    const profileStatus=JSON.parse((await cli(main,'company-profiles','--mode',mode,'status')).stdout);
    assert.equal(profileStatus.verified.business,0);assert.equal(profileStatus.data_issues.length,1);
    assert.deepEqual(await Promise.all(stableFiles.map(f=>fs.readFile(path.join(core,f),'utf8'))),before);
    await assert.rejects(fs.access(city));
-   await cli(entry,'prepare','--profile',input,'--out',path.join(skillRoot,'runs/missing'));await assert.rejects(fs.access(city));
+   await assert.rejects(cli(entry,'prepare','--profile',input,'--out',path.join(skillRoot,'runs/missing')),/城市索引不可用/);await assert.rejects(fs.access(city));
    const openInput=path.join(skillRoot,'runs/open.json');await write(openInput,{is_test:true,industry_filters:['internet'],city_filters:[],evidence:[]});
    await cli(entry,'prepare','--profile',openInput,'--out',path.join(skillRoot,'runs/open'));
    assert.equal((await read(path.join(skillRoot,'runs/open/run.json'))).companies[0].selected,true);await assert.rejects(fs.access(city));
@@ -83,14 +85,14 @@ test('all three product directions consume labels read-only; explicit maintenanc
    const callsBefore=(await fs.readFile(log,'utf8')).trim().split('\n');assert.equal(callsBefore.length,1);
    await cli(maintenance,'cities','--mode',mode,'--only','synthetic','--out',path.join(skillRoot,'artifacts/city-maintenance'));
    const updated=await read(city);assert.deepEqual(updated.companies[0].cities,['深圳']);assert.equal(updated.companies[0].search_mode,mode);
-   const history=(await fs.readdir(path.join(skillRoot,'artifacts/city-maintenance'))).find(f=>f.startsWith('index-before-'));
+   const history=(await fs.readdir(path.join(skillRoot,'artifacts/city-maintenance'))).find(f=>f.startsWith('index-before'));
    assert(history);assert.deepEqual((await read(path.join(skillRoot,'artifacts/city-maintenance',history))).companies[0].cities,['上海']);
    assert.equal((await read(path.join(dir,'run.json'))).companies[0].city_tags[0],'上海');
    assert.deepEqual(await Promise.all(stableFiles.map(f=>fs.readFile(path.join(core,f),'utf8'))),before);
    await fs.unlink(log);
  }
- const audit=path.join(root,'job-search/artifacts/audit.json');await cli(maintenance,'audit','--out',audit);assert.equal((await read(audit)).read_only,true);
+ const audit=path.join(root,'shared/job-search-core/state/maintenance/audit.json');await cli(maintenance,'audit','--out',audit);assert.equal((await read(audit)).read_only,true);
  await assert.rejects(cli(maintenance,'audit','--out',audit),/EEXIST/);
- const review=path.join(root,'job-search/artifacts/review.json');await cli(maintenance,'review','--out',review);assert.equal((await read(review)).summary.companies,1);
+ const review=path.join(root,'shared/job-search-core/state/maintenance/review.json');await cli(maintenance,'review','--out',review);assert.equal((await read(review)).summary.companies,1);
  await assert.rejects(fs.access(log));
 });

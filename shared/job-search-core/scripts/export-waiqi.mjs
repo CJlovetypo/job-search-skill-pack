@@ -5,7 +5,7 @@ import {csvCell,recruitmentLink} from './lib/waiqi-utils.mjs';
 
 const core=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const root=path.resolve(core,'../..');
-const input=path.resolve(process.argv[2]||path.join(root,'job-search/runtime/campus/artifacts/waiqi-2026-09-20'));
+const input=path.resolve(process.argv[2]||path.join(root,'shared/job-search-core/state/maintenance/waiqi-2026-09-20'));
 const read=async p=>{try{return JSON.parse(await fs.readFile(p,'utf8'));}catch(e){if(e.code==='ENOENT')return null;throw e;}};
 const write=async(p,x)=>{await fs.mkdir(path.dirname(p),{recursive:true});await fs.writeFile(p,JSON.stringify(x,null,2)+'\n');};
 const registry=await read(path.join(core,'assets/sources.json'));

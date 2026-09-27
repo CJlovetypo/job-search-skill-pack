@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import {configureJobSearch} from '../../../scripts/runtime.mjs';
+configureJobSearch('campus');
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {readJson,writeJson,workspacePath,SKILL_ROOT} from './lib/io.mjs';

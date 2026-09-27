@@ -1,3 +1,4 @@
+import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -47,7 +48,7 @@ test('published registry has one owner per reviewed employer identity and preser
       if(interfaces.has(key)){
         // An official migration can converge on an already retained interface.
         // Preserve the historic source IDs, but require a recorded distinct old route.
-        assert.ok([source,interfaces.get(key)].some(s=>s.repair_history?.some(h=>h.previous_config&&sourceKey(h.previous_config)!==key&&h.evidence?.kind==='official_application_site_migration')),'duplicate interface without verified migration history');
+        assert.ok([source,interfaces.get(key)].some(s=>s.repair_history?.some(h=>h.previous_fingerprint&&h.previous_fingerprint!==h.current_fingerprint&&h.kind==='official_application_site_migration')),'duplicate interface without verified migration history');
       }
       interfaces.set(key,source);
     }

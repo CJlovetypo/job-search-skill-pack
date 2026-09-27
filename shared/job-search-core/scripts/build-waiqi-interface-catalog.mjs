@@ -6,11 +6,11 @@ import {atsConfiguration} from './discover-waiqi-zero-websites.mjs';
 import {isIndividualJobRoute} from './lib/career-link-scope.mjs';
 
 // Export company relationships and interface contracts; never export response bodies or JD rows.
-const root=path.resolve(process.argv[2]||'job-search/runtime/campus/artifacts/waiqi-expansion-followup');
-const review=path.resolve(process.argv[3]||'job-search/runtime/campus/artifacts/waiqi-candidate-review');
+const root=path.resolve(process.argv[2]||'shared/job-search-core/state/maintenance/waiqi-expansion-followup');
+const review=path.resolve(process.argv[3]||'shared/job-search-core/state/maintenance/waiqi-candidate-review');
 const output=path.resolve(process.argv[4]||'datasets/recruitment-links/catalog/waiqi-interface-catalog.json');
-const deepReview=path.resolve(process.argv[5]||'job-search/runtime/campus/artifacts/waiqi-interface-deep-review/no-interface-websites');
-const standardReview=path.resolve('job-search/runtime/campus/artifacts/waiqi-interface-deep-review/standard-ats');
+const deepReview=path.resolve(process.argv[5]||'shared/job-search-core/state/maintenance/waiqi-interface-deep-review/no-interface-websites');
+const standardReview=path.resolve('shared/job-search-core/state/maintenance/waiqi-interface-deep-review/standard-ats');
 const read=file=>JSON.parse(fs.readFileSync(file,'utf8'));
 const registry=read('shared/job-search-core/assets/sources.json').companies;
 const candidates=read('datasets/recruitment-links/catalog/waiqi-source-candidates.json');
@@ -110,7 +110,7 @@ for(const item of overrides.interfaces||[]){
 }
 const revisits=read(path.join(root,'career-revisit/results.json'));
 const searches=read(path.join(root,'search-revisit/results.json'));
-const searchCandidates=read('job-search/runtime/campus/artifacts/waiqi-2026-09-20/zero-position-source-discovery/discovery-candidates.json');
+const searchCandidates=read('shared/job-search-core/state/maintenance/waiqi-2026-09-20/zero-position-source-discovery/discovery-candidates.json');
 for(const c of searchCandidates.candidates){
   const url=c.effective_url||c.candidate_url,config=atsConfiguration(url);
   // Retain company/career entrances only; individual job URLs stay in the original candidate archive.

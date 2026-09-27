@@ -252,7 +252,7 @@ export async function loadCompanyInputs({includeResearch=false,includePrivate=tr
     try {data.research=JSON.parse(gunzipSync(await fs.readFile(ARCHIVE_FILE)).toString('utf8'));}
     catch(error) {if(error.code==='ENOENT')data.research={companies:[]};else throw error;}
   }
-  data.cities=Object.fromEntries(await Promise.all(Object.entries(MODE_ROOTS).map(async([mode,root])=>[mode,await read(path.join(PACK_ROOT,root,'data/company-city-index.json'),{companies:[]})])));
+  data.cities=Object.fromEntries(await Promise.all(Object.entries(MODE_ROOTS).map(async([mode,root])=>[mode,await read(path.join(PACK_ROOT,root,'company-city-index.json'),{companies:[],unavailable:true})])));
   return data;
 }
 export async function loadCompanyContext() {
