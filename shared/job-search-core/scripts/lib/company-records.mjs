@@ -22,7 +22,7 @@ export function projectCompanyRecords(records, inputs) {
   const b=indexById(result.business),o=indexById(result.ownership),p=indexById(result.profiles);
   const sourceRows=new Map(result.registry.companies.map(c=>[c.company_id,c]));
   for(const record of records.companies) {
-    const source=sourceRows.get(record.company_id)||record.identity;
+    const source=sourceRows.get(record.company_id)||{...record.identity};
     const r=byId.get(source.company_id),g=r.governance.fields,base={company_id:source.company_id,display_name:source.display_name};
     if(!b.has(source.company_id))b.set(source.company_id,{...base,business_tags:r.tags.business||[],business_summary:r.descriptions.business_summary||'',status:g['tags.business'].status,evidence:g['tags.business'].evidence||[]});
     if(!o.has(source.company_id))o.set(source.company_id,{...base,ownership_tag:r.tags.ownership||'待核实',status:g['tags.ownership'].status,evidence:g['tags.ownership'].evidence||[]});

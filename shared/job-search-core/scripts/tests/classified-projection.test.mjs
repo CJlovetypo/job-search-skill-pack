@@ -13,4 +13,8 @@ test('description classification replaces stale compatibility tags without claim
  assert.deepEqual(inputs.registry.companies[0].industry_tags,['smart_hardware']);
  record.tags.industry=[];
  assert.deepEqual(projectCompanyRecords({companies:[record]},inputs).registry.companies[0].industry_tags,[],'unknown must clear stale source industries');
+ record.identity.company_id=record.company_id;
+ const before=structuredClone(record),withoutSources={...inputs,registry:{companies:[]}};
+ assert.equal(projectCompanyRecords({companies:[record]},withoutSources).registry.companies.length,0);
+ assert.deepEqual(record,before,'projection must not mutate the identity of an entity without a source');
 });
