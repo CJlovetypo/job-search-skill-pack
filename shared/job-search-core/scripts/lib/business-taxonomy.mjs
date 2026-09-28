@@ -1,6 +1,8 @@
 import fs from 'node:fs';
+import path from 'node:path';
+import {CORE_ROOT} from '../../runtime-context.mjs';
 
-export const BUSINESS_TAXONOMY = JSON.parse(fs.readFileSync(new URL('../../data/business-taxonomy.json', import.meta.url), 'utf8'));
+export const BUSINESS_TAXONOMY = JSON.parse(fs.readFileSync(path.join(CORE_ROOT,'data/business-taxonomy.json'), 'utf8'));
 const terms = new Map(BUSINESS_TAXONOMY.terms.map(t => [t.label, t]));
 const aliases = new Map();
 for (const term of terms.values()) for (const alias of [term.label, ...(term.aliases || [])]) {

@@ -26,7 +26,7 @@ export function projectCompanyRecords(records, inputs) {
     const r=byId.get(source.company_id),g=r.governance.fields,base={company_id:source.company_id,display_name:source.display_name};
     if(!b.has(source.company_id))b.set(source.company_id,{...base,business_tags:r.tags.business||[],business_summary:r.descriptions.business_summary||'',status:g['tags.business'].status,evidence:g['tags.business'].evidence||[]});
     if(!o.has(source.company_id))o.set(source.company_id,{...base,ownership_tag:r.tags.ownership||'待核实',status:g['tags.ownership'].status,evidence:g['tags.ownership'].evidence||[]});
-    if(published(r,'tags.industry')&&r.tags.industry?.length)source.industry_tags=r.tags.industry;
+    if(published(r,'tags.industry'))source.industry_tags=r.tags.industry||[];
     if(published(r,'tags.business')||published(r,'descriptions.business_summary')) {
       const old=b.get(source.company_id)||base;
       b.set(source.company_id,{...old,...base,business_tags:r.tags.business||[],business_summary:r.descriptions.business_summary||'',status:g['tags.business'].status==='unresolved'?'unknown':g['tags.business'].status,evidence:g['tags.business'].evidence});

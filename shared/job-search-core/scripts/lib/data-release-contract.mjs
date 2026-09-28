@@ -1,5 +1,6 @@
 // Public data shape and integrity checks only. No publishing or repair side effects.
 import {createHash} from 'node:crypto';
+import {validateIndustryTags} from './industry-routing.mjs';
 import {publicCompanyRecords,publicCompatibility,publicUrl} from './public-company-data.mjs';
 export const DATA_CONTRACT_VERSION=1;
 export const DATA_FILES=Object.freeze([
@@ -45,7 +46,7 @@ export function validateDataSnapshot(files,{providers}={}){
  }
  function ids(rows,label){const result=new Set();for(const row of rows){if(typeof row.company_id!=='string'||!row.company_id||result.has(row.company_id))throw Error('Duplicate or invalid company ID: '+label);result.add(row.company_id);}return result;}
  const subjects=ids(records.companies,'records'),sources=ids(registry.companies,'sources');
- for(const c of records.companies)if(c.identity?.company_id!==c.company_id)throw Error('Identity ID mismatch');
+ for(const c of records.companies){if(c.identity?.company_id!==c.company_id)throw Error('Identity ID mismatch');validateIndustryTags(c.tags.industry);}
  for(const c of registry.companies){
   if(!subjects.has(c.company_id))throw Error('Source references missing subject');const sourceIds=new Set();
   for(const s of c.recruitment_sources?.length?c.recruitment_sources:[c]){
@@ -54,6 +55,8 @@ export function validateDataSnapshot(files,{providers}={}){
    if(s.source_id&&sourceIds.has(s.source_id))throw Error('Duplicate source ID');sourceIds.add(s.source_id);
   }
   const record=records.companies.find(r=>r.company_id===c.company_id);
+  validateIndustryTags(c.industry_tags);
+  if(JSON.stringify([...c.industry_tags].sort())!==JSON.stringify([...record.tags.industry].sort()))throw Error('Company/source industry mismatch: '+c.company_id);
   const expected=(c.recruitment_sources?.length?c.recruitment_sources:[c]).map(s=>[s.source_id||null,s.provider,publicUrl(s.primary_entry_url)]);
   const actual=(record.sources||[]).map(s=>[s.source_id||null,s.provider,s.url]);if(JSON.stringify(actual)!==JSON.stringify(expected))throw Error('Company/source projection mismatch: '+c.company_id);
  }

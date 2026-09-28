@@ -11,4 +11,6 @@ test('description classification replaces stale compatibility tags without claim
  assert.deepEqual(result.business.companies[0].business_tags,['芯片']);
  assert.equal(result.business.companies[0].status,'demo_unreviewed');
  assert.deepEqual(inputs.registry.companies[0].industry_tags,['smart_hardware']);
+ record.tags.industry=[];
+ assert.deepEqual(projectCompanyRecords({companies:[record]},inputs).registry.companies[0].industry_tags,[],'unknown must clear stale source industries');
 });
