@@ -18,7 +18,7 @@ export function indexById(dataset) {
 export function projectCompanyRecords(records, inputs) {
   const result={...inputs,registry:{...inputs.registry,companies:inputs.registry.companies.map(c=>({...c}))},
     business:{...inputs.business},ownership:{...inputs.ownership},profiles:{...inputs.profiles}},byId=indexById(records);
-  const published=(r,key)=>['fresh_web_review','api_search','demo_search'].includes(r.governance.fields[key]?.origin);
+  const published=(r,key)=>['fresh_web_review','api_search','demo_search','local_description_classification'].includes(r.governance.fields[key]?.origin);
   const b=indexById(result.business),o=indexById(result.ownership),p=indexById(result.profiles);
   const sourceRows=new Map(result.registry.companies.map(c=>[c.company_id,c]));
   for(const record of records.companies) {
