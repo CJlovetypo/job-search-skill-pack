@@ -24,7 +24,7 @@ conditions.cities可附importance：must保持明确城市过滤，prefer/open�
   "goal": "discover",
   "conditions": {
     "recruitment": {"state":"explicit","value":"campus","basis":"用户说校招"},
-    "industries": {"state":"explicit","value":["internet"],"basis":"用户说互联网行业"},
+    "industries": {"state":"explicit","value":["software_it"],"basis":"用户说软件与 IT 服务行业"},
     "cities": {"state":"unspecified","value":null},
     "roles": {"state":"explicit","value":["项目管理"],"basis":"用户岗位目标"}
   },
@@ -59,7 +59,7 @@ node job-search/scripts/jobs.mjs task-save --file job-search/runs/input/patch.js
 准备岗位发现时，查询文件不是个人画像，只含实际查询参数及 is_test；不造证据数组：
 
 ```json
-{"is_test":true,"industry_filters":["internet"],"city_filters":[],"company_filters":[]}
+{"is_test":true,"industry_filters":["software_it"],"city_filters":[],"company_filters":[]}
 ```
 
 ```sh

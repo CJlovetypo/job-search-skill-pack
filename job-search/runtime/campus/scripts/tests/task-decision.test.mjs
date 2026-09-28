@@ -18,7 +18,7 @@ const cli=(...args)=>exec(process.execPath,[entry,...args],{cwd:PACK_ROOT,window
 const condition=value=>({state:'explicit',value,basis:'模拟用户明确给出'});
 function task(overrides={}){
  return {schema_version:1,task_id:'test-task',revision:1,is_test:true,user_request:'合成测试：找校招项目管理岗位，互联网行业，未指定城市',goal:'discover',
-  conditions:{recruitment:condition('campus'),industries:condition(['internet']),roles:condition(['项目管理']),cities:{state:'unspecified',value:null}},
+  conditions:{recruitment:condition('campus'),industries:condition(['software_it']),roles:condition(['项目管理']),cities:{state:'unspecified',value:null}},
   retrieval:{mode:'exhaustive',selection:'explicit',basis:'合成用户已选择全量 JD 综合判断'},materials:{profile:'not_needed'},issues:[],changes:[],...overrides};
 }
 const write=async(file,value)=>{await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,JSON.stringify(value,null,2)+'\n','utf8');};
@@ -37,7 +37,7 @@ test('salary and commute are acknowledged but never become execution blockers; s
  value.conditions.commute=condition('半小时');value.issues=[{field:'commute',reason:'地址未知',question:'住哪里',blocks:['collect','assess']}];
  const result=decideTask(value);assert.equal(result.can_collect,true);assert.equal(result.can_review_partial,true);assert.equal(result.required_notices.length,2);assert(!result.questions_now.some(q=>['salary','commute'].includes(q.field)));
  value.conditions.cities={...condition(['上海']),importance:'prefer'};
- const p={assessment_model_version:5,is_test:true,evidence:[],industry_filters:['internet'],company_filters:[],city_filters:[],city_preference:{state:'explicit',values:['上海'],importance:'prefer'}};
+ const p={assessment_model_version:5,is_test:true,evidence:[],industry_filters:['software_it'],company_filters:[],city_filters:[],city_preference:{state:'explicit',values:['上海'],importance:'prefer'}};
  assert.doesNotThrow(()=>assertTaskExecution(value,p,'campus'));
  assert.throws(()=>assertTaskExecution(value,{...p,city_filters:['上海']},'campus'),/软偏好/);
 });
@@ -147,7 +147,7 @@ test('unresolved questions survive unrelated revisions; preference changes canno
  assert.throws(()=>assertScopeRevision(previous,preference),/新运行/);
 });
 test('execution inputs cannot drift from declared direction, city, companies, strategy or test status',()=>{
- const profile={is_test:true,industry_filters:['internet'],city_filters:[]};
+ const profile={is_test:true,industry_filters:['software_it'],city_filters:[]};
  assert.doesNotThrow(()=>assertTaskExecution(task(),profile,'campus',{discovery:true}));
  assert.throws(()=>assertTaskExecution(task(),profile,'social',{discovery:true}),/方向/);
  assert.throws(()=>assertTaskExecution(task(),{...profile,city_filters:['上海']},'campus',{discovery:true}),/城市/);

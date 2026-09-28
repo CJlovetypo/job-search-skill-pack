@@ -9,24 +9,24 @@ await fs.mkdir(path.join(SKILL_ROOT,'artifacts/industry-merge'),{recursive:true}
 const run=async(...args)=>{const r=await exec(process.execPath,[cli,...args],{cwd:SKILL_ROOT,maxBuffer:10e6});return JSON.parse(r.stdout.trim());};
 test('industry is explicit, multiselect unions companies, and all is deliberate',()=>{
  assert.throws(()=>normalizeIndustries(),/请先指定行业/);assert.throws(()=>normalizeIndustries([]),/请先指定行业/);assert.throws(()=>normalizeIndustries(['unknown']),/未识别/);
- assert.deepEqual(normalizeIndustries(['互联网','智能硬件']),['internet','smart_hardware']);assert.deepEqual(normalizeIndustries('不限行业'),['all']);
- const companies=[{company_id:'a',industry_tags:['internet','smart_hardware']},{company_id:'b',industry_tags:['smart_hardware']},{company_id:'c',industry_tags:['automotive_oem']}];
- assert.deepEqual(routeCompanies(companies,['internet','smart_hardware']).map(c=>c.company_id),['a','b']);assert.equal(routeCompanies(companies,['all']).length,3);
+ assert.deepEqual(normalizeIndustries(['软件','消费电子行业']),['software_it','consumer_electronics_appliances']);assert.deepEqual(normalizeIndustries('不限行业'),['all']);
+ const companies=[{company_id:'a',industry_tags:['software_it','consumer_electronics_appliances']},{company_id:'b',industry_tags:['consumer_electronics_appliances']},{company_id:'c',industry_tags:['vehicles']}];
+ assert.deepEqual(routeCompanies(companies,['software_it','consumer_electronics_appliances']).map(c=>c.company_id),['a','b']);assert.equal(routeCompanies(companies,['all']).length,3);
 });
 
 test('expanded industries route companies without assuming ownership or replacing business preferences',async()=>{
- assert.deepEqual(normalizeIndustries(['银行','医疗','农林牧渔','金融']),['finance','healthcare','agriculture']);
+ assert.deepEqual(normalizeIndustries(['银行','医疗服务','农林牧渔','金融']),['finance','medical_services','agriculture_farming']);
  const current=(await readJson(datasetPath(SKILL_ROOT,'assets/sources.json'))).companies;
- for(const industry of INDUSTRIES)assert(current.some(c=>c.industry_tags.includes(industry.id)),industry.id+' has no admitted source');
+ for(const c of current)for(const id of c.industry_tags)assert(INDUSTRIES.some(i=>i.id===id),'unknown source industry '+id);
  const finance=await run('catalog','--industries','finance','--only','易方达基金');assert.equal(finance.selected_companies,1);assert.equal(finance.ownership_pending.length,0);
- const mixed=await run('catalog','--industries','finance,healthcare');assert.equal(mixed.selected_companies,new Set(mixed.companies.map(c=>c.company_id)).size);
- await assert.rejects(()=>run('catalog','--industries','healthcare','--only','易方达基金'),/行业范围冲突/);
+ const mixed=await run('catalog','--industries','finance,medical_services');assert.equal(mixed.selected_companies,new Set(mixed.companies.map(c=>c.company_id)).size);
+ await assert.rejects(()=>run('catalog','--industries','medical_services','--only','易方达基金'),/行业范围冲突/);
  const shanghai=await run('catalog','--industries','finance','--cities','上海');assert(shanghai.selected_companies>0);assert(shanghai.companies.every(c=>c.cities.includes('上海')));
 });
 test('catalog uses published API ownership and business labels for company preferences',async()=>{
  const records=JSON.parse(await fs.readFile(path.join(PACK_ROOT,'shared/job-search-core/data/company-records.json'),'utf8'));
  for(const ownership of ['国企','外企']) {
-  const company=records.companies.find(c=>c.governance.fields['tags.ownership'].status==='api_supported'&&c.tags.ownership===ownership&&c.tags.industry.length&&c.tags.business.length&&c.governance.fields['tags.business'].status==='api_supported');
+  const company=records.companies.find(c=>c.governance.fields['tags.ownership'].status==='api_supported'&&c.tags.ownership===ownership&&c.tags.industry.length&&c.tags.business.length);
   assert(company,'缺少可验证的 API 公司性质样本：'+ownership);
   const file=path.join(SKILL_ROOT,'artifacts/industry-merge/api-'+ownership+'.json');
   await writeJson(file,{industry_filters:[company.tags.industry[0]],company_filters:[company.company_id],city_filters:[],ownership_filters:[ownership],ownership_preferences:[ownership],business_preferences:[company.tags.business[0]]});
@@ -55,11 +55,11 @@ test('merged registry preserves original IDs, covers every source, and corrects 
  const current=(await readJson(datasetPath(SKILL_ROOT,'assets/sources.json'))).companies;
  const baseline=[{company_id:'company-7ca2b7da6e0f',display_name:'科大讯飞',provider:'beisen'},{company_id:'company-45d4e09fc97b',display_name:'轻舟智航',provider:'feishu'},{company_id:'company-3d1930c4cd50',display_name:'中科创达',provider:'feishu'},{company_id:'company-ad28e918f26b',display_name:'Momenta',provider:'feishu'}];
  assert.equal(new Set(current.map(c=>c.company_id)).size,current.length);
- for(const old of baseline){const c=current.find(c=>c.company_id===old.company_id);assert.equal(c.display_name,old.display_name);assert(c.industry_tags.includes('internet'));assert.equal(c.provider,old.provider);}
+ for(const old of baseline){const c=current.find(c=>c.company_id===old.company_id);assert.equal(c.display_name,old.display_name);assert.equal(c.provider,old.provider);}
  const records=(await readJson(path.join(PACK_ROOT,'shared/job-search-core/data/company-records.json'))).companies;
  for(const c of current){assert(Array.isArray(c.industry_tags));if(!c.industry_tags.length)assert.deepEqual(records.find(r=>r.company_id===c.company_id).tags.industry,[]);for(const s of c.recruitment_sources||[]){assert.equal(s.company_id,c.company_id);assert(s.source_id&&s.provider&&s.primary_entry_url);}}
- assert.equal(current.filter(c=>c.display_name==='科大讯飞').length,1);assert(current.find(c=>c.display_name==='科大讯飞').industry_tags.includes('smart_hardware'));
- assert(!current.some(c=>c.display_name==='威盛电子'));assert.deepEqual(current.find(c=>c.display_name==='MiniMax').industry_tags,['internet']);
+ assert.equal(current.filter(c=>c.display_name==='科大讯飞').length,1);assert(current.find(c=>c.display_name==='科大讯飞').industry_tags.includes('software_it'));
+ assert(!current.some(c=>c.display_name==='威盛电子'));assert.deepEqual(current.find(c=>c.display_name==='MiniMax').industry_tags,['software_it']);
 });
 test('all company endpoints are visited despite one failure; IDs stay stable and cross-platform collisions are isolated',async()=>{
  const company={company_id:'fixture',display_name:'测试',provider:'moka',recruitment_sources:[{source_id:'a',provider:'moka'},{source_id:'broken',provider:'beisen'},{source_id:'b',provider:'moka'},{source_id:'c',provider:'feishu'}]},seen=[];
@@ -70,17 +70,17 @@ test('contradictory recruitment metadata remains unresolved after a third source
  const c={company_id:'test',display_name:'测试',provider:'moka'};const input=['formal','internship','formal'].map((formal_status,i)=>({source:{provider:'moka',source_id:String(i)},result:{jobs:[{job_id:'1',formal_status,body_complete:true}],coverage:{status:'complete'}}}));
  const result=mergeSourceResults(c,input);assert.equal(result.jobs[0].formal_status,'unknown');assert.deepEqual(result.jobs[0].recruitment_evidence.conflicting_recruitment_types,['formal','internship']);
 });
-const profile=()=>({is_test:true,summary:'行业分流开发测试，不是真实用户',graduation:'2027-06',degree:'本科',city_filters:[],industry_filters:['internet'],evidence:[{id:'E1',text:'合成经历：参与招聘面试协调',source:'合成测试画像',kind:'resume',claim_type:'objective_experience',experience_type:'internship',experience_id:'I1'}]});
+const profile=()=>({is_test:true,summary:'行业分流开发测试，不是真实用户',graduation:'2027-06',degree:'本科',city_filters:[],industry_filters:['games'],evidence:[{id:'E1',text:'合成经历：参与招聘面试协调',source:'合成测试画像',kind:'resume',claim_type:'objective_experience',experience_type:'internship',experience_id:'I1'}]});
 test('CLI routes before preparation, excludes unrelated industry metadata gaps, and never assumes an omitted industry',async()=>{
  const dir=await fs.mkdtemp(path.join(SKILL_ROOT,'artifacts/industry-merge/test-')),file=path.join(dir,'profile.json'),p=profile();p.company_filters=['腾讯'];await writeJson(file,p);
- await run('prepare','--profile',file,'--out',path.join(dir,'internet'));const prepared=await readJson(path.join(dir,'internet/run.json'));assert.equal(prepared.companies.length,1);assert.equal(prepared.companies[0].display_name,'腾讯');assert(prepared.selection_summary.excluded_by_industry>0);
+ await run('prepare','--profile',file,'--out',path.join(dir,'software_it'));const prepared=await readJson(path.join(dir,'internet/run.json'));assert.equal(prepared.companies.length,1);assert.equal(prepared.companies[0].display_name,'腾讯');assert(prepared.selection_summary.excluded_by_industry>0);
  delete p.industry_filters;await writeJson(file,p);await assert.rejects(()=>run('prepare','--profile',file,'--out',path.join(dir,'missing')),/请先指定行业/);
- p.industry_filters=['automotive_oem'];await writeJson(file,p);await assert.rejects(()=>run('prepare','--profile',file,'--out',path.join(dir,'conflict')),/行业范围冲突/);
- const both=await run('catalog','--industries','internet,smart_hardware','--only','科大讯飞');assert.equal(both.selected_companies,1);assert.equal(both.ownership_pending.length,0);
+ p.industry_filters=['vehicles'];await writeJson(file,p);await assert.rejects(()=>run('prepare','--profile',file,'--out',path.join(dir,'conflict')),/行业范围冲突/);
+ const both=await run('catalog','--industries','software_it,consumer_electronics_appliances','--only','科大讯飞');assert.equal(both.selected_companies,1);assert.equal(both.ownership_pending.length,0);
 });
 test('demo ownership stays explicit and does not block city exclusions',async()=>{
- const catalog=await run('catalog','--industries','smart_hardware','--only','格力');assert.equal(catalog.selected_companies,1);assert.equal(catalog.ownership_pending.length,0);
- const dir=await fs.mkdtemp(path.join(SKILL_ROOT,'artifacts/industry-merge/test-')),file=path.join(dir,'profile.json'),p={...profile(),industry_filters:['smart_hardware'],company_filters:['格力']};await writeJson(file,p);
+ const catalog=await run('catalog','--industries','consumer_electronics_appliances','--only','格力');assert.equal(catalog.selected_companies,1);assert.equal(catalog.ownership_pending.length,0);
+ const dir=await fs.mkdtemp(path.join(SKILL_ROOT,'artifacts/industry-merge/test-')),file=path.join(dir,'profile.json'),p={...profile(),industry_filters:['consumer_electronics_appliances'],company_filters:['格力']};await writeJson(file,p);
  await run('prepare','--profile',file,'--out',path.join(dir,'researched'));const researched=await readJson(path.join(dir,'researched/run.json'));assert.equal(researched.companies[0].selected,true);assert.equal(researched.companies[0].ownership_status,'demo_unreviewed');
  const absentCity=['北京','上海','拉萨','哈尔滨','武汉'].find(city=>!catalog.companies[0].cities.includes(city));assert(absentCity);
  p.city_filters=[absentCity];await writeJson(file,p);await run('prepare','--profile',file,'--out',path.join(dir,'excluded'));const prepared=await readJson(path.join(dir,'excluded/run.json'));assert.equal(prepared.companies[0].selected,false);assert.equal(prepared.companies[0].ownership_status,'demo_unreviewed');

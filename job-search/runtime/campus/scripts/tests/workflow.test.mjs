@@ -69,7 +69,7 @@ function sheet(data,name='岗位匹配'){
 }
 async function updateJson(file,mutate){const data=await readJson(file);mutate(data);await writeJson(file,data);}
 function testProfile(overrides={}){
- return {graduation:'2027-06',degree:'本科',industry_filters:['internet'],city_filters:['武汉'],business_preferences:['人工智能'],evidence:[{id:'E1',kind:'resume',source:'测试简历：招聘实习经历',claim_type:'objective_experience',experience_type:'internship',experience_id:'I1',text:'测试经历：参与校园招聘，协调40场面试'}],...overrides};
+ return {graduation:'2027-06',degree:'本科',industry_filters:['software_it'],city_filters:['武汉'],business_preferences:['人工智能'],evidence:[{id:'E1',kind:'resume',source:'测试简历：招聘实习经历',claim_type:'objective_experience',experience_type:'internship',experience_id:'I1',text:'测试经历：参与校园招聘，协调40场面试'}],...overrides};
 }
 function testSummary(overrides={}){
  return {conclusion:'招聘实习与岗位协调职责相符，可结合资格和业务倾向决定是否关注。',ability:'对口招聘实习中的面试协调形成直接实践依据，独立决策经验仍待补充。',interest:'测试用户明确希望从事招聘职能。',gaps:'缺少独立招聘策略设计证据，提前实习安排需进一步核对。',...overrides};

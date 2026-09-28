@@ -14,7 +14,7 @@
 
 ```bash
 node ../../scripts/jobs.mjs industries --mode campus
-node ../../scripts/jobs.mjs catalog --mode campus --industries smart_hardware,automotive_oem --cities 上海
+node ../../scripts/jobs.mjs catalog --mode campus --industries consumer_electronics_appliances,vehicles --cities 上海
 node ../../scripts/jobs.mjs catalog --mode campus --profile runs/input-日期/profile.json --out runs/input-日期/catalog.json
 node ../../scripts/jobs.mjs status --mode campus
 python scripts/extract_resume.py /path/resume.pdf --out runs/input-日期/resume.txt
@@ -59,7 +59,7 @@ node ../../scripts/jobs.mjs render --mode campus --run runs/本次运行
   "summary": "根据用户材料整理的简要画像",
   "graduation": "2027-06",
   "degree": "本科",
-  "industry_filters": ["internet", "smart_hardware"],
+  "industry_filters": ["software_it", "consumer_electronics_appliances"],
   "company_filters": [],
   "city_filters": ["武汉"],
   "ownership_preferences": ["外企"],
@@ -168,7 +168,7 @@ node ../../scripts/jobs.mjs render --mode campus --run runs/本次运行
 
 ## 行业分流与合并来源
 
-`profile.industry_filters` 必填，使用 `industries` 返回的行业 ID 非空数组，例如 `["finance","healthcare"]` 或 `["internet","smart_hardware"]`；不限行业填 `["all"]`。完整选项由 `scripts/lib/industry-routing.mjs` 维护，不按旧版四类限制。空数组表示未决定，不是不限；`prepare` 会提示先询问用户。已表达行业不重复询问。行业选择不同于业务偏好，不能用行业匹配直接形成能力或意愿评级。
+`profile.industry_filters` 必填，使用 `industries` 返回的行业 ID 非空数组，例如 `["finance","healthcare"]` 或 `["software_it","consumer_electronics_appliances"]`；不限行业填 `["all"]`。完整选项由 `scripts/lib/industry-routing.mjs` 维护，不按旧版四类限制。空数组表示未决定，不是不限；`prepare` 会提示先询问用户。已表达行业不重复询问。行业选择不同于业务偏好，不能用行业匹配直接形成能力或意愿评级。
 
 `../../../shared/job-search-core/assets/sources.json` 中 `industry_tags` 允许多值。多选取并集，以公司 ID 去重，行业排除的公司不进入采集队列。`company_filters` 为可选公司名称／ID／已确认别名数组；`prepare --only` 同样可明确公司范围，公司与行业冲突时提示澄清，不绕过行业。行业外公司数量留在运行日志，Excel 沿用原来的四个页签和十二列。
 

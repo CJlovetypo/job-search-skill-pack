@@ -7,7 +7,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {selectQueryCompanies} from '../../../shared/job-search-core/scripts/lib/query-selection.mjs';
 import {normalizeConfig,openDb,subscribe,runSubscription,reviewExport,reviewSubmit,finalize,renderReport,selectCompanies} from '../radar.mjs';
 import {migrationPreview,migrateDatabase,rollbackMigration} from '../migration.mjs';
-const companies=[{company_id:'a',display_name:'游戏公司',industry_tags:['internet'],business_tags:['游戏研发'],provider:'fixture',primary_entry_url:'https://example.invalid/a'},{company_id:'b',display_name:'其他',industry_tags:['internet'],business_tags:['游戏研发']}];
+const companies=[{company_id:'a',display_name:'游戏公司',industry_tags:['software_it'],business_tags:['游戏研发'],provider:'fixture',primary_entry_url:'https://example.invalid/a'},{company_id:'b',display_name:'其他',industry_tags:['software_it'],business_tags:['游戏研发']}];
 const context={registry:{companies},records:{companies:companies.map(c=>({company_id:c.company_id,tags:{business:c.business_tags,ownership:'私企',headquarters_country:'中国',listing_status:'未上市'}}))},cities:Object.fromEntries(['campus','social','internship'].map(mode=>[mode,{updated_at:'2026-09-27',companies:[{company_id:'a',cities:['上海']},{company_id:'b',cities:['北京']}]}]))};
 const config=(mode='social')=>normalizeConfig({id:'test',mode,business_filters:['游戏研发'],cities:['上海'],roles:['项目管理'],retrieval:{mode:'exhaustive',selection:'explicit',basis:'合成测试用户明确选择全量'}},companies,{context});
 const job={job_id:'j1',title:'交付协调专员',description:'负责项目计划、里程碑和跨部门风险协调。',requirements:'有三年项目管理经验。',formal_status:'social',open_status:'open',body_complete:true,cities:['上海'],official_url:'https://example.invalid/j1'};

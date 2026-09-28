@@ -7,8 +7,8 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {openDb,normalizeConfig,subscribe,runSubscription,renderReport} from '../radar.mjs';
 
-const companies=[{company_id:'a',display_name:'示例公司',industry_tags:['internet']}];
-const config={id:'pm',mode:'social',keywords:['项目经理'],cities:['上海'],industries:['internet'],retrieval:{mode:'targeted',selection:'explicit',basis:'用户选择标题定向'},keyword_reasons:[{keyword:'项目经理',reason:'用户明确岗位名称'},{keyword:'经理',reason:'用户更新岗位名称'}]};
+const companies=[{company_id:'a',display_name:'示例公司',industry_tags:['software_it']}];
+const config={id:'pm',mode:'social',keywords:['项目经理'],cities:['上海'],industries:['software_it'],retrieval:{mode:'targeted',selection:'explicit',basis:'用户选择标题定向'},keyword_reasons:[{keyword:'项目经理',reason:'用户明确岗位名称'},{keyword:'经理',reason:'用户更新岗位名称'}]};
 const job={job_id:'1',title:'项目经理',cities:['上海'],formal_status:'social',open_status:'open',body_complete:true,description:'负责开发',official_url:'https://example.com/job/1',job_url_kind:'official_detail'};
 function fixture(t) {const dir=fs.mkdtempSync(path.join(os.tmpdir(),'radar-')); const db=openDb(path.join(dir,'db.sqlite'));t.after(()=>{db.close();fs.rmSync(dir,{recursive:true,force:true});}); subscribe(db,normalizeConfig(config,companies));return db;}
 const context={registry:{companies},cities:{social:{companies:[{company_id:'a',cities:['上海']}]}}};

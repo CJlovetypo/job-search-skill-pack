@@ -25,7 +25,7 @@ Node.js 22+；PDF提取用Python+pypdf，DOCX用标准zip/xml解析。Excel使�
   "salary_preference": null,
   "level_preference": null,
   "industry_filters": [
-    "internet"
+    "software_it"
   ],
   "company_filters": [],
   "headquarters_country_filters": [],
