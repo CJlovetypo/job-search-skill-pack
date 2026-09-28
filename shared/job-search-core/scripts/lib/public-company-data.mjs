@@ -1,8 +1,3 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import {CORE_ROOT} from '../../runtime-context.mjs';
-import {commitPublication,withPublicationLock} from './company-publication-transaction.mjs';
-
 const pick=(row,keys)=>Object.fromEntries(keys.filter(k=>row?.[k]!==undefined).map(k=>[k,structuredClone(row[k])]));
 export function publicUrl(value){
  try{const u=new URL(value);if(!['http:','https:'].includes(u.protocol)||u.username||u.password||/localhost|127\.0\.0\.1/.test(u.hostname))return null;
@@ -25,22 +20,6 @@ export function publicCompanyRecords(records){
   governance:{fields:Object.fromEntries(Object.entries(row.governance.fields).map(([key,value])=>[key,fieldMetadata(value)])),
    recruitment:Object.fromEntries(Object.entries(row.governance.recruitment||{}).map(([mode,value])=>[mode,pick(value,['status','origin','review_state','updated_at','last_refresh_at','last_refresh_status','city_coverage_complete','source_config_fingerprint'])]))}
  }))};
-}
-export function publicRecordWrites(records,compatibility){
- const writes=[];
- if(compatibility)for(const [key,name]of [['business','company-business-tags'],['ownership','company-ownership-tags'],['profiles','company-profiles'],['size','company-size-tags']])writes.push({file:path.join(CORE_ROOT,'data',name+'.json'),bytes:JSON.stringify(publicCompatibility(key,compatibility[key]))+'\n'});
- writes.push({file:path.join(CORE_ROOT,'data/company-records.json'),bytes:JSON.stringify(publicCompanyRecords(records))+'\n'});return writes;
-}
-export async function publishPublicRecords(records,compatibility,{extraWrites=[],inputs={},metadata={}}={}){
- return withPublicationLock(async()=>{
- const data=publicCompanyRecords(records);
- // Rebuilding existing data or adding API support cannot introduce unchecked
- // independent-review decisions through a second publication entrypoint.
- let previous;try{previous=JSON.parse(await fs.readFile(path.join(CORE_ROOT,'data/company-records.json'),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
- assertIndependentReviewsUnchanged(previous,data);
- await commitPublication([...extraWrites,...publicRecordWrites(records,compatibility)],{inputs,metadata});
- return data;
- });
 }
 export function assertIndependentReviewsUnchanged(previous,data) {
  const old=new Map((previous?.companies||[]).map(c=>[c.company_id,c])),next=new Map(data.companies.map(c=>[c.company_id,c]));

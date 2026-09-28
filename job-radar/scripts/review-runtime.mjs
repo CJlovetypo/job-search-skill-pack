@@ -40,7 +40,7 @@ export async function collectRadar(db,id,context,collector,options={}){
  db.prepare('INSERT INTO run_context VALUES(?,?)').run(run,json(snapshot));
  try{
   for(const company of selection.companies){
-   let result;try{result=await collector(company,{mode:'full',targetMode:c.mode,maxPages:options.maxPages||100,timeoutMs:options.timeoutMs||20000,repair:true,repairPolicy:'safe_existing',cities:query.city_filters,searchPlan:plan,query});}catch(e){result={jobs:[],coverage:{status:'failed',reason:e.message}};}
+   let result;try{result=await collector(company,{mode:'full',targetMode:c.mode,maxPages:options.maxPages||100,timeoutMs:options.timeoutMs||20000,cities:query.city_filters,searchPlan:plan,query});}catch(e){result={jobs:[],coverage:{status:'failed',reason:e.message}};}
    result.migration_bridge=!previous&&!!db.prepare('SELECT 1 FROM migration_state WHERE subscription=?').get(id);
    const hasHistory=!!db.prepare('SELECT 1 FROM jobs WHERE subscription=? AND revision=? AND company=? LIMIT 1').get(id,sub.revision,company.company_id);
    result.baseline_reset=!!(previous&&hasHistory&&(previous.query_hash!==snapshot.query_hash||previous.source_hashes[company.company_id]!==sourceHashes[company.company_id]));

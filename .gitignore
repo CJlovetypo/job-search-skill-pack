@@ -6,7 +6,6 @@
 !/LICENSE
 !/job-radar/
 !/shared/
-!/recruitment-link-repair/
 !/job-search/
 /shared/*
 !/shared/job-search-core/
@@ -75,3 +74,4 @@ Desktop.ini
 /shared/job-search-core/assets/waiqi-interface-catalog.json
 /shared/job-search-core/assets/waiqi-interface-review-index.json
 /shared/job-search-core/data/waiqi-foreign-company-index.json
+/shared/job-search-core/data/.publication-state.json

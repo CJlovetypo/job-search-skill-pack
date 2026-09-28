@@ -42,8 +42,10 @@ test('catalog uses published API ownership and business labels for company prefe
 
 test('company metadata keys agree and known duplicate employer aliases remain merged',async()=>{
  const companies=(await readJson(datasetPath(SKILL_ROOT,'assets/sources.json'))).companies;
- const ids=companies.map(c=>c.company_id).sort();for(const file of ['company-city-index','company-business-tags','company-ownership-tags','company-profiles']){
-  const rows=(await readJson(file==='company-city-index'?recruitmentFile('campus'):datasetPath(SKILL_ROOT,'data/'+file+'.json'))).companies;assert.deepEqual(rows.map(c=>c.company_id).sort(),ids,file);
+ const records=(await readJson(path.join(PACK_ROOT,'shared/job-search-core/data/company-records.json'))).companies;
+ const ids=companies.map(c=>c.company_id).sort(),allIds=records.map(c=>c.company_id).sort();assert.deepEqual(records.filter(c=>c.sources.length).map(c=>c.company_id).sort(),ids);
+ for(const file of ['company-city-index','company-business-tags','company-ownership-tags','company-profiles']){
+  const rows=(await readJson(file==='company-city-index'?recruitmentFile('campus'):datasetPath(SKILL_ROOT,'data/'+file+'.json'))).companies;assert.deepEqual(rows.map(c=>c.company_id).sort(),file==='company-city-index'?ids:allIds,file);
  }
  // Recovered public suite config identifies both Hotjob portals as one 中冶长天 tenant.
  const zhongye=companies.filter(c=>c.display_name==='中冶长天');assert.equal(zhongye.length,1);assert.equal(zhongye[0].company_id,'co_f99d8a693504e99ccc83');assert.equal(zhongye[0].recruitment_sources.length,2);
@@ -54,7 +56,8 @@ test('merged registry preserves original IDs, covers every source, and corrects 
  const baseline=[{company_id:'company-7ca2b7da6e0f',display_name:'科大讯飞',provider:'beisen'},{company_id:'company-45d4e09fc97b',display_name:'轻舟智航',provider:'feishu'},{company_id:'company-3d1930c4cd50',display_name:'中科创达',provider:'feishu'},{company_id:'company-ad28e918f26b',display_name:'Momenta',provider:'feishu'}];
  assert.equal(new Set(current.map(c=>c.company_id)).size,current.length);
  for(const old of baseline){const c=current.find(c=>c.company_id===old.company_id);assert.equal(c.display_name,old.display_name);assert(c.industry_tags.includes('internet'));assert.equal(c.provider,old.provider);}
- for(const c of current){assert(c.industry_tags.length);for(const s of c.recruitment_sources||[]){assert.equal(s.company_id,c.company_id);assert(s.source_id&&s.provider&&s.primary_entry_url);}}
+ const records=(await readJson(path.join(PACK_ROOT,'shared/job-search-core/data/company-records.json'))).companies;
+ for(const c of current){assert(Array.isArray(c.industry_tags));if(!c.industry_tags.length)assert.deepEqual(records.find(r=>r.company_id===c.company_id).tags.industry,[]);for(const s of c.recruitment_sources||[]){assert.equal(s.company_id,c.company_id);assert(s.source_id&&s.provider&&s.primary_entry_url);}}
  assert.equal(current.filter(c=>c.display_name==='科大讯飞').length,1);assert(current.find(c=>c.display_name==='科大讯飞').industry_tags.includes('smart_hardware'));
  assert(!current.some(c=>c.display_name==='威盛电子'));assert.deepEqual(current.find(c=>c.display_name==='MiniMax').industry_tags,['internet']);
 });

@@ -41,6 +41,7 @@ export function selectQueryCompanies(context,raw,{applyCities=true,plan=null}={}
   if(applyCities&&query.city_filters.length&&(!cityIndex||!Array.isArray(cityIndex.companies)||cityIndex.unavailable))throw Error('正式城市索引不可用，不能将缺失索引解释为零家公司');
   const cities=new Map((cityIndex?.companies||[]).map(x=>[x.company_id,x]));
   const requested=new Set();
+  for(const name of query.company_filters){const entity=[...records.values()].find(r=>r.company_id===name||r.identity?.display_name===name||r.identity?.aliases?.includes(name));if(entity&&!companies.some(c=>c.company_id===entity.company_id))throw Error('公司已收录，尚无可采集的招聘源：'+name);}
   for(const name of query.company_filters){const hits=companies.filter(c=>c.company_id===name||c.display_name===name||c.aliases?.includes(name));if(hits.length!==1||requested.has(hits[0].company_id))throw Error('公司范围含未识别（未收录）、歧义或重复公司：'+name);requested.add(hits[0].company_id);}
   const rows=companies.filter(c=>!requested.size||requested.has(c.company_id)).map(company=>{
     const record=records.get(company.company_id),tags=record?.tags||{},b=business.get(company.company_id),owner=owners.get(company.company_id),city=cities.get(company.company_id),reasons=[];

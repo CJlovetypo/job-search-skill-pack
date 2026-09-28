@@ -28,7 +28,8 @@ import {SEARCH_MODE,MODE_POLICY_VERSION,searchMode} from './search-mode.mjs';
 import {reviewRecruitment} from './recruitment-policy.mjs';
 import {normalizeJobLocations,jobCityStatus} from './locations.mjs';
 import {searchPlanFingerprint} from './targeted-search.mjs';
-import {maintainSource} from './source-repair.mjs';
+import {sourceConfigFingerprint} from './source-fingerprint.mjs';
+export {sourceConfigFingerprint};
 function needsTargetBody(job,options){const loc=normalizeJobLocations(job);return job.formal_status===searchMode(options.targetMode||SEARCH_MODE.id).status&&job.open_status==='open'&&!job.body_complete&&job.detail_skipped_reason!=='explicit_non_target_city'&&jobCityStatus({cities:loc.cities,location_unknown:loc.unknown,location_special:loc.special},options.cities||[])!=='excluded';}
 function enforceListOnlyCoverage(result,options){
  if(options.mode!=='list'&&result.coverage?.capability==='public_list_only'&&(result.jobs||[]).some(j=>!j.body_complete)){
@@ -61,13 +62,8 @@ async function collectRoutedEndpoint(source,options={}) {
 export async function collectEndpoint(source,options={}){
  if(source.identity_verification?.identity_verified===false)return {company_id:source.company_id,display_name:source.display_name,checked_at:new Date().toISOString(),jobs:[],requests:[],coverage:{status:'failed',pages:0,reason:'source_identity_not_verified: '+(source.identity_verification.basis||'explicit identity verification failure')}};
  let result;
- try{result=await collectRoutedEndpoint(source,options);}catch(e){if(options.repair===false)throw e;result={company_id:source.company_id,display_name:source.display_name,checked_at:new Date().toISOString(),jobs:[],requests:[],coverage:{status:'failed',pages:0,reason:e.message}};}
- try{return await maintainSource(source,result,options,collectRoutedEndpoint);}catch(e){return {...result,maintenance_warning:e.message};}
-}
-const canonical=value=>Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonical(value[k])])):value;
-export function sourceConfigFingerprint(company,targetMode=SEARCH_MODE.id){
- const configs=(company.recruitment_sources?.length?company.recruitment_sources:[company]).map(s=>Object.fromEntries(['identity_verification','provider','primary_entry_url','api_config','list_page_size','project_type','route_evidence_url','official_job_url_template','validated_api_request_examples','public_bootstrap_requests'].filter(k=>s[k]!==undefined).map(k=>[k,s[k]])));
- return createHash('sha256').update(JSON.stringify(canonical(targetMode==='campus'?configs:{configs,targetMode,policy:MODE_POLICY_VERSION}))).digest('hex');
+ try{result=await collectRoutedEndpoint(source,options);}catch(e){result={company_id:source.company_id,display_name:source.display_name,checked_at:new Date().toISOString(),jobs:[],requests:[],coverage:{status:'failed',pages:0,reason:e.message}};}
+ return result;
 }
 export function sourceCacheMatches(result,company,searchPlan=null){
  if(searchPlan){if(result.search_plan_fingerprint!==searchPlanFingerprint(searchPlan))return false;}
@@ -77,8 +73,12 @@ export function sourceCacheMatches(result,company,searchPlan=null){
  return SEARCH_MODE.id==='campus'&&!company?.recruitment_sources?.length;
 }
 function jobNamespace(source){
+ if(source.job_namespace)return source.provider+':reviewed:'+source.job_namespace;
  const entry=source.primary_entry_url?new URL(source.primary_entry_url):null;
  const cfg=source.api_config||{};
+ if(source.provider==='workday'&&cfg.tenant&&cfg.site)return 'workday:'+cfg.tenant+':'+cfg.site;
+ if(source.provider==='smartrecruiters'&&cfg.company_identifier)return 'smartrecruiters:'+cfg.company_identifier;
+ if(source.provider==='ashby'&&cfg.board_token)return 'ashby:'+cfg.board_token;
  const publicTenant=source.provider==='51job_coapi'?cfg.ctmid:source.provider==='51job_xyz'?cfg.ehire_ctm_id:source.provider==='zhaopin_grace'?cfg.org_number:source.provider==='greenhouse'?cfg.board_token:source.provider==='moseeker_public'?cfg.company_id:source.provider==='phenom_public'?cfg.origin:source.provider==='eightfold_public'?[cfg.origin,cfg.domain].join(':'):source.provider==='avature_public'?[cfg.origin,cfg.search_path].join(':'):source.provider==='nowcoder_public'?cfg.company_id:source.provider==='oracle_recruiting'?[cfg.origin,cfg.site].join(':'):null;
  if(publicTenant)return source.provider+':'+publicTenant;
  const list=source.validated_api_request_examples?.find(q=>/list|search/i.test(q.purpose||''));
@@ -106,10 +106,10 @@ export function mergeSourceResults(company,results,options={}){
  return {company_id:company.company_id,display_name:company.display_name,checked_at:new Date().toISOString(),jobs,requests,coverage:{status,collection_complete:contexts.length>0&&contexts.every(c=>c.status==='complete'||c.collection_complete===true)&&!incomplete,pages:contexts.reduce((n,c)=>n+(typeof c.pages==='number'?c.pages:c.pages?.length||0),0),server_total:null,jobs_observed:jobs.length,contexts,reason:contexts.map(c=>`${c.provider}/${c.source_id}: ${c.reason||c.status}`).join('; ')+(incomplete?`; ${incomplete} observed jobs have incomplete or unresolved JD sections`:''),details_failed:contexts.reduce((n,c)=>n+(c.details_failed||0),0)}};
 }
 export async function collectCompanySources(company,options={},collector=collectEndpoint){
+ if(!company.provider&&!company.recruitment_sources?.length)return {company_id:company.company_id,jobs:[],requests:[],coverage:{status:'unavailable',reason:'company_has_no_runnable_sources',pages:0,collection_complete:false}};
  options={...options,targetMode:options.targetMode||SEARCH_MODE.id};
  const fingerprint=sourceConfigFingerprint(company,options.targetMode);
- if(!company.recruitment_sources?.length){const result=await collector(company,options);return {...result,source_config_fingerprint:result.effective_source?sourceConfigFingerprint(result.effective_source,options.targetMode):fingerprint};}
+ if(!company.recruitment_sources?.length){const result=await collector(company,options);return {...result,source_config_fingerprint:fingerprint};}
  const results=[];for(const config of company.recruitment_sources){const source={...config,company_id:company.company_id,display_name:company.display_name};try{results.push({source,result:await collector(source,{...options,evidenceDir:options.evidenceDir?path.join(options.evidenceDir,source.source_id):undefined})});}catch(e){results.push({source,result:{jobs:[],requests:[],coverage:{status:'failed',reason:String(e.message||e),pages:0}}});}}
- const effective={...company,recruitment_sources:results.map(({source,result})=>result.effective_source||source)};
- return {...mergeSourceResults(company,results,options),source_config_fingerprint:sourceConfigFingerprint(effective,options.targetMode),repairs:results.filter(x=>x.result.repair).map(x=>({source_id:x.source.source_id,...x.result.repair}))};
+ return {...mergeSourceResults(company,results,options),source_config_fingerprint:fingerprint};
 }

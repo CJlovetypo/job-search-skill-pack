@@ -1,4 +1,0 @@
-interface:
-  display_name: "招聘链接修复"
-  short_description: "从飞书、WPS 与外企历史数据定位招聘链接失效原因并验证替代入口"
-  default_prompt: "使用 $recruitment-link-repair，结合历史数据修复这家公司的招聘链接，保留主体、招聘方向和验证证据。"

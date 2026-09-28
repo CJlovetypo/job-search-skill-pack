@@ -7,7 +7,8 @@ import {reviewRecruitment} from './recruitment-policy.mjs';
 import {SEARCH_MODE} from './search-mode.mjs';
 
 // Anonymous public contracts verified 2026-09-19. Scope is these employers only.
-const configs=JSON.parse(await readFile(new URL('../../assets/custom-providers.json',import.meta.url),'utf8')).providers;
+const {CUSTOM_PROVIDERS_FILE}=await import('../../registry.mjs');
+const configs=JSON.parse(await readFile(CUSTOM_PROVIDERS_FILE,'utf8')).providers;
 const keys=new Set(['tencent','alibaba','baidu','jd','bilibili','kuaishou','pdd','xiaohongshu']);
 const clone=x=>structuredClone(x),str=x=>x==null?'':String(x);
 const get=(o,p)=>p==='$'?o:p?.split('.').reduce((v,k)=>v?.[k],o);

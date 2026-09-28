@@ -6,7 +6,7 @@ import {isV5} from './assessment-v5.mjs';
 import {normalizeBusinessFilters,businessMatchMode} from './business-taxonomy.mjs';
 
 export const TASK_VERSION = 1;
-export const GOALS = ['clarify','consult','capabilities','discover','match','compare','explore','radar','repair'];
+export const GOALS = ['clarify','consult','capabilities','discover','match','compare','explore','radar'];
 export const MODES = ['campus','internship','social'];
 const states = ['explicit','inherited','unspecified','conflict'];
 const arrayFields = ['industries','businesses','companies','cities','roles'];
@@ -61,7 +61,7 @@ export function validateTask(task) {
   if(!object(task.materials))errors.push('缺少 materials 状态');
   for(const [key,value] of Object.entries(task.materials||{}))if(!['available','missing','partial','unreadable','conflict','not_needed'].includes(value))errors.push('材料状态无效：'+key);
   if(task.issues!=null&&!Array.isArray(task.issues))errors.push('issues 必须为数组');
-  else for(const issue of task.issues||[])if(!object(issue)||!text(issue.field)||!text(issue.reason)||!text(issue.question)||!Array.isArray(issue.blocks)||issue.blocks.some(s=>!['collect','assess','schedule','repair'].includes(s)))errors.push('issue 需要 field、reason、question 和合法 blocks');
+  else for(const issue of task.issues||[])if(!object(issue)||!text(issue.field)||!text(issue.reason)||!text(issue.question)||!Array.isArray(issue.blocks)||issue.blocks.some(s=>!['collect','assess','schedule'].includes(s)))errors.push('issue 需要 field、reason、question 和合法 blocks');
   if(task.changes!=null&&(!Array.isArray(task.changes)||task.changes.some(x=>!['cities','industries','businesses','companies','recruitment','evidence','preference','availability','refresh','presentation','scope'].includes(x))))errors.push('changes 存在未知变化类型');
   return errors;
 }
@@ -70,13 +70,13 @@ export function decideTask(task) {
   const errors=validateTask(task);
   if(errors.length)return {valid:false,errors};
   const c=task.conditions, mode=specified(c.recruitment)?c.recruitment.value:null;
-  const gates={collect:[],assess:[],schedule:[],repair:[]}, questions=[];
+  const gates={collect:[],assess:[],schedule:[]}, questions=[];
   const need=(field,question,stages)=>{
     if(!questions.some(q=>q.field===field))questions.push({field,question});
     for(const stage of stages)if(!gates[stage].includes(field))gates[stage].push(field);
   };
   const searching=['discover','match','explore'].includes(task.goal);
-  if(task.goal==='clarify')need('goal','请明确本轮要继续哪项任务。',['collect','assess','schedule','repair']);
+  if(task.goal==='clarify')need('goal','请明确本轮要继续哪项任务。',['collect','assess','schedule']);
   const radarSearch=task.goal==='radar'&&['create','update'].includes(task.radar_action);
   if(searching||task.goal==='compare'||radarSearch){
     if(!mode)need('recruitment','这次找校招、实习还是社招？',['collect','assess',...(task.goal==='radar'?['schedule']:[])]);
@@ -93,7 +93,6 @@ export function decideTask(task) {
     if(['create','update','resume'].includes(task.radar_action)&&(!specified(c.schedule)||!text(c.schedule.value?.time)||!text(c.schedule.value?.timezone)))need('schedule','具体何时执行、使用哪个时区？',['schedule']);
     if(['update','pause','mute','resume'].includes(task.radar_action)&&!task.subscription_id)need('subscription','请先定位要操作的已有订阅。',['schedule']);
   }
-  if(task.goal==='repair'&&!specified(c.repair_target))need('repair_target','先从历史定位，仍无法确定时补充公司或失效链接。',['repair']);
   for(const issue of task.issues||[])if(!nonBlockingConditions.has(issue.field))need(issue.field,issue.question,issue.blocks);
   const changes=task.changes||[], actions=[];
   if(changes.includes('refresh'))actions.push('refresh_jobs');
@@ -106,12 +105,11 @@ export function decideTask(task) {
   if(!specified(c.industries)&&searching)independent.push('show_industries');
   if(specified(c.companies))independent.push('resolve_company_ids');
   if(task.goal==='capabilities')independent.push('show_capabilities_and_coverage');
-  if(task.goal==='repair')independent.push('lookup_local_source_history');
   if(task.goal==='radar')independent.push('inspect_existing_subscriptions');
   // Scope is deliberately deferred until after collection, not a first-turn form.
   const now=questions.filter(q=>q.field!=='evaluation_scope');
   return {valid:true,task_id:task.task_id,revision:task.revision,goal:task.goal,mode,
-    route:task.goal==='radar'?'job-radar':task.goal==='repair'?'recruitment-link-repair':'job-search',
+    route:task.goal==='radar'?'job-radar':'job-search',
     retrieval:task.retrieval.mode,city_policy:specified(c.cities)?'user_defined':'unrestricted_this_run_not_user_preference',
     gates,questions_now:now.slice(0,3),questions_later:[...now.slice(3),...questions.filter(q=>q.field==='evaluation_scope')],
     independent_actions:independent,change_actions:actions,

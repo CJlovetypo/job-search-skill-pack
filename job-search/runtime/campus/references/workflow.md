@@ -17,8 +17,6 @@ node ../../scripts/jobs.mjs industries --mode campus
 node ../../scripts/jobs.mjs catalog --mode campus --industries smart_hardware,automotive_oem --cities 上海
 node ../../scripts/jobs.mjs catalog --mode campus --profile runs/input-日期/profile.json --out runs/input-日期/catalog.json
 node ../../scripts/jobs.mjs status --mode campus
-node ../../scripts/jobs.mjs refresh-cities --mode campus
-node ../../scripts/jobs.mjs refresh-cities --mode campus --only 腾讯,米哈游
 python scripts/extract_resume.py /path/resume.pdf --out runs/input-日期/resume.txt
 node ../../scripts/jobs.mjs prepare --mode campus --profile runs/input-日期/profile.json --out runs/本次运行 --task ../../runs/本轮任务/r1.json
 node ../../scripts/jobs.mjs collect --mode campus --run runs/本次运行
@@ -37,7 +35,6 @@ node ../../scripts/jobs.mjs render --mode campus --run runs/本次运行
 
 需要核对新样式时，可为 `render` 添加 `--preview-dir runs/本次运行/tmp/excel-preview`，生成各工作表的局部预览及检查结果供内部核验；最终只交付 Excel 文件。
 
-`refresh-cities` 仅用于主动维护，不是求职步骤；默认更新全名单，可用 `--only` 缩小用户要求的范围。默认每家公司串行分页、公司之间并发 3。`--max-pages` 是执行边界，触达边界必须标为 partial。`--out` 可指定 skill 内证据目录，结合 `--resume` 继续已中断的初始化；相同结果已完整则复用。
 
 `collect --refresh` 重新取当次岗位；普通 `collect` 继续未完成部分。采集结束写入独立 JD 归档和 `screening-summary.json`，不自动生成评估批次。展示公司数、可评估岗位数、待核实数、各公司数量及来源限制后确定用户意愿。已有本轮明确选择时沿用，不重复提问；没有选择时等待答复，不能替用户默认实验或全量。示例中的用户话语仅说明参数，执行时必须记录真实需求。
 
@@ -157,7 +154,7 @@ node ../../scripts/jobs.mjs render --mode campus --run runs/本次运行
 
 修改行业同样新建运行目录，重新分流公司，不覆盖既有报告。新建运行目录并再次 prepare，添加 `--reuse-run 上一运行目录`。程序会复用仍适用的公司快照，重新按新城市条件更新岗位状态；不会复用旧的公司入选结果或旧排序。随后 collect 补取新增公司及新城市缺正文的岗位，再重新评估，保留旧报告。
 
-业务标签维护通过公开资料核实后更新 JSON，不需要后台服务。每条记录为 company_id、display_name、business_tags、business_summary、evidence、status；evidence 至少有来源 URL、标题、类型、简短依据及核实日期。当前 skill 对 `../../../shared/job-search-core/assets/sources.json` 中的固定名单维护标签，数量以文件为准。用户要求维护时，API 能读取完整 JD 即可准入来源；当前正式岗位状态单独记录为 formal_available、no_current_formal 或 formal_status_unknown，不能把实习样本当正式岗位推荐。
+业务标签读取已发布公司画像，分类与证据口径见共享公司标签模型。公司主体、来源和标签的维护统一在私有运营链路完成，不是求职步骤。
 
 ## 公司性质标签
 
@@ -165,7 +162,7 @@ node ../../scripts/jobs.mjs render --mode campus --run runs/本次运行
 
 优先读取官网介绍、年报或公告、政府与工商联官方资料。必须对应到当前招聘主体，母子公司关系明确后才能沿用集团性质。合资、混合所有制或控制关系有争议时，先完成公开资料核查；仍无法判断时记录原因并标待核实，不在三类中强选。历史依据保留日期，不将旧控制关系描述为已确认的最新关系。
 
-运行时统一画像可叠加 API 研究发布层。每家公司性质记录包含 `company_id`、`display_name`、`ownership_tag`（国企／私企／外企／待核实）、`status`（`verified`／`api_supported`／`verified_unresolved`／`unknown`）、`reason`、`checked_at`、`evidence`；每项 evidence 包含 `url`、`title`、`note`、`checked_at`。`api_supported` 是可用于倾向性检索的正式值，但仍待独立核实，不能称为 `verified`。原始 `company-ownership-tags.json` 仍保留原有独立核实状态；API 发布层只在统一画像中覆盖合格字段。未知性质不能冒充国企、私企或外企。
+运行时直接读取正式公司画像，不叠加研究档案或本机覆盖。性质字段中的 `api_supported` 表示已有 API 来源支持，仍待独立核实，不能称为 `verified`。未知性质不解释为国企、私企或外企。
 
 `prepare` 直接读取已有性质记录，将属性保存到公司快照的 `ownership_tag`、`ownership_status`、`ownership_reason`、`ownership_evidence`、`ownership_checked_at`。`verified` 三类结论直接展示；`verified_unresolved`、`unknown` 或缺失显示待核实，内部状态和现有证据保留，不重新核验、不阻塞准备或导出。严格证据校验仅在主动维护中进行。公司性质列用于表征企业属性，不默认改变城市硬筛、业务偏好、个人意愿或能力判断。
 
@@ -179,4 +176,4 @@ node ../../scripts/jobs.mjs render --mode campus --run runs/本次运行
 
 公司可以有多个 `recruitment_sources`，采集器依次访问所有配置，单源失败不阻断其他源。同平台、同招聘租户的相同岗位 ID 合并；不同平台或租户的 ID 冲突通过前缀隔离，并保留 `source_job_id`、`source_provider`、`source_job_namespace` 和 `source_ids`。无法确认域名同属一个租户时保守分开，避免错误合并。原主平台与租户的岗位 ID 保持兼容，历史运行仍按其保存范围继续。多个来源对同一岗位招聘性质明确矛盾时保留待核实，不凭顺序覆盖。
 
-采集快照保存 `source_config_fingerprint`；新增入口或修改请求配置后，`collect` 与 `refresh-cities --resume` 不再跳过旧快照。合并前没有指纹的单入口快照继续兼容；公司现已配置多来源时须重新采集一次。明确非目标城市而跳过正文的岗位不影响本轮来源覆盖完整性，目标范围内缺正文或来源失败仍如实标记。
+采集快照保存 `source_config_fingerprint`；新增入口或修改请求配置后，`collect` 不再跳过旧快照。合并前没有指纹的单入口快照继续兼容；公司现已配置多来源时须重新采集一次。明确非目标城市而跳过正文的岗位不影响本轮来源覆盖完整性，目标范围内缺正文或来源失败仍如实标记。

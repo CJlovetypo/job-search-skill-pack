@@ -9,11 +9,10 @@ import {PACK_ROOT} from '../../../shared/job-search-core/runtime-context.mjs';
 const exec=promisify(execFile);
 test('shared and radar operate without any job-search product or private maintenance files',async()=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'standalone-radar-')),core=path.join(root,'shared/job-search-core');await fs.mkdir(core,{recursive:true});
- for(const name of ['scripts','assets','data','runtime-context.mjs','registry.mjs','maintenance-paths.mjs'])await fs.cp(path.join(PACK_ROOT,'shared/job-search-core',name),path.join(core,name),{recursive:true});
+ for(const name of ['scripts','assets','data','runtime-context.mjs','registry.mjs'])await fs.cp(path.join(PACK_ROOT,'shared/job-search-core',name),path.join(core,name),{recursive:true});
  await fs.cp(path.join(PACK_ROOT,'job-radar/scripts'),path.join(root,'job-radar/scripts'),{recursive:true});
  await assert.rejects(fs.access(path.join(root,'job-search')));
  const script=`import {loadCompanyContext} from './shared/job-search-core/scripts/lib/company-records.mjs';
- import {sourceFromEntry} from './shared/job-search-core/scripts/source-discovery.mjs';
  import {configureRuntime} from './shared/job-search-core/runtime-context.mjs';
  import {openDb,subscribe,normalizeConfig,runSubscription,renderReport} from './job-radar/scripts/radar.mjs';
  globalThis.fetch=()=>{throw Error('Network forbidden')};configureRuntime({mode:'social',outputRoot:'job-radar'});

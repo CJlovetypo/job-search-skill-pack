@@ -89,9 +89,9 @@ test('radar pause/mute/history does not demand search criteria again',()=>{
  }
  const result=decideTask(task({goal:'radar',radar_action:'pause',conditions:{}}));assert.deepEqual(result.questions_now.map(q=>q.field),['subscription']);
 });
-test('repair only needs target identity and preserves read-only access',()=>{
+test('public task decisions reject maintenance repair goals',()=>{
  const value=task({goal:'repair',repair_access:'read_only',conditions:{repair_target:condition('company-or-url')}});
- assert.deepEqual(decideTask(value).questions_now,[]);assert.equal(value.repair_access,'read_only');
+ assert.equal(decideTask(value).valid,false);
 });
 test('specific JD comparison does not demand industry selection',()=>{
  const result=decideTask(task({goal:'compare',conditions:{recruitment:condition('campus')},materials:{profile:'available',jd:'missing'},evaluation_scope:condition({mode:'all'})}));

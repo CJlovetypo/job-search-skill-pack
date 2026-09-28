@@ -1,10 +1,4 @@
-import {createHash} from 'node:crypto';
-import path from 'node:path';
-import {createClient} from './http.mjs';
-import {SKILL_ROOT,readJson,writeJson} from './io.mjs';
-import {runtimeContext} from '../../runtime-context.mjs';
 import {SEARCH_MODE,MODE_POLICY_VERSION} from './search-mode.mjs';
-import {mokaSiteCandidates,confirmMokaSiteCandidate} from './public-site-candidates.mjs';
 
 const clone=x=>structuredClone(x);
 export function requestObject(q) {
@@ -55,58 +49,6 @@ export function routeKnownSource(source,mode) {
  return s;
 }
 
-async function discoverSites(source,options) {
- const mode=options.targetMode,sourceKey=JSON.stringify([MODE_POLICY_VERSION,'public-site-tuples-v2',mode,source.provider,source.primary_entry_url,source.validated_api_request_examples]);
- const key=createHash('sha256').update(sourceKey).digest('hex');
- if(options.directionDiscoveryMemo?.has(key))return {...clone(options.directionDiscoveryMemo.get(key)),audit_scope_reused:true};
- const cache=path.join(options.cacheRoot||runtimeContext().cacheRoot,key+'.json');
- const cached=options.refresh?null:await readJson(cache,null);
- if(cached){options.directionDiscoveryMemo?.set(key,clone(cached));return {...cached,cache_reused:true};}
- const client=options.discoveryClient||createClient({...options,evidenceDir:options.evidenceDir?path.join(options.evidenceDir,'channel-discovery'):undefined});
- const result={routes:[],notes:[],requests:[],checked_at:new Date().toISOString()};
- try {
-  const boot=await client.request({url:source.primary_entry_url},{purpose:'public_configuration_bootstrap'});
-  if(boot.record.http_status!==200)throw Error('Public configuration HTTP '+boot.record.http_status);
-  const config=publicSiteConfig(boot.text,source.provider);
-  if(source.provider==='moka') {
-   const list=(source.validated_api_request_examples||[]).find(q=>/\/website\/jobs\/v2/.test(q.url));
-   const org=String(requestObject(list||{}).orgId||'');
-   if(!config||!org)throw Error('Missing public Moka configuration or verified tenant');
-   const candidates=mokaSiteCandidates(config,{entryUrl:boot.url,orgId:org,mode,evidenceFile:boot.record.response_file});result.notes.push(...candidates.notes);
-   for(const route of candidates.routes){
-    try{
-     const same=route.entry===new URL(boot.url).origin+new URL(boot.url).pathname.replace(/\/$/,'');
-     const target=same?boot:await client.request({url:route.entry},{purpose:'public_related_site_configuration'});
-     if(target.record.http_status!==200){result.notes.push('Related site HTTP '+target.record.http_status);continue;}
-     const confirmation=confirmMokaSiteCandidate(route,same?config:publicSiteConfig(target.text,'moka'));
-     if(confirmation.accepted)result.routes.push({...route,requires_bootstrap_identity_check:false,confirmation,confirmation_file:target.record.response_file});
-     else result.notes.push(confirmation.reason);
-    }catch(error){result.notes.push(error.message);}
-   }
-  }else {
-   const links=[...boot.text.matchAll(/href\s*=\s*(["'])(.*?)\1/gi)].map(m=>decode(m[2]))
-     .concat(strings(config).flatMap(v=>v.match(/(?:https?:)?\/\/[^\s"'<>]+/g)||[]));
-   const candidates=[...new Set(links.filter(v=>/social|society|experienced/i.test(v)).map(v=>{try{return new URL(v,boot.url).href;}catch{return null;}}).filter(Boolean))];
-   // New hosts require separate company identity verification; stay on this public tenant.
-   for(const url of candidates.filter(u=>new URL(u).origin===new URL(boot.url).origin).slice(0,4)) {
-    const r=await client.request({url},{purpose:'public_related_site_configuration'});if(r.record.http_status!==200)continue;
-    const info=publicSiteConfig(r.text,'feishu'),websitePath=info?.website_info?.path;
-    if(!websitePath)continue;
-    const tenant=x=>x?.tenant_info?.tenant_id_md5||x?.tenant_info?.tenant_id;
-    if(tenant(config)&&tenant(info)&&tenant(config)!==tenant(info)){result.notes.push('Linked website tenant differs; not adopted');continue;}
-    const u=new URL(r.url);const prefix=u.pathname.split('/').filter(Boolean)[0];
-    const office=websitePath==='society';
-    result.routes.push({entry:u.origin+'/'+(prefix?prefix+'/':''),websitePath,office,evidence_file:r.record.response_file});
-   }
-  }
- }catch(error){result.notes.push(error.message);}
- result.requests=client.records;
- // Failed discovery is retried on next run, not cached as a permanent absence.
- if(!result.notes.length)await writeJson(cache,result);
- options.directionDiscoveryMemo?.set(key,clone(result));
- return result;
-}
-
 export async function directionSources(source,options={}) {
  const mode=options.targetMode||SEARCH_MODE.id,plan=sourceDirectionPlan(source,mode);
  if(mode==='campus')return {sources:[source],plan,requests:[]};
@@ -127,28 +69,6 @@ export async function directionSources(source,options={}) {
  if(['hotjob','moka_api_platform','hcmcloud_public'].includes(source.provider)&&mode==='internship') {
   const social=routeKnownSource(source,'social');social.target_mode=mode;sources.push(social);
  }
- if(source.provider==='moka'||source.provider==='feishu'&&mode==='social') {
-  const discovery=await discoverSites(source,{...options,targetMode:mode});requests.push(...discovery.requests);
-  for(const route of discovery.routes) {
-   const s=clone(base),origin=new URL(route.entry).origin;s.primary_entry_url=route.entry;s.direction_route_evidence=route;
-   if(source.provider==='moka') {
-    s.public_bootstrap_requests=[{url:route.entry,method:'GET'}];
-    for(const q of s.validated_api_request_examples||[]) {
-     const u=new URL(q.url);q.url=origin+u.pathname+u.search;
-     q.headers={...q.headers,Origin:origin,Referer:route.entry};
-     if(/\/website\/jobs\/v2/.test(q.url))q.body={...requestObject(q),orgId:route.orgId,siteId:route.siteId,site:route.site};
-    }
-   }else {
-    const rewrite=q=>{const u=new URL(q.url);q.url=origin+u.pathname+u.search;q.headers={...q.headers,Origin:origin,Referer:route.entry,'website-path':route.websitePath,...route.office?{'portal-channel':'office'}:{}};
-     if(/\/search\/job\/posts/.test(q.url))q.body={...requestObject(q),recruitment_id_list:[],...route.office?{portal_type:2}:{}};return q;};
-    s.validated_api_request_examples=(s.validated_api_request_examples||[]).map(rewrite);
-    s.public_bootstrap_requests=(s.public_bootstrap_requests||[]).map(rewrite);
-    s.official_job_url_template=route.entry.replace(/\/$/,'')+'/position/{job_id}/detail';
-   }
-   sources.push(s);
-  }
-  plan.discovery_notes=discovery.notes;
-  if(mode==='social'&&!discovery.routes.length&&/campus/.test(source.primary_entry_url||''))plan.limitation='当前已验证入口属于校招门户，公开配置尚未定位社招门户；本入口结果不能证明该公司没有社招。';
- }
+ if(source.provider==='moka'||source.provider==='feishu'&&mode==='social')plan.limitation='仅读取已发布入口；当前入口未必完整覆盖本招聘方向。';
  const seen=new Set();return {sources:sources.filter(s=>{const key=JSON.stringify([s.provider,s.primary_entry_url,s.validated_api_request_examples,s.api_config]);if(seen.has(key))return false;seen.add(key);return true;}),plan,requests};
 }

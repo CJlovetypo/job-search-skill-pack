@@ -8,10 +8,7 @@
   "scripts": {
     "check:distribution": "node scripts/check-distribution.mjs",
     "check:boundaries": "node scripts/check-boundaries.mjs",
-    "test": "cd ../.. && node --test job-search/runtime/campus/scripts/tests/*.test.mjs job-radar/scripts/tests/*.test.mjs recruitment-link-repair/scripts/history.test.mjs",
-    "test:perplexity": "node --test ../../job-search/runtime/campus/scripts/tests/perplexity-agent.test.mjs"
+    "test": "cd ../.. && node --test shared/job-search-core/scripts/tests/*.test.mjs job-search/runtime/campus/scripts/tests/*.test.mjs job-radar/scripts/tests/*.test.mjs"
   },
-  "dependencies": {
-    "@perplexity-ai/perplexity_ai": "0.38.5"
-  }
+  "dependencies": {}
 }

@@ -155,8 +155,9 @@ async function main() {
   const context=await loadCompanyContext(),records=new Map(context.records.companies.map(x=>[x.company_id,x]));
   const companies=context.registry.companies.map(x=>({...x,business_tags:records.get(x.company_id)?.tags.business||[],business_status:records.get(x.company_id)?.governance.fields['tags.business'].status}));
   if (command==='catalog') {
+    for(const r of context.records.companies)if(!companies.some(c=>c.company_id===r.company_id))companies.push({company_id:r.company_id,display_name:r.identity.display_name,industry_tags:r.tags.industry,business_tags:r.tags.business,business_status:r.governance.fields['tags.business'].status,recruitment_available:false});
     const wanted=normalizeBusinessFilters(flags.businesses),match=businessMatchMode(flags['business-match']);
-    return console.log(json(companies.filter(x=>businessMatches(x.business_tags,wanted,match)&&(!flags.query||[x.display_name,x.company_id,...x.industry_tags||[],...x.business_tags].join(' ').toLowerCase().includes(flags.query.toLowerCase()))).map(x=>({id:x.company_id,name:x.display_name,industries:x.industry_tags,business_tags:x.business_tags,business_status:x.business_status}))));
+    return console.log(json(companies.filter(x=>businessMatches(x.business_tags,wanted,match)&&(!flags.query||[x.display_name,x.company_id,...x.industry_tags||[],...x.business_tags].join(' ').toLowerCase().includes(flags.query.toLowerCase()))).map(x=>({id:x.company_id,name:x.display_name,industries:x.industry_tags,business_tags:x.business_tags,business_status:x.business_status,recruitment_available:x.recruitment_available!==false}))));
   }
   const database=flags.db||path.join(ROOT,'state/radar.sqlite');
   if(command==='migrate-preview')return console.log(json(migrationPreview(database,companies,flags.file?read(flags.file):[])));

@@ -1,6 +1,7 @@
 // Public API shapes and URL patterns consulted from job-pro (MIT).
 // See assets/job-pro-LICENSE.txt. No audit code, browser, or personal session is used at runtime.
 import { readFile } from 'node:fs/promises';
+import {CUSTOM_PROVIDERS_FILE} from '../../registry.mjs';
 import { createClient } from './http.mjs';
 import { normalizeJobLocations, jobCityStatus } from './locations.mjs';
 import { collectYotta } from './providers-yotta.mjs';
@@ -12,7 +13,7 @@ import {collectXinrenxinshi} from './providers-xinrenxinshi.mjs';
 import {SEARCH_MODE,searchMode,knownOtherType} from './search-mode.mjs';
 import {reviewRecruitment} from './recruitment-policy.mjs';
 
-const configuration = JSON.parse(await readFile(new URL('../../assets/custom-providers.json', import.meta.url), 'utf8')).providers;
+const configuration = JSON.parse(await readFile(CUSTOM_PROVIDERS_FILE, 'utf8')).providers;
 const clone = x => structuredClone(x);
 const get = (x, p) => p ? p.split('.').reduce((v, k) => v?.[k], x) : undefined;
 const set = (x, p, value) => { const keys = p.split('.'); let v = x; for (const k of keys.slice(0, -1)) v = v[k] ||= {}; v[keys.at(-1)] = value; };

@@ -46,7 +46,6 @@ conditions.cities可附importance：must保持明确城市过滤，prefer/open�
 
 materials 的 profile/jd/history 可为 available/missing/partial/unreadable/conflict/not_needed。availability 的不确定信息放 conditions 或画像原事实，不用假的确切日期。额外问题放 issues：`{"field":"role_meaning","reason":"PM有歧义","question":"这里PM指产品还是项目管理？","blocks":["collect","assess"]}`。程序派生的问题还需根据已读材料去重、合并和自然表达，不能把内部字段名当问卷交给用户。
 
-radar 额外记录 radar_action=create/update/pause/mute/resume/history、已有订阅的 subscription_id、conditions.schedule={state,value:{time,timezone},basis}。repair 可记录 conditions.repair_target、repair_access=read_only/apply；具体执行遵守独立Skill，任务记录本身不授权外部操作。
 
 ```sh
 node job-search/scripts/jobs.mjs industries

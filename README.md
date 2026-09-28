@@ -17,13 +17,13 @@
 https://github.com/CJlovetypo/job-search-skill-pack
 
 完整保留仓库目录，按 README 的“手动安装与运行依赖”检查环境。
-加载 job-search、job-radar 和 recruitment-link-repair 的 SKILL.md，求职使用 job-search。
+加载 job-search 和 job-radar 的 SKILL.md，求职使用 job-search。
 ```
 
 <details>
 <summary>手动安装与运行依赖</summary>
 
-将整个仓库放入支持本地 Skill 和命令执行的 Agent 工作环境，并让宿主加载 `job-search`、`job-radar` 和 `recruitment-link-repair` 的 `SKILL.md`。校招、实习、社招统一使用 `job-search`。当前 Excel 导出使用 Codex 的运行依赖；其他宿主需提供兼容依赖后使用。
+将整个仓库放入支持本地 Skill 和命令执行的 Agent 工作环境，并让宿主加载 `job-search` 和 `job-radar` 的 `SKILL.md`。校招、实习、社招统一使用 `job-search`。当前 Excel 导出使用 Codex 的运行依赖；其他宿主需提供兼容依赖后使用。
 
 ```sh
 git clone https://github.com/CJlovetypo/job-search-skill-pack.git JobScope_CN
@@ -40,16 +40,14 @@ JobScope_CN/
       internship/         # 实习
       social/             # 社招
   job-radar/               # 岗位订阅与变化跟踪
-  recruitment-link-repair/ # 招聘入口历史定位与修复
   shared/job-search-core/  # 共用业务判断、证据模型、来源采集与交付
-  datasets/                # 本地维护资料：不随 GitHub 分发
   docs/                    # 本地 PRD、审核和过程报告：不分发
   README.md
 ```
 
 | 依赖 | 用途 |
 | --- | --- |
-| Node.js 22+ | 岗位采集与校验；岗位雷达需 **22.13+**，使用内置 SQLite；可选 Perplexity 联网回答需安装官方 npm SDK |
+| Node.js 22+ | 岗位采集与校验；岗位雷达需 **22.13+**，使用内置 SQLite |
 | Python 3 | 简历提取与少量公开 API；PDF 提取需要 `pypdf`，可用 `CAMPUS_JOB_FIT_PYTHON` 指定解释器 |
 | `@oai/artifact-tool` | Excel 导出；通过 Codex 的 `load_workspace_dependencies` 定位，或设置 `CODEX_NODE_MODULES` |
 | 宿主定时任务 | 岗位雷达的每日检索与提醒 |
@@ -58,7 +56,7 @@ JobScope_CN/
 
 ## 项目介绍
 
-**接入 3,220 个公司／招聘主体，用自然语言找岗位、判断匹配度、持续关注新机会。**
+**接入 3,221 个公司／招聘主体，用自然语言找岗位、判断匹配度、持续关注新机会。**
 
 JobScope_CN 是面向中文求职场景的 AI Agent 技能包。通过 [job-search 统一入口](job-search/SKILL.md)，用自然语言浏览岗位、结合经历判断匹配度，或比较已有机会。它从公司公开招聘接口采集岗位，阅读完整职位描述（JD），按实际证据解释匹配依据与待确认事项；需要持续关注时，再衔接岗位雷达。
 
@@ -74,7 +72,7 @@ JobScope_CN 是面向中文求职场景的 AI Agent 技能包。通过 [job-sear
 
 | 你关心的事 | 这里怎么做 |
 | --- | --- |
-| 能找到多少公司的岗位？ | 维护覆盖 **3,220 个公司／招聘主体、19 个行业大类**的共享来源库，包含 **4,057 个招聘接口配置**。 |
+| 能找到多少公司的岗位？ | 维护覆盖 **3,221 个公司／招聘主体、19 个行业大类**的共享来源库，包含 **4,061 个招聘接口配置**。 |
 | 能不能按我的情况找？ | 校招核对届别、学历与专业；实习核对在校状态与到岗安排；社招结合实际职责、成果及经验差距判断。 |
 | 没有简历能开始吗？ | 可以先发现岗位；做匹配时已有文字事实也可使用，缺少的证据保留为不确定。 |
 | 推荐理由是什么？ | 在选定范围内逐岗阅读完整 JD，分别判断“我能否胜任”和“这份工作是否符合我的意愿”，保留依据与缺口。 |
@@ -83,9 +81,11 @@ JobScope_CN 是面向中文求职场景的 AI Agent 技能包。通过 [job-sear
 
 ## 招聘来源覆盖
 
-![招聘来源覆盖：3,220 个公司／招聘主体、4,057 个接口配置、19 个行业大类；下方展示覆盖主体数最多的十个行业](shared/job-search-core/assets/readme-coverage.svg)
+![招聘来源覆盖：3,221 个公司／招聘主体、4,061 个接口配置、19 个行业大类；下方展示覆盖主体数最多的十个行业](shared/job-search-core/assets/readme-coverage.svg)
 
-统计于 **2026-09-27**，主体及接口数量依据[招聘来源库](shared/job-search-core/assets/sources.json)，行业归属依据当前[正式公司画像](shared/job-search-core/data/company-records.json)。同一主体可归入多个行业；包括待独立复核的 Demo 标签。
+正式主体总数：**3,222**；有正式招聘源的主体：**3,221**；尚无招聘源的主体：**1**。
+
+统计于 **2026-09-27**，招聘源覆盖主体及接口数量依据[招聘来源库](shared/job-search-core/assets/sources.json)，正式主体总数与行业归属依据当前[正式公司画像](shared/job-search-core/data/company-records.json)。同一主体可归入多个行业；包括待独立复核的 Demo 标签。
 
 ### 行业覆盖一览
 
@@ -120,7 +120,7 @@ JobScope_CN 是面向中文求职场景的 AI Agent 技能包。通过 [job-sear
 - **接口配置数**按各主体的 `recruitment_sources` 统计；没有子配置时按主体自身配置计 1 个。同一主体可能有多个招聘入口，配置数不是岗位数。
 - **接入方式**包括北森、Moka、海纳 Hotjob、飞书招聘，以及 Workday、SmartRecruiters、Oracle 等招聘系统和公司自有接口。通过公开接口及匿名初始化获取岗位，无需用户登录招聘平台。完整 JD、零岗位 API、完整公开列表与动态列表契约分开标注；列表契约只证明公司入口和匿名列表端点可用，不承诺单次快照取全。Jobs2Web、AJINGA 本轮只核验列表，缺正文的岗位不进入完整评估。SAP 的官方 RSS 属于明确标注的部分覆盖来源。
 - **来源证据**保留请求样例、岗位样本、核验日期与分页限制。曾经验证可取得 JD，不代表接口始终在线，也不代表该主体此刻同时开放校招、实习和社招。
-- **候选目录不计入接入量**。Waiqi 等渠道发现的公司与招聘链接须经过接口和主体核验，纳入正式来源库后才计数；维护方法见 [Waiqi 来源维护](shared/job-search-core/references/waiqi-sources.md)。
+- **候选目录不计入接入量**。Waiqi 等渠道发现的公司与招聘链接须经过接口和主体核验，纳入正式来源库后才计数；正式数据边界见[工程与数据发布边界](shared/job-search-core/references/repository-management.md)。
 
 在仓库根目录运行 `node job-search/scripts/jobs.mjs industries` 可查看当前行业计数。上方图表与表格是本次统计快照，新增来源后应同步更新。
 
@@ -230,42 +230,38 @@ JobScope_CN 是面向中文求职场景的 AI Agent 技能包。通过 [job-sear
 <details>
 <summary>验证命令与测试记录</summary>
 
-可选的 [Perplexity 联网回答](shared/job-search-core/references/perplexity-agent.md)用于主动公司研究，支持来源引用、结构化输出和多轮追问；通过环境变量认证，不会自动更新公司标签。
+公司研究与数据维护由独立私有运营链路完成，普通求职不需要搜索供应商账户或 SDK。
 
 在仓库根目录执行：
 
 ```sh
 node job-search/scripts/jobs.mjs industries
-node --test job-search/runtime/campus/scripts/tests/*.test.mjs job-radar/scripts/tests/*.test.mjs recruitment-link-repair/scripts/history.test.mjs
+node --test shared/job-search-core/scripts/tests/*.test.mjs job-search/runtime/campus/scripts/tests/*.test.mjs job-radar/scripts/tests/*.test.mjs
 ```
 
 项目回归测试在 `shared/job-search-core` 运行 `npm test`，发布边界检查运行 `npm run check:distribution`，共享依赖检查运行 `npm run check:boundaries`。回归包含移除求职产品目录后的共享层与雷达测试。真实模拟回复、审核记录和过程报告保留在本地 `docs`，不随 GitHub 分发。
 
 三个招聘方向通过统一 CLI 完成候选发现和 v5 匹配 Excel 链路；内部 runtime 目录不作为 Skill 加载。
 
-更多说明：[运行与数据约定](job-search/runtime/campus/references/workflow.md) · [共享来源维护](shared/job-search-core/references/maintenance.md) · [定向检索](shared/job-search-core/references/targeted-search.md) · [公司规模模型](shared/job-search-core/references/company-size-model.md) · [接口修复](shared/job-search-core/references/source-repair.md)。第三方来源许可见 [job-pro-LICENSE.txt](shared/job-search-core/assets/job-pro-LICENSE.txt)。
+更多说明：[运行与数据约定](job-search/runtime/campus/references/workflow.md) · [定向检索](shared/job-search-core/references/targeted-search.md) · [公司规模模型](shared/job-search-core/references/company-size-model.md)。第三方来源许可见 [job-pro-LICENSE.txt](shared/job-search-core/assets/job-pro-LICENSE.txt)。
 
 </details>
 
 ## 覆盖与数据说明
 
-“范围内审阅完成”指已读取并判断本次明确范围内的可评估岗位，不代表所有岗位的适合性都已确定，也不代表全市场覆盖。报告会同时说明已审阅数、仍不确定数及资料待核实情况。公司性质、行业、业务及招聘城市标签仅在主动维护流程更新；搜索与匹配直接使用已保存记录，缺项不触发补核，正常岗位采集不回写共享标签。3,220 家公司的正式画像均已有首版静态字段，可直接用于读取和筛选；字段状态分为 `demo_unreviewed`（基于既有联网材料的首版值，待独立复核）、`api_supported`（API 有来源支持，待独立核实）和 `verified`（独立核实）。联网材料没有提供可用事实时，首版字段明确保存“待核实”或缺口说明，不能解释为事实已确认。国企／外企等性质倾向、行业与业务偏好读取正式画像。城市硬筛使用对应招聘方向已保存的地点标签，软偏好单独记录；尚未记录的城市可能影响入选范围。空列表、部分分页、待核实和采集失败分别记录，接口失败不解释为公司没有招聘。
+“范围内审阅完成”指已读取并判断本次明确范围内的可评估岗位，不代表所有岗位的适合性都已确定，也不代表全市场覆盖。报告会同时说明已审阅数、仍不确定数及资料待核实情况。公司性质、行业、业务及招聘城市标签仅在主动维护流程更新；搜索与匹配直接使用已保存记录，缺项不触发补核，正常岗位采集不回写共享标签。正式画像可直接用于读取和筛选；新增主体未核实的字段保持未知，无招聘源的主体单独列示。字段状态分为 `demo_unreviewed`（基于既有联网材料的首版值，待独立复核）、`api_supported`（API 有来源支持，待独立核实）和 `verified`（独立核实）。联网材料没有提供可用事实时，首版字段明确保存“待核实”或缺口说明，不能解释为事实已确认。国企／外企等性质倾向、行业与业务偏好读取正式画像。城市硬筛使用对应招聘方向已保存的地点标签，软偏好单独记录；尚未记录的城市可能影响入选范围。空列表、部分分页、待核实和采集失败分别记录，接口失败不解释为公司没有招聘。
 
 简历、个人画像、报告、原始抓取记录和运行历史保存在本地，不随仓库分发。求职任务修订位于 `job-search/runs`；各招聘方向的运行产物位于 `job-search/runtime/<方向>/runs`、`outputs`、`artifacts` 等目录；雷达订阅与 SQLite 历史库位于 `job-radar/state`，均由 `.gitignore` 排除。使用时，Agent 仍需读取材料完成分析，模型侧处理方式取决于所用宿主与模型。
 
 本项目用于岗位发现与求职判断，不自动投递或联系招聘方，也不承诺面试与录用。
 
-## 招聘链接历史与修复
+## 正式数据与更新
 
-[历史库契约](recruitment-link-repair/references/history-dataset.md)说明寻源原件、冻结快照和检索索引的用途。原始文档、公司搜索响应、复核过程与内部报告保留本地；正式公司标签、描述、招聘城市和 API 配置仍随项目发布，用户拉取后即可使用。
+公司画像、招聘入口、API 配置、城市索引和接口能力随版本公开分发。求职与雷达只读正式数据，用户不需要私有运营仓库。
 
-需要修复失效入口时，加载独立的 [recruitment-link-repair](recruitment-link-repair/SKILL.md)：
+来源失效时记录来源暂不可用或结果不完整，并继续使用其他已发布来源。采集失败不等于公司没有招聘。用户可以反馈问题或更新正式版本；产品不提供自动修复、修复命令或本机配置覆盖。
 
-> 使用 recruitment-link-repair，查这家公司的历史招聘入口，修复失效链接，并核实雇主、招聘方向及岗位获取能力。
-
-日常求职与雷达共用有限自动修复：仅对 Moka／飞书的同主体、同平台、同方向入口参数作白名单写入，可能更新本机正式来源库，不自动提交或推送 GitHub。公开库保留必要摘要，完整证据与恢复记录存于共享 `state/source-repairs/`；公司画像和城市索引仍只在主动维护中更新。
-
-该维护 Skill 与求职和雷达入口并列，保留整个仓库相对目录即可使用。原始数据、冻结快照、索引和哈希清单仅保存在本地 `datasets/recruitment-links/`，不随 Git 分发；需要历史资料检索的新机器应单独恢复数据集，正常求职与正式标签读取不依赖这些原件。历史收录不代表当前可用，修复采用前必须重新验证。 新增或修复 API 在基本取数验证之外，还必须逐配置、逐招聘方向验证关键词能力并保存结论；未证实支持时继续使用本地筛选。
+数据发现、主体创建、修复、扩源和复核由独立私有运营链路完成，经版本化发布包更新公有仓库。个人简历、偏好、岗位缓存与报告仍保存在本机，不默认上传。详见[工程与数据发布边界](shared/job-search-core/references/repository-management.md)。
 
 ## 许可证
 

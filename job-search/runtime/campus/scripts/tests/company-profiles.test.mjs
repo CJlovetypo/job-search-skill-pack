@@ -5,21 +5,11 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import {SKILL_ROOT, writeJson} from '../lib/io.mjs';
 await fs.mkdir(path.join(SKILL_ROOT,'tmp'),{recursive:true});
-import {mergeProfiles, companyProfileSnapshot, saveCompanyProfileSnapshot, companyProfileSheet, emptyFact, factProblem} from '../lib/company-profiles.mjs';
+import {companyProfileSnapshot, saveCompanyProfileSnapshot, companyProfileSheet, emptyFact, factProblem} from '../lib/company-profiles.mjs';
 
 const fact = value => ({value, status: 'verified', entity: '测试集团全球员工', as_of: '2025-12-31', checked_at: '2026-09-13', evidence: [{url: 'https://example.com/report', title: '合成年报', note: '合成测试数据'}]});
-test('资料按ID增量维护，业务初始化不覆盖人数或历史资本，不猜同名主体', () => {
-  const sources = [{company_id: 'a', display_name: '同名公司'}, {company_id: 'b', display_name: '同名公司'}];
-  const previous = {companies: [{company_id: 'a', workforce: fact('100人'), capital: fact('2020年融资')}]};
-  const merged = mergeProfiles(sources, {companies: []}, previous, [{company_id: 'a', business: fact('软件业务')}]);
-  assert.equal(merged.companies[0].workforce.value, '100人');
-  assert.equal(merged.companies[0].capital.value, '2020年融资');
-  assert.equal(merged.companies[1].workforce.status, 'missing');
-  assert.throws(() => mergeProfiles(sources, {companies: []}, previous, [{company_id: 'absent'}]), /未知/);
-  assert.throws(() => mergeProfiles(sources, {companies: []}, previous, [{company_id: 'a'}, {company_id: 'a'}]), /重复/);
-  assert.ok(factProblem({...fact('100人'), evidence: []}));
-  assert.ok(factProblem({...emptyFact(), value: '估计100人'}));
-  assert.ok(factProblem({...fact('100人'), evidence: [{url: 'file:///secret', title: 'x', note: 'x'}]}));
+test('公有资料模块只提供读取和个人快照，不导出维护合并入口',async()=>{
+ const api=await import('../lib/company-profiles.mjs');assert.equal(api.mergeProfiles,undefined);assert.ok(factProblem({...emptyFact(),value:'未经核实的人数'}));
 });
 
 test('运行快照离线复用且公司去重，只有覆盖表中的公司和缺资料公司也保留三行', async () => {

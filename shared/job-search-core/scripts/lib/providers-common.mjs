@@ -372,6 +372,7 @@ async function collectContext(source, context, options, client) {
 /** Public ATS collection. Evidence is written only to the requested output directory. */
 export async function collectCommon(source, options = {}) {
   if (!supported.has(source.provider)) return null;
+  source={...source,target_mode:options.targetMode||source.target_mode||SEARCH_MODE.id};
   const settings = { mode: 'list', maxPages: 1000, pageSize: 20, timeoutMs: 20000, ...options };
   if (!['list', 'full'].includes(settings.mode)) throw new Error('mode must be list or full');
   if (!Number.isInteger(settings.maxPages) || settings.maxPages < 1) throw new Error('maxPages must be a positive integer');

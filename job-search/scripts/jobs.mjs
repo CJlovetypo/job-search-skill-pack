@@ -8,6 +8,8 @@ const [command,...args]=process.argv.slice(2);
 const read=async file=>JSON.parse(await fs.readFile(path.resolve(file),'utf8'));
 const value=name=>{const i=args.indexOf('--'+name);return i>=0&&args[i+1]&&!args[i+1].startsWith('--')?args[i+1]:undefined;};
 async function main(){
+  if(['repair-source','refresh-cities','company-maintenance'].includes(command))throw Error('该命令不属于公开产品；请使用正式数据版本。');
+  if(command==='company-profiles'&&!args.includes('status'))throw Error('公开公司资料仅支持 status 读取。');
   if(['task-check','task-show','task-save'].includes(command)){
     if(!value('file'))throw Error('需要 --file 任务记录');
     let task=await read(value('file'));
@@ -25,7 +27,7 @@ async function main(){
     console.log(JSON.stringify({task,decision}));return;
   }
   if(!command||command==='help'){
-    console.log('task-check/task-save --file 任务.json；industries；catalog/prepare/collect/plan-assessment/batch-*/render --mode campus|internship|social。prepare 需 --task；纯发现加 --discovery 后用 render-discovery。plan-assessment 用 --scope-mode sample|companies|all。company-profiles --mode 方向 status|sync|import；运行/输出位于 job-search/runtime/<方向>。');return;
+    console.log('task-check/task-save --file 任务.json；industries；catalog/prepare/collect/plan-assessment/batch-*/render --mode campus|internship|social。prepare 需 --task；纯发现加 --discovery 后用 render-discovery。plan-assessment 用 --scope-mode sample|companies|all。运行/输出位于 job-search/runtime/<方向>。');return;
   }
   const task=value('task')?await read(value('task')):null;
   const run=value('run')?await read(path.join(value('run'),'run.json')):null;

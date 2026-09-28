@@ -15,4 +15,4 @@
 - 超过两年的资料只保留历史，不据此确认当前标签；无统计日期时标为待核实，不能当成最新实测人数。
 - 任一项缺证据或口径不清都允许“待核实”。标签不默认成为硬筛条件。
 
-维护数据位于 `shared/job-search-core/data/company-size-tags.json`，由已保存的性质和公司简介事实生成：`node shared/job-search-core/scripts/update-company-size.mjs`。新增事实先进入公司资料库，再重算标签，避免手动随意改评级。
+正式规模标签位于 `shared/job-search-core/data/company-size-tags.json`。私有链路依据已核实的性质和公司简介事实生成、审核并发布，公开产品只读取结果。

@@ -6,7 +6,7 @@ import {SEARCH_MODE} from './search-mode.mjs';
 const selectiveDetails=new Set(['moka','beisen','feishu','hotjob','workday','smartrecruiters','tencent','alibaba','baidu','jd','bilibili','kuaishou','pdd','xiaohongshu','meituan','openout','mihoyo','first_party']);
 export async function collectTargeted(company,plan,options={},capabilities={},collector=collectEndpoint){
  const mode=options.targetMode||SEARCH_MODE.id,configs=company.recruitment_sources?.length?company.recruitment_sources:[company],results=[],strategies=[];
- const byKey=new Map((capabilities.configurations||[]).map(c=>[c.key+'|'+c.mode,c])),effectiveConfigs=[...configs];
+ const byKey=new Map((capabilities.configurations||[]).map(c=>[c.key+'|'+c.mode,c]));
  for(const [index,config] of configs.entries()){
   const key=directionSourceKey(company,config,index),source={...config,company_id:company.company_id,display_name:company.display_name},proof=byKey.get(key+'|'+mode);
   const native=proof?.status==='verified_native_keyword'&&proof.mode===mode&&nativeKeywordParameter(source.provider);
@@ -20,21 +20,12 @@ export async function collectTargeted(company,plan,options={},capabilities={},co
     if(!selectiveDetails.has(source.provider)&&options.mode!=='list'&&(result.jobs||[]).some(j=>titleFilter(j.title)&&!j.body_complete)){
      const full=await collector(source,{...opts,mode:'full'});result={...full,requests:[...(result.requests||[]),...(full.requests||[])]};strategies.at(-1).strategy='provider_full_fetch_then_title_filter';
     }
-    const repairedSource=result.effective_source;
-    if(repairedSource){
-     // A changed source cannot reuse the previous keyword capability proof.
-     const refreshed=await collector(repairedSource,{...opts,keyword:'',repair:false,mode:options.mode||'full'});
-     result={...refreshed,requests:[...(result.requests||[]),...(refreshed.requests||[])],repair:result.repair,effective_source:repairedSource};
-     effectiveConfigs[index]=repairedSource;strategies.at(-1).strategy='repaired_contract_local_title_filter';
-    }
-    results.push({source:repairedSource||source,result:applyTargetedResult(result,plan,strategies.at(-1).strategy)});
-    if(repairedSource)break;
+    results.push({source,result:applyTargetedResult(result,plan,strategies.at(-1).strategy)});
    }catch(e){results.push({source,result:{jobs:[],requests:[],coverage:{status:'failed',pages:0,reason:e.message,search_scope:'targeted_titles'}}});}
   }
  }
  const merged=mergeSourceResults(company,results,{...options,targetMode:mode});
- const effectiveCompany=company.recruitment_sources?.length?{...company,recruitment_sources:effectiveConfigs}:effectiveConfigs[0];
- const final=applyTargetedResult({...merged,source_config_fingerprint:sourceConfigFingerprint(effectiveCompany,mode)},plan,strategies);
+ const final=applyTargetedResult({...merged,source_config_fingerprint:sourceConfigFingerprint(company,mode)},plan,strategies);
  final.coverage.unfiltered_observed_rows=results.reduce((n,x)=>n+(x.result.coverage.unfiltered_observed_rows||0),0);
  return final;
 }

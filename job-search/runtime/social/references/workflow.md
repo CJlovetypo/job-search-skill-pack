@@ -76,7 +76,7 @@ node ../../scripts/jobs.mjs render --mode social --run runs/唯一运行名
 
 catalog/prepare 只读现有社招城市索引，首次、过期或缺失均不自动初始化。索引只在主动维护流程更新，不借校招城市代替；collect 只获取本轮岗位正文，不回写共享标签。缺记录按当前标签未命中处理，不能称为没有岗位。
 
-公司城市标签未命中硬排除；入选公司内的其他城市岗位保留为excluded_city，地点未知待核实。行业限定公司，业务仅影响优先处理顺序，不减少已入选公司。公司性质缺资料保留待核实，不阻塞prepare，不伪造verified。用户要求最新岗位使用collect --refresh；只有主动维护城市标签才使用refresh-cities --only 公司A,公司B。
+公司城市标签未命中硬排除；入选公司内的其他城市岗位保留为excluded_city，地点未知待核实。行业限定公司，业务仅影响优先处理顺序，不减少已入选公司。公司性质缺资料保留待核实，不阻塞prepare，不伪造verified。用户要求最新岗位使用collect --refresh；城市标签由私有链路更新后随正式版本发布。
 
 collect默认并发3，公司内串行分页、有限详情并发；可用--concurrency 1至8调整。每次请求有超时，触达--max-pages必须partial。只复用相同来源与招聘方向指纹且采集已完整结束的快照（仅方向覆盖有限的partial也可复用，但仍如实显示部分覆盖）；变更方向使用 job-search 的另一方向运行目录，变更画像使用新run。用户变更偏好可prepare --reuse-run 当前方向旧run复用JD，但旧评估不能补指纹继续使用。
 

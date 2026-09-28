@@ -4,6 +4,7 @@ import {runtimeContext} from '../../runtime-context.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import nodeHttp from 'node:http';
 import nodeHttps from 'node:https';
+import {maintenanceNetworkScope} from './maintenance-network-scope.mjs';
 
 const userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 const sensitiveHeader = /^(cookie|authorization|proxy-authorization|set-cookie)$/i;
@@ -83,6 +84,8 @@ class AnonymousCookies {
 
 /** Fresh anonymous HTTP only. Cookie values never enter persisted request records. */
 export function createClient({ evidenceDir, timeoutMs = 20000, signal: externalSignal, requestBudget } = {}) {
+  const maintenance=maintenanceNetworkScope();
+  if(maintenance)externalSignal=externalSignal?AbortSignal.any([externalSignal,maintenance.signal]):maintenance.signal;
   const session = randomUUID().slice(0, 12);
   const directory = path.resolve(evidenceDir || path.join(runtimeContext().evidenceRoot, 'runs', `http-${Date.now()}-${session}`));
   const jar = new AnonymousCookies();
@@ -102,6 +105,7 @@ export function createClient({ evidenceDir, timeoutMs = 20000, signal: externalS
     },
     async request({ url, method = 'GET', headers = {}, body = null }, { purpose = 'public_api' } = {}) {
       if(externalSignal?.aborted)throw externalSignal.reason;
+      maintenance?.claim(purpose);
       if(requestBudget&&--requestBudget.remaining<0)throw Error('public_request_budget_exhausted');
       const target = new URL(url);
       if (!['https:', 'http:'].includes(target.protocol)) throw new Error('HTTP(S) URL required');
@@ -123,6 +127,7 @@ export function createClient({ evidenceDir, timeoutMs = 20000, signal: externalS
         checked_at: new Date().toISOString(), anonymous_session_from_scratch: true,
         cookie_policy: 'Fresh HTTP response cookies only; values omitted. Replay public bootstrap in the same new anonymous session.' };
       records.push(record);
+      maintenance?.records.push(record);
       const started = Date.now();
       try {
         let current = target.href, currentMethod = method, currentBody = encoded;
@@ -136,13 +141,21 @@ export function createClient({ evidenceDir, timeoutMs = 20000, signal: externalS
           if (new URL(current).origin !== target.origin) for (const key of Object.keys(outgoing)) if (dynamicHeader.test(key)) delete outgoing[key];
           const cookie = jar.header(current);
           if (cookie) outgoing.Cookie = cookie;
+          const release=maintenance?await maintenance.limiter.acquire(current,signal):()=>{};
+          try {
+          if(maintenance&&--maintenance.remaining<0)throw Error('maintenance_request_budget_exhausted');
           response = await fetch(current, { method: currentMethod, headers: outgoing,
             body: currentMethod === 'GET' ? undefined : currentBody, redirect: 'manual', signal });
           if(response.status===403&&new URL(current).origin===target.origin){
             await response.body?.cancel();
+            if(maintenance&&--maintenance.remaining<0)throw Error('maintenance_request_budget_exhausted');
             response=await nativeFetch(current,{method:currentMethod,headers:outgoing,body:currentMethod==='GET'?undefined:currentBody,signal});
             record.transport_fallback='node_http_after_fetch_403';
           }
+          if(maintenance&&response.status===429)maintenance.limiter.rateLimit(current,response.headers.get('retry-after'));
+          // Read within the host slot: response bodies can outlive fetch's headers.
+          if(maintenance){const bytes=await response.arrayBuffer();response=new Response([204,205,304].includes(response.status)?null:bytes,{status:response.status,statusText:response.statusText,headers:response.headers});}
+          } finally {release();}
           jar.receive(current, response.headers.getSetCookie?.() || []);
           if (![301, 302, 303, 307, 308].includes(response.status) || !response.headers.get('location')) break;
           const next = new URL(response.headers.get('location'), current);
@@ -182,6 +195,7 @@ export async function saveDecoded(record, data) {
   const file = record.response_file.replace(/\.[^.]+$/, '-decoded.json');
   await writeFile(file, JSON.stringify(data, null, 2) + '\n', 'utf8');
   record.decoded_response_file = file;
+  record.decoded_response_sha256 = createHash('sha256').update(JSON.stringify(data, null, 2) + '\n').digest('hex');
   record.decoding = 'AES-CBC using key in the public API envelope and IV in current anonymous public Moka init-data';
   return file;
 }

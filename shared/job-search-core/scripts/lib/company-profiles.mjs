@@ -18,37 +18,6 @@ export function factProblem(fact) {
   return null;
 }
 
-// Offline maintenance only. Network research supplies reviewed patches separately.
-export function mergeProfiles(sources, business, previous, patches = []) {
-  const ids = new Set(sources.map(c => c.company_id));
-  const old = new Map((previous.companies || []).map(c => [c.company_id, c]));
-  const businesses = new Map(business.companies.map(c => [c.company_id, c]));
-  const seen = new Set();
-  for (const patch of patches) {
-    if (!ids.has(patch.company_id) || seen.has(patch.company_id)) throw new Error('未知或重复公司 ID：' + patch.company_id);
-    seen.add(patch.company_id);
-    for (const field of Object.keys(PROFILE_FIELDS)) if (patch[field]) {
-      const issue = factProblem(patch[field]);
-      if (issue) throw new Error(patch.company_id + '/' + field + '：' + issue);
-    }
-  }
-  const updates = new Map(patches.map(c => [c.company_id, c]));
-  return {schema_version: 1, updated_at: new Date().toISOString(), companies: sources.map(company => {
-    const entry = {company_id: company.company_id, display_name: company.display_name};
-    for (const field of Object.keys(PROFILE_FIELDS)) entry[field] = updates.get(company.company_id)?.[field] || old.get(company.company_id)?.[field] || emptyFact();
-    const b = businesses.get(company.company_id);
-    if (entry.business.status === 'missing' && b?.status === 'verified' && text(b.business_summary)) {
-      const fact = {value: b.business_summary, status: 'verified', entity: company.display_name + '（品牌／集团业务口径）', as_of: '', checked_at: b.evidence?.[0]?.checked_at || business.updated_at, evidence: b.evidence || []};
-      if (!factProblem(fact)) entry.business = fact;
-    }
-    for (const field of Object.keys(PROFILE_FIELDS)) {
-      const issue = factProblem(entry[field]);
-      if (issue) throw new Error(company.display_name + '/' + field + '：' + issue);
-    }
-    return entry;
-  })};
-}
-
 export async function companyProfileSnapshot(dir, companies, context) {
   const saved = await readJson(path.join(dir, 'company-profiles.snapshot.json'), null);
   if(!saved)context??=await loadCompanyContext();
