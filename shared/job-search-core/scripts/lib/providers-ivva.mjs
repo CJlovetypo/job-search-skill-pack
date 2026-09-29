@@ -1,6 +1,4 @@
-import {spawn} from 'node:child_process';
-import path from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {createClient} from './http.mjs';
 import {normalizeJobLocations} from './locations.mjs';
 import {plainJobText} from './providers-global.mjs';
 
@@ -30,18 +28,26 @@ export function normalizeIvvaResult(data,source) {
 }
 
 export async function collectIvva(source,options={}) {
-  const python=options.python||process.env.CAMPUS_JOB_FIT_PYTHON||process.env.PYTHON||'python';
-  const helper=fileURLToPath(new URL('./ivva_public.py',import.meta.url));
-  const evidenceDir=options.evidenceDir||path.resolve(path.dirname(helper),'../../artifacts/ivva-'+Date.now());
-  const data=await new Promise((resolve,reject)=>{
-    const child=spawn(python,['-B','-X','utf8',helper],{windowsHide:true,stdio:['pipe','pipe','pipe'],shell:false});
-    let stdout='',stderr='';
-    child.stdout.setEncoding('utf8');child.stderr.setEncoding('utf8');
-    child.stdout.on('data',chunk=>{stdout+=chunk;});child.stderr.on('data',chunk=>{stderr+=chunk;});
-    child.on('error',e=>reject(new Error('IVVA requires Python 3; set CAMPUS_JOB_FIT_PYTHON to the available runtime: '+e.message)));
-    child.on('close',(code,signal)=>{try{if(code!==0)throw Error(`IVVA Python reader failed (exit=${code}, signal=${signal||'none'}): ${stderr.trim().slice(0,500)||'No diagnostic output; check Python 3 and CAMPUS_JOB_FIT_PYTHON (Windows Store aliases are not a Python runtime).'}`);resolve(JSON.parse(stdout));}catch(e){reject(e);}});
-    child.stdin.on('error',()=>{});
-    child.stdin.end(JSON.stringify({source,options:{evidenceDir,maxPages:options.maxPages||1000,timeoutMs:options.timeoutMs||20000}}));
-  });
-  return normalizeIvvaResult(data,source);
+  const entry=new URL(source.primary_entry_url);
+  if(entry.origin!=='https://talent.biomap-inc.com')throw Error('Unsupported IVVA public portal');
+  const client=createClient(options),rows=[],pages=[],seen=new Set();let total=null,complete=false,reason='max_pages_reached';
+  const request=async(route,params,method='GET')=>{
+    const body=new URLSearchParams(params),r=await client.request({url:entry.origin+route+(method==='GET'?'?'+body:''),method,body:method==='GET'?null:body,headers:{Referer:entry.href,'Content-Type':'application/x-www-form-urlencoded'}},{purpose:method==='GET'?'public_portal_configuration':'job_list'});
+    if(r.record.http_status!==200||r.data?.success!==true)throw Error('Public IVVA API did not return success: HTTP '+r.record.http_status);
+    return r;
+  };
+  try{
+    const bootstrap=await request('/companyPortal/getCompOfficialWebsiteToken',{token:entry.pathname.replace(/\/$/,'').split('/').at(-1),isSchoolRecruit:0}),token=bootstrap.data.data?.token1;
+    if(!token)throw Error('Public campus portal identifier missing');
+    for(let page=1;page<=(options.maxPages||1000);page++){
+      const r=await request('/companyPortal/positionSearchByPortal',{token,isSchoolRecruit:1,pageIndex:page,pageSize:30,position_recruitStatus_i:1},'POST'),items=r.data.listData,count=r.data.pageModel?.rowCount;
+      if(!Array.isArray(items)||!Number.isInteger(count))throw Error('IVVA list/page totals missing');
+      if(total!==null&&total!==count){reason='server_total_changed';break;}total=count;let fresh=0;
+      for(const item of items){const id=String(item.positionId??'');if(!id)throw Error('Position ID missing');if(!seen.has(id)){seen.add(id);rows.push({...item,_raw_file:r.record.response_file,_portal_token:token});fresh++;}}
+      pages.push({page,server_total:total,new_ids:fresh,job_ids:items.map(x=>String(x.positionId)),response_file:r.record.response_file});
+      if(seen.size===total){complete=true;reason='unique_ids_reconcile_server_total';break;}
+      if(!items.length||!fresh){reason='empty_or_repeated_page_before_total';break;}
+    }
+  }catch(error){reason=error.message;}
+  return normalizeIvvaResult({rows,requests:client.records,coverage:{status:complete?'complete':pages.length?'partial':'failed',pages:pages.length,server_total:total,jobs_observed:rows.length,list_complete:complete,reason,page_evidence:pages}},source);
 }

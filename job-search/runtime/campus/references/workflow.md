@@ -31,7 +31,7 @@ node ../../scripts/jobs.mjs render --mode campus --run runs/本次运行
 
 实际执行时用绝对脚本和运行路径，或先将工作目录设为 skill 根目录。Windows 的 Node/Python 命令不可用时，定位已安装运行时或 Codex 附带依赖，不将命令解析失败当作 API 不可用。
 
-百图生科 IVVA 来源使用标准 Python HTTP 客户端兼容服务器响应头，保持 TLS 验证。运行前由 agent 将 `CAMPUS_JOB_FIT_PYTHON` 设为已定位的 Python 3 可执行文件；未设置则使用 `PYTHON` 或系统 `python`。读取的是公开招聘门户配置和岗位 API，无需个人登录。子进程受环境限制时记录采集失败原因，不误报空岗位。
+百图生科 IVVA 来源通过共享 HTTP 客户端读取公开招聘门户配置和岗位 API，无需个人登录。与其他采集器一样，维护验证受请求数、分页和超时预算约束；请求失败会保留错误与已取得的数据，不误报空岗位。
 
 需要核对新样式时，可为 `render` 添加 `--preview-dir runs/本次运行/tmp/excel-preview`，生成各工作表的局部预览及检查结果供内部核验；最终只交付 Excel 文件。
 
