@@ -29,23 +29,35 @@ const dutyCue = /^(?:(?:你|您|you)\s*(?:将|会|will)\s*)?(?:负责|参与|协
 const reqCue = /^(?:(?:你|您)\s*)?(?:\d{4}年?(?:应届|届)|全日制|本科|硕士|博士|大学|大专|研究生|计算机.{0,30}专业|具备|具有|拥有|熟悉|熟练|精通|掌握|了解|热爱|喜欢|良好的|较强的|优秀的|有.{1,70}(?:经验|经历|能力|基础)|对.{1,50}(?:了解|兴趣|热情|理解|热爱|认知)|能(?:够|适应|承受)|善于|英语|学历|专业[：:]|(?:bachelor|master|ph\.?d|degree|experience|proficien|strong |excellent |knowledge of|familiar|ability to|fluent|passion for|understanding of)\b)/i;
 
 /** Exact-ID-only extraction from a local API response. A title never joins jobs. */
-export function extractRawBody(payload, jobId) {
+export function extractRawBody(payload, jobId, job = {}, {parentVerified=false} = {}) {
   const matches = [];
+  const provider=job.provider||job.recruitment_evidence?.provider,e=job.recruitment_evidence||{};
+  const equal=(a,b)=>a!=null&&b!=null&&(typeof a!=='number'||Number.isSafeInteger(a))&&String(a)===String(b);
+  function matchesId(v){
+    if(provider==='yokaverse')return v.position_id!=null&&`${v.company}-${v.position_id}`===String(jobId);
+    if(provider==='huawei'){
+      const expected=String(e.advertisement_id)+(e.position_intention_id!=null?':'+e.position_intention_id:'');
+      if(String(jobId)!==expected)return false;
+      return e.position_intention_id!=null?parentVerified&&equal(v.positionIntentionId,e.position_intention_id)&&equal(v.jobId,e.job_id):equal(v.advertisementId,e.advertisement_id)&&equal(v.jobId,e.job_id);
+    }
+    return ['postId','id_icims','job_id','jobid','jobId','JobAdId','Id','id','jobReqId','positionId','requisitionId','publishId','jobUnionId','pkId'].some(k=>equal(v[k],jobId));
+  }
   function walk(v, pointer) {
     if (!v || typeof v !== 'object') return;
-    const ids = ['postId', 'id_icims', 'job_id', 'jobid', 'jobId', 'JobAdId', 'Id', 'id', 'jobReqId', 'positionId', 'requisitionId'];
-    if (!Array.isArray(v) && ids.some(k => v[k] != null && (typeof v[k] !== 'number' || Number.isSafeInteger(v[k])) && String(v[k]) === String(jobId))) matches.push({ record: v, pointer });
+    if (!Array.isArray(v) && matchesId(v)) matches.push({ record: v, pointer });
     for (const [k, child] of Object.entries(v)) if (child && typeof child === 'object') walk(child, `${pointer}/${k.replace(/~/g, '~0').replace(/\//g, '~1')}`);
   }
   walk(payload, '');
   const fields = ['info_lang', 'topicDetail', 'topicRequirement', 'desc', 'request', 'graduateBonus', 'internBonus',
     'Duty', 'Require', 'DutyStr', 'RequireStr', 'jobDescription', 'description', 'descriptionHtml', 'requirements', 'requirement',
-    'workContent', 'serviceCondition', 'jobResponsibility', 'jobRequirements', 'jobinfo', 'basic_qualifications', 'preferred_qualifications'];
+    'workContent', 'serviceCondition', 'jobResponsibility', 'jobRequirements', 'jobinfo', 'basic_qualifications', 'preferred_qualifications',
+    'positionDescription','positionRequirement','jobDuties','jobDuty','jobRequirement','postDuty','qualification','introduce',
+    ...(provider==='huawei'?['mainBusiness','jobRequire','jobResponsibilities','jobDemand']:[])];
   const found = matches.filter(x => fields.some(k => k in x.record));
   if (found.length !== 1) return { error: found.length ? 'ambiguous_exact_id_records' : matches.length ? 'exact_id_record_without_body_fields' : 'no_exact_id_record', matches: found.length };
   const { record: r, pointer } = found[0];
-  const descKeys = ['topicDetail', 'desc', 'DutyStr', 'Duty', 'jobDescription', 'description', 'descriptionHtml', 'workContent', 'jobResponsibility', 'jobinfo'];
-  const reqKeys = ['topicRequirement', 'request', 'RequireStr', 'Require', 'requirements', 'requirement', 'serviceCondition', 'jobRequirements', 'basic_qualifications'];
+  const descKeys = ['topicDetail', 'desc', 'DutyStr', 'Duty', 'jobDescription', 'description', 'descriptionHtml', 'workContent', 'jobResponsibility', 'jobinfo','positionDescription','jobDuties','jobDuty','postDuty','introduce',...(provider==='huawei'?['mainBusiness','jobResponsibilities']:[])];
+  const reqKeys = ['topicRequirement', 'request', 'RequireStr', 'Require', 'requirements', 'requirement', 'serviceCondition', 'jobRequirements', 'basic_qualifications','positionRequirement','jobRequirement','qualification',...(provider==='huawei'?['jobRequire','jobDemand']:[])];
   const take = keys => keys.filter(k => meaningful(bodyText(r[k]))).map(k => ({ field: k, text: bodyText(r[k]) }));
   const unique = a => a.filter((x, i) => !a.slice(0, i).some(y => y.text === x.text));
   const d = unique(take(descKeys)), q = unique(take(reqKeys));
@@ -112,8 +124,8 @@ export function reviewProviderBody(job) {
 }
 
 /** Return a new job, preserving the full original body and all unrelated fields.
- * Reads job.raw_file only if supplied; optional job.body_source_files are additional
- * caller-selected local snapshots. No implicit scans or downloads.
+ * Reads only caller-selected raw/list/evidence/body-source snapshots.
+ * No implicit scans or downloads.
  */
 export function reviewJobBody(job,{requests=[],rawCache}={}) {
   const identity=[job.company_id||'',String(job.source_job_id??job.job_id??'')];
@@ -123,29 +135,31 @@ export function reviewJobBody(job,{requests=[],rawCache}={}) {
   const original = unchanged?prior.original:{ description: job.description ?? '', requirements: job.requirements ?? '', body_complete: job.body_complete };
   let description = bodyText(original.description), requirements = bodyText(original.requirements);
   const sources = [], rawErrors = [], rawFields = [];
-  const files = [...new Set([job.raw_file, ...(job.body_source_files || [])].filter(Boolean))];
+  const files = [...new Set([job.raw_file,job.list_raw_file,...(job.evidence_files||[]), ...(job.body_source_files || [])].filter(Boolean))];
+  rawCache??=new Map();
+  function readRaw(file){
+    let cached=rawCache.get(file);
+    if(!cached){const bytes=fs.readFileSync(file),text=bytes.toString('utf8').replace(/^\uFEFF/,'').trim(),wrapped=text.match(/^[\w$.]+\s*\(([\s\S]*)\)\s*;?\s*$/);cached={bytes,payload:JSON.parse(wrapped?wrapped[1]:text)};rawCache.set(file,cached);}
+    return cached;
+  }
+  const provider=job.provider||job.recruitment_evidence?.provider,e=job.recruitment_evidence||{};
+  const parentVerified=provider==='huawei'&&files.some(file=>{try{return readRaw(file).payload.data?.result?.some(r=>String(r.advertisementId)===String(e.advertisement_id)&&String(r.jobId)===String(e.job_id));}catch{return false;}});
   for (const file of files) {
     try {
-      let cached=rawCache?.get(file);
-      if(!cached){
-        const bytes=fs.readFileSync(file),text=bytes.toString('utf8').replace(/^\uFEFF/, '').trim();
-        // Decode a single JSONP wrapper as data; never execute callback code.
-        const wrapped=text.match(/^[\w$.]+\s*\(([\s\S]*)\)\s*;?\s*$/);
-        cached={bytes,payload:JSON.parse(wrapped?wrapped[1]:text)};rawCache?.set(file,cached);
-      }
-      const {bytes,payload}=cached,raw=extractRawBody(payload,job.source_job_id??job.job_id);
+      const {bytes,payload}=readRaw(file),raw=extractRawBody(payload,job.source_job_id??job.job_id,job,{parentVerified});
       sources.push({ path: file, sha256: sha(bytes), pointer: raw.pointer ?? null, fields: raw.fields || [], error: raw.error || null });
       if (raw.error) { rawErrors.push(raw.error); continue; }
       rawFields.push(...raw.fields);
       // Retain even differing legacy text; never silently discard sentences.
       const includes = (a, b) => a.replace(/\s/g, '').includes(b.replace(/\s/g, ''));
-      if (raw.description && !includes(description, raw.description)) description = meaningful(description) ? `${description}\n\n${raw.description}` : raw.description;
+      if (raw.description && !includes(description+'\n'+requirements, raw.description)) description = meaningful(description) ? `${description}\n\n${raw.description}` : raw.description;
       if (raw.requirements && !includes(requirements, raw.requirements)) requirements = meaningful(requirements) ? `${requirements}\n\n${raw.requirements}` : raw.requirements;
     } catch (error) { rawErrors.push(error.code || 'invalid_local_json'); sources.push({ path: file, error: error.code || 'invalid_local_json' }); }
   }
   const content={description,requirements};
   let fetch=bodyFetch({...job,description,requirements},requests);
-  if(fetch.status==='unknown'&&rawFields.length&&(meaningful(description)||meaningful(requirements)))fetch={...fetch,status:'available',reason:'exact_id_official_body_fields'};
+  const budgetOnly=fetch.status==='not_attempted'&&/budget|limit|public_list_capability_only/i.test(fetch.reason||'');
+  if((fetch.status==='unknown'||budgetOnly)&&rawFields.length&&(meaningful(description)||meaningful(requirements)))fetch={...fetch,status:'available',reason:'exact_id_official_body_fields'};
   const contentFingerprint=sha(JSON.stringify(content));
   const inputHash=sha(JSON.stringify([identity,content,fetch,sources.map(s=>[s.sha256,s.pointer,s.error])]));
   const di = inspect(description), ri = inspect(requirements);
