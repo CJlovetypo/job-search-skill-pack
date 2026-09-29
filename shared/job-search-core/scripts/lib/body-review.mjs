@@ -33,18 +33,18 @@ export function extractRawBody(payload, jobId) {
   const matches = [];
   function walk(v, pointer) {
     if (!v || typeof v !== 'object') return;
-    const ids = ['postId', 'id_icims', 'job_id', 'jobId', 'JobAdId', 'Id', 'id', 'jobReqId', 'positionId', 'requisitionId'];
+    const ids = ['postId', 'id_icims', 'job_id', 'jobid', 'jobId', 'JobAdId', 'Id', 'id', 'jobReqId', 'positionId', 'requisitionId'];
     if (!Array.isArray(v) && ids.some(k => v[k] != null && (typeof v[k] !== 'number' || Number.isSafeInteger(v[k])) && String(v[k]) === String(jobId))) matches.push({ record: v, pointer });
     for (const [k, child] of Object.entries(v)) if (child && typeof child === 'object') walk(child, `${pointer}/${k.replace(/~/g, '~0').replace(/\//g, '~1')}`);
   }
   walk(payload, '');
   const fields = ['info_lang', 'topicDetail', 'topicRequirement', 'desc', 'request', 'graduateBonus', 'internBonus',
     'Duty', 'Require', 'DutyStr', 'RequireStr', 'jobDescription', 'description', 'descriptionHtml', 'requirements', 'requirement',
-    'workContent', 'serviceCondition', 'jobResponsibility', 'jobRequirements', 'basic_qualifications', 'preferred_qualifications'];
+    'workContent', 'serviceCondition', 'jobResponsibility', 'jobRequirements', 'jobinfo', 'basic_qualifications', 'preferred_qualifications'];
   const found = matches.filter(x => fields.some(k => k in x.record));
   if (found.length !== 1) return { error: found.length ? 'ambiguous_exact_id_records' : matches.length ? 'exact_id_record_without_body_fields' : 'no_exact_id_record', matches: found.length };
   const { record: r, pointer } = found[0];
-  const descKeys = ['topicDetail', 'desc', 'DutyStr', 'Duty', 'jobDescription', 'description', 'descriptionHtml', 'workContent', 'jobResponsibility'];
+  const descKeys = ['topicDetail', 'desc', 'DutyStr', 'Duty', 'jobDescription', 'description', 'descriptionHtml', 'workContent', 'jobResponsibility', 'jobinfo'];
   const reqKeys = ['topicRequirement', 'request', 'RequireStr', 'Require', 'requirements', 'requirement', 'serviceCondition', 'jobRequirements', 'basic_qualifications'];
   const take = keys => keys.filter(k => meaningful(bodyText(r[k]))).map(k => ({ field: k, text: bodyText(r[k]) }));
   const unique = a => a.filter((x, i) => !a.slice(0, i).some(y => y.text === x.text));
@@ -127,7 +127,12 @@ export function reviewJobBody(job,{requests=[],rawCache}={}) {
   for (const file of files) {
     try {
       let cached=rawCache?.get(file);
-      if(!cached){const bytes=fs.readFileSync(file);cached={bytes,payload:JSON.parse(bytes.toString('utf8').replace(/^\uFEFF/, ''))};rawCache?.set(file,cached);}
+      if(!cached){
+        const bytes=fs.readFileSync(file),text=bytes.toString('utf8').replace(/^\uFEFF/, '').trim();
+        // Decode a single JSONP wrapper as data; never execute callback code.
+        const wrapped=text.match(/^[\w$.]+\s*\(([\s\S]*)\)\s*;?\s*$/);
+        cached={bytes,payload:JSON.parse(wrapped?wrapped[1]:text)};rawCache?.set(file,cached);
+      }
       const {bytes,payload}=cached,raw=extractRawBody(payload,job.source_job_id??job.job_id);
       sources.push({ path: file, sha256: sha(bytes), pointer: raw.pointer ?? null, fields: raw.fields || [], error: raw.error || null });
       if (raw.error) { rawErrors.push(raw.error); continue; }
@@ -170,7 +175,7 @@ export function reviewJobBody(job,{requests=[],rawCache}={}) {
   if (!meaningful(description) && ri.duties.length) { description = ri.duties.join('\n'); rules.push('duties_in_requirements'); }
   const sections={responsibilities:duties.some(x=>meaningful(unbullet(x)))?'identified':'not_identified',requirements:reqEvidence.some(x=>meaningful(unbullet(x)))?'identified':'not_identified'};
   if(!meaningful(description)&&!meaningful(requirements))sections.responsibilities=sections.requirements='not_evaluated';
-  const validOverride=['manual_full_record_review','model_full_available_body_and_local_evidence_review'].includes(prior?.method)&&prior.version===BODY_REVIEW_VERSION&&prior.input_sha256===inputHash&&prior.output_sha256===outputHash(job)&&fetch.status==='available'&&['duty_clauses','requirement_clauses'].every(k=>prior.evidence?.[k]?.some(q=>meaningful(q)&&(content.description+'\n'+content.requirements).includes(q)));
+  const validOverride=job.body_complete===true&&['manual_full_record_review','model_full_available_body_and_local_evidence_review'].includes(prior?.method)&&prior.version===BODY_REVIEW_VERSION&&prior.input_sha256===inputHash&&prior.output_sha256===outputHash(job)&&fetch.status==='available'&&['duty_clauses','requirement_clauses'].every(k=>prior.evidence?.[k]?.some(q=>meaningful(q)&&(content.description+'\n'+content.requirements).includes(q)));
   if(validOverride)sections.responsibilities=sections.requirements='identified';
   const complete = fetch.status==='available'&&sections.responsibilities==='identified'&&sections.requirements==='identified';
   if (complete && !rules.length) rules.push('distinct_duties_and_qualification_evidence');

@@ -16,6 +16,7 @@ export function bodyFetch(job,requests=[]) {
   if(/summary|truncat/i.test(skip)||job.body_is_summary===true)return result('partial','summary_or_truncated_body');
   // A list may already carry the full body even when a redundant detail was skipped.
   if(text(job)&&detail.some(r=>r.http_status>=200&&r.http_status<300&&r.response_is_json!==false))return result('available','successful_bound_detail_body');
+  if(text(job)&&list.some(r=>r.http_status>=200&&r.http_status<300&&r.response_is_json!==false&&/full.*bod/i.test(r.purpose||'')))return result('available','successful_bound_full_body_list');
   if(error&&!/limit|budget|skipped/i.test(error))return result('failed','detail_fetch_failed');
   if(related.some(r=>r.http_status>=400))return result('failed','body_response_failed');
   if(job.body_fetch?.status==='available'&&text(job))return {...job.body_fetch,origin};

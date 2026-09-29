@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import {reviewJobBody} from '../lib/body-review.mjs';
 import {bodyCacheReusable,needsBodyFetch} from '../lib/body-fetch.mjs';
 import {jobFingerprint} from '../lib/job-version.mjs';
@@ -30,4 +33,18 @@ test('old manual method names do not bypass review; parser version invalidates a
  assert.equal(j.body_complete,false);
  const a=reviewJobBody(job);assert.notEqual(jobFingerprint(a),jobFingerprint({...a,body_review:{...a.body_review,version:3}}));
  assert.equal(jobFingerprint(a),jobFingerprint({...a,body_review:{...a.body_review,input_sha256:'different response metadata'}}));
+});
+test('explicit full-body list evidence remains available without relying on legacy true',()=>{
+ const j={job_id:'1',description:body,evidence_files:['list.json'],detail_skipped_reason:'detail_limit'};
+ const requests=[{purpose:'list_with_full_job_bodies',http_status:200,response_is_json:true,response_file:'list.json'}];
+ assert.equal(reviewJobBody(j,{requests}).body_fetch.status,'available');
+ assert.equal(reviewJobBody(j,{requests:[{...requests[0],purpose:'job_list'}]}).body_fetch.status,'not_attempted');
+});
+test('archived JSONP full body requires exact ID and is never executed',async t=>{
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'body-jsonp-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));const raw=path.join(dir,'raw.txt');
+ await fs.writeFile(raw,'jsoncallback('+JSON.stringify({resultbody:{jobid:'1',jobinfo:body}})+');');
+ assert.equal(reviewJobBody({job_id:'1',raw_file:raw}).body_complete,true);
+ assert.equal(reviewJobBody({job_id:'2',raw_file:raw}).body_complete,false);
+ await fs.writeFile(raw,'jsoncallback({});globalThis.untrusted=true;');
+ assert.equal(reviewJobBody({job_id:'1',raw_file:raw}).body_complete,false);assert.equal(globalThis.untrusted,undefined);
 });
