@@ -1,8 +1,10 @@
+import {validateRecruitmentRoutes,companyRouteEntries} from './recruitment-routes.mjs';
 // Public data shape and integrity checks only. No publishing or repair side effects.
+import {directionSourceKey} from './direction-validation.mjs';
 import {createHash} from 'node:crypto';
 import {validateIndustryTags} from './industry-routing.mjs';
 import {publicCompanyRecords,publicCompatibility,publicUrl} from './public-company-data.mjs';
-export const DATA_CONTRACT_VERSION=1;
+export const DATA_CONTRACT_VERSION=2;
 export const DATA_FILES=Object.freeze([
  'assets/sources.json','assets/custom-providers.json','data/business-taxonomy.json',
  ...['records','business-tags','ownership-tags','profiles','size-tags'].map(n=>'data/company-'+n+'.json'),
@@ -24,7 +26,7 @@ export function publicOperationalValue(value){
 }
 export function assertPublicOperationalValue(value){if(JSON.stringify(value)!==JSON.stringify(publicOperationalValue(value)))throw Error('Private field or local evidence path in release');}
 const pick=(v,keys)=>Object.fromEntries(keys.filter(k=>v?.[k]!==undefined).map(k=>[k,v[k]]));
-const SOURCE_FIELDS=['company_id','display_name','aliases','industry_tags','source_id','provider','primary_entry_url','alternative_entry_urls','additional_entry_urls','api_config','validated_api_request_examples','public_bootstrap_requests','official_job_url_template','list_page_size','project_type','job_namespace','route_evidence_url','verification_status','verified_at','api_verified_at','admitted','source_relationship'];
+const SOURCE_FIELDS=['collection_routes','recruitment_modes','company_id','display_name','aliases','industry_tags','source_id','provider','primary_entry_url','alternative_entry_urls','additional_entry_urls','api_config','validated_api_request_examples','public_bootstrap_requests','official_job_url_template','list_page_size','project_type','job_namespace','route_evidence_url','verification_status','verified_at','api_verified_at','admitted','source_relationship'];
 export function publicSourceRegistry(registry){
  const source=row=>{
   const out=pick(row,SOURCE_FIELDS);
@@ -38,6 +40,7 @@ export function validateDataSnapshot(files,{providers}={}){
  for(const name of DATA_FILES)if(!Object.hasOwn(files,name))throw Error('Incomplete release: '+name);
  for(const [name,value]of Object.entries(files)){assertReleasePath(name);assertPublicOperationalValue(value);}
  const registry=files['assets/sources.json'],records=files['data/company-records.json'];
+ if(registry?.schema_version===3)for(const mode of ['campus','social','internship'])for(const name of ['source-direction-validation.json','source-mode-capabilities.json'])if(!files['data/recruitment/'+mode+'/'+name])throw Error('Missing direction data: '+mode+'/'+name);
  if(!Array.isArray(registry?.companies)||!Array.isArray(records?.companies))throw Error('Missing company arrays');
  if(JSON.stringify(registry)!==JSON.stringify(publicSourceRegistry(registry)))throw Error('Public source schema whitelist mismatch');
  if(JSON.stringify(records)!==JSON.stringify(publicCompanyRecords(records)))throw Error('Public company schema mismatch');
@@ -50,6 +53,8 @@ export function validateDataSnapshot(files,{providers}={}){
  for(const c of registry.companies){
   if(!subjects.has(c.company_id))throw Error('Source references missing subject');const sourceIds=new Set();
   for(const s of c.recruitment_sources?.length?c.recruitment_sources:[c]){
+   if(registry.schema_version===3&&!s.collection_routes)throw Error('Source missing recruitment routes');
+   validateRecruitmentRoutes(s);
    if(providers&&!providers.includes(s.provider))throw Error('Unsupported provider: '+s.provider);
    if(!['http:','https:'].includes(new URL(s.primary_entry_url).protocol))throw Error('Invalid source URL');
    if(s.source_id&&sourceIds.has(s.source_id))throw Error('Duplicate source ID');sourceIds.add(s.source_id);
@@ -64,6 +69,13 @@ export function validateDataSnapshot(files,{providers}={}){
  for(const [name,data]of Object.entries(files))if(name.startsWith('data/')&&name!=='data/company-records.json'){
   if(Array.isArray(data.companies)){ids(data.companies,name);for(const c of data.companies)if(!subjects.has(c.company_id))throw Error('Unknown company in '+name);}
   for(const row of Array.isArray(data.configurations)?data.configurations:[])if(row.company_id&&!subjects.has(row.company_id))throw Error('Unknown capability company');
+ }
+ if(registry.schema_version===3){
+  const expected=new Map();for(const c of registry.companies)for(const mode of ['campus','social','internship'])for(const {source,index}of companyRouteEntries(c,mode))expected.set(mode+'|'+directionSourceKey(c,source,index),source);
+  for(const [name,data]of Object.entries(files))if(name.includes('source-')&&Array.isArray(data.configurations)){
+   const seen=new Set();for(const row of data.configurations){const key=row.mode+'|'+row.key,source=expected.get(key);if(!source||row.source_id!==source.source_id||row.route_id!==source.route_id||row.route_config_fingerprint!==source.route_config_fingerprint)throw Error('Stale or dangling route capability: '+name+' '+key);if(seen.has(key))throw Error('Duplicate route capability: '+key);seen.add(key);}
+   if(name.includes('/recruitment/')){const mode=name.split('/')[2];if(data.mode!==mode||[...expected.keys()].filter(k=>k.startsWith(mode+'|')).some(k=>!seen.has(k)))throw Error('Incomplete route capability: '+name);}
+  }
  }
  return {subjects:subjects.size,with_sources:sources.size,without_sources:subjects.size-sources.size,configurations:registry.companies.reduce((n,c)=>n+(c.recruitment_sources?.length||1),0)};
 }

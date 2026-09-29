@@ -33,7 +33,7 @@ export async function collectRadar(db,id,context,collector,options={}){
  const query=radarQuery(c),selection=radarSelection(c,context),plan=radarSearchPlan(c,selection,context);
  const run=randomUUID(),started=new Date().toISOString();
  db.prepare('INSERT INTO runs VALUES(?,?,?,?,?,?,?,?)').run(run,id,sub.revision,started,null,'running',sub.config,null);
- const sourceHashes=Object.fromEntries(selection.companies.map(x=>[x.company_id,hash(x)]));
+ const sourceHashes=Object.fromEntries(selection.companies.map(x=>[x.company_id,x.collection_routes||x.recruitment_sources?.some(s=>s.collection_routes)?sourceConfigFingerprint(x,c.mode):hash(x)]));
  const prior=db.prepare("SELECT x.payload FROM run_context x JOIN runs r ON r.id=x.run WHERE r.subscription=? AND r.revision=? AND r.status IN ('complete','partial','failed','empty_scope') ORDER BY r.started DESC LIMIT 1").get(id,sub.revision);
  const previous=prior?JSON.parse(prior.payload):null;
  const snapshot={query,search_plan:plan,selection:selection.summary,source_hashes:sourceHashes,sources:selection.companies,company_records:(context.records?.companies||[]).filter(r=>selection.companies.some(c=>c.company_id===r.company_id)),city_index:context.cities?.[c.mode]||null,query_hash:hash(query),company_ids:selection.companies.map(x=>x.company_id)};

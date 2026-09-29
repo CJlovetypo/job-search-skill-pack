@@ -1,4 +1,5 @@
 import {SEARCH_MODE,MODE_POLICY_VERSION} from './search-mode.mjs';
+import {expandRecruitmentRoutes} from './recruitment-routes.mjs';
 
 const clone=x=>structuredClone(x);
 export function requestObject(q) {
@@ -20,8 +21,9 @@ export function publicSiteConfig(html,provider) {
 function strings(v) { return typeof v==='string'?[v]:Array.isArray(v)?v.flatMap(strings):v&&typeof v==='object'?Object.values(v).flatMap(strings):[]; }
 const broadProviders=new Set(['iqvia_public','ajinga_public','jobs2web_public','tupu360','moseeker_public','phenom_public','eightfold_public','avature_public','51job_coapi','51job_xyz','zhaopin_grace','workday','smartrecruiters','icims_jibe','oracle_recruiting','nowcoder_public','greenhouse','ashby','microsoft_eightfold','sap_rss','amazon_jobs','xinrenxinshi','yotta','tongcheng','wenhua_public']);
 export function sourceDirectionPlan(source,mode=SEARCH_MODE.id) {
+ if(source.recruitment_modes){const binding=source.recruitment_modes[mode];return {strategy:'explicit_routes',scope:binding?.scope||'published_routes',status:binding?.status,route_ids:binding?.route_ids||[],...(binding?.limitation?{limitation:binding.limitation}:{})};}
  if(source.provider==='huatie_public')return {strategy:'official_career_channel',scope:mode==='internship'?'campus_portal_without_dedicated_internship_channel':'observed_official_channel',...(mode==='internship'?{limitation:'官网仅公开校招和社招入口，实习读取校招门户，不能证明全公司实习覆盖。'}:{})};
- if(mode==='campus')return {strategy:'verified_campus',scope:'verified_original'};
+ if(mode==='campus')return {strategy:'legacy_published_route',scope:'direction_evidence_required'};
  if(['tencent','alibaba','baidu','jd','bilibili','kuaishou','xiaohongshu'].includes(source.provider)||mode==='internship'&&source.provider==='pdd')return {strategy:'verified_employer_direction_contract',scope:'per_job_type_required'};
  if(['beisen','beisen_lightbolt','hotjob','feishu','moka','moka_api_platform','hcmcloud_public'].includes(source.provider))return {strategy:'public_type_routing',scope:'validate_target_at_runtime'};
  if(broadProviders.has(source.provider))return {strategy:'existing_broad_stream',scope:'per_job_type_required'};
@@ -51,6 +53,7 @@ export function routeKnownSource(source,mode) {
 
 export async function directionSources(source,options={}) {
  const mode=options.targetMode||SEARCH_MODE.id,plan=sourceDirectionPlan(source,mode);
+ if(source.collection_routes||source.route_id)return {sources:expandRecruitmentRoutes(source,mode),plan,requests:[]};
  if(mode==='campus')return {sources:[source],plan,requests:[]};
  const base=routeKnownSource(source,mode),sources=[base],requests=[];
  // Capability verification can address a documented target category directly;

@@ -77,10 +77,8 @@ function classify(d, provider, campusContext, targetMode=SEARCH_MODE.id) {
     evidence.query_recruitment_id_list = d._requested_recruitment_ids;
     evidence.cohort_corroboration = [title, d.job_subject?.name?.zh_cn, d.requirement].filter(Boolean).join('\n').match(/.{0,20}(?:校招|校园招聘|(?:20)?2\d\s*届).{0,60}/g)?.slice(0,3);
   }
-  else if (['moka', 'moka_api_platform'].includes(provider) && campusContext && /^(全职|正式|full.?time)$/i.test(type)) formal = 'formal';
   else if (provider === 'hotjob' && Number(d.recruitType) === 1
     && /校招|校园招聘|应届|(?:20)?2\d届/.test([title, d.projectName, d.serviceCondition, d.workContent].join('\n'))) formal = 'formal';
-  else if (targetMode==='campus'&&campusContext === false && /^(全职|正式|full.?time)$/i.test(type)) formal = 'social';
 
   if (provider === 'beisen') {
     if (Number(d.Status) === 1) open = 'open';

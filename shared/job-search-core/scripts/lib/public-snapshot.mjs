@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {CORE_ROOT} from '../../runtime-context.mjs';
-import {bytesHash,assertReleasePath} from './data-release-contract.mjs';
+import {bytesHash,assertReleasePath,DATA_CONTRACT_VERSION} from './data-release-contract.mjs';
 
 export const PUBLICATION_STATE_FILE=path.join(CORE_ROOT,'data/.publication-state.json');
 export async function readPublicationState(file=PUBLICATION_STATE_FILE){
@@ -12,6 +12,7 @@ async function releaseState(root){
  const file=path.join(root,'data/public-release.json'),text=await readPublicationState(file);
  if(!text)return null;
  const manifest=JSON.parse(text),stats=[];
+ if(![1,DATA_CONTRACT_VERSION].includes(manifest.schema_version))throw Error('Unsupported public data contract');
  for(const [relative,digest]of Object.entries(manifest.hashes||{})){
   assertReleasePath(relative);const target=path.join(root,relative),stat=await fs.stat(target),stamp=[stat.mtimeMs,stat.ctimeMs,stat.size].join(':');
   const key=target+'|'+digest;if(checked.get(key)!==stamp){if(bytesHash(await fs.readFile(target))!==digest)throw Error('正式数据版本不完整，请完成版本更新后重试');checked.set(key,stamp);}

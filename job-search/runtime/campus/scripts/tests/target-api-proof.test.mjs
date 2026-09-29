@@ -24,7 +24,7 @@ test('known social endpoint still requires independent mandatory professional re
 test('runtime full-JD reconciliation rejects inherited false positives and restores genuine targets',()=>{
  assert.equal(reconcileTargetJob({...base,formal_status:'social',recruitment_evidence:{provider:'moka',commitment:'全职'}},source,'social').formal_status,'unknown');
  assert.equal(reconcileTargetJob({...base,formal_status:'formal',recruitment_evidence:{provider:'moka',hireMode:1,showIsCampus:true,commitment:'全职'}},source,'social').formal_status,'social');
- const campus={...base,formal_status:'formal'};assert.equal(reconcileTargetJob(campus,source,'campus'),campus);
+ const campus={...base,formal_status:'formal'};assert.equal(reconcileTargetJob(campus,source,'campus').formal_status,'unknown');
 });
 test('audit proof rejects inferred social status and unlabeled full-time',()=>assert.equal(proof({provider:'moka',commitment:'全职',campus_context:false},'social',{formal_status:'social'}).accepted,false));
 test('audit proof rejects management trainee as generic social evidence',()=>assert.equal(proof({provider:'moka',commitment:'全职',projectName:'Global Management Trainee'}).accepted,false));

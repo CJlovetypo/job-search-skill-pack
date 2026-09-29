@@ -1,3 +1,4 @@
+import {validateRecruitmentRoutes} from './scripts/lib/recruitment-routes.mjs';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import {CORE_ROOT} from './runtime-context.mjs';
@@ -24,6 +25,7 @@ export async function readSourceRegistry() {
  return readConsistentPublic(async()=>{
   const data = JSON.parse(await fs.readFile(SOURCE_REGISTRY_FILE, 'utf8'));
   if (!Array.isArray(data.companies)) throw Error('共享来源库缺少 companies 数组');
+  if(data.schema_version===3)for(const c of data.companies)for(const source of c.recruitment_sources?.length?c.recruitment_sources:[c])if(!validateRecruitmentRoutes(source))throw Error('Source missing recruitment routes');
   return data;
  });
 }

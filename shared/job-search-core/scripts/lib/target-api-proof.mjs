@@ -1,15 +1,17 @@
+import {campusEvidence} from './recruitment-policy.mjs';
 /** Strict target-JD admission. Never use inferred formal_status as proof. */
 export function reconcileTargetJob(job,source,mode){
-  if(mode==='campus'||job.body_complete!==true||job.open_status!=='open')return job;
-  const proof=targetApiProof(job,source,mode);
-  if(!proof.accepted&&job.formal_status!==mode)return job;
-  return {...job,formal_status:proof.accepted?mode:'unknown',recruitment_evidence:{...job.recruitment_evidence,target_api_admission:{accepted:proof.accepted,reason:proof.reason,evidence:proof.evidence}}};
+  if(job.body_complete!==true||job.open_status!=='open'||['activity','parttime'].includes(job.formal_status))return job;
+  const proofs=['campus','social','internship'].map(direction=>({direction,proof:targetApiProof(job,source,direction)}));
+  const accepted=proofs.filter(p=>p.proof.accepted),selected=accepted.length===1?accepted[0]:null;
+  const proof=selected?.proof||{accepted:false,reason:accepted.length?'conflicting_direction_proofs':'no_confirmed_recruitment_type',evidence:[]};
+  return {...job,formal_status:selected?(selected.direction==='campus'?'formal':selected.direction):'unknown',recruitment_evidence:{...job.recruitment_evidence,target_api_admission:proof}};
 }
 export function targetApiProof(job={},source={},mode) {
   const e=job.recruitment_evidence||{},m=job.raw_metadata||{},evidence=[];
   const reject=reason=>({accepted:false,reason,evidence});
   const add=(field,value,kind)=>evidence.push({field,value,kind});
-  if(!['internship','social'].includes(mode))return reject('unsupported_target_mode');
+  if(!['campus','internship','social'].includes(mode))return reject('unsupported_target_mode');
   if(job.company_id&&source.company_id&&String(job.company_id)!==String(source.company_id))return reject('company_binding_conflict');
   if(e.ownership_mismatch||e.tenant_mismatch||m.ownership_mismatch||m.tenant_mismatch||source.ownership_mismatch)return reject('explicit_tenant_conflict');
   const body=source.validated_api_request_examples?.find(q=>q.body&&typeof q.body==='object')?.body||{};
@@ -142,6 +144,14 @@ export function targetApiProof(job={},source={},mode) {
   if(/(?:本|此)岗位\s*(?:属于|为|是)\s*(?:春招|秋招|校园招聘|校招)?\s*正式(?:校招)?岗/.test(description+'\n'+requirements))push(explicitFormal,'explicit_formal_statement',(description+'\n'+requirements).match(/.{0,10}(?:本|此)岗位.{0,50}/)?.[0]);
 
   if(internship.length&&explicitFormal.length){add('conflicting_actual_types',{internship,explicitFormal},'conflict');return reject('internship_conflicts_with_explicit_formal_job_type');}
+  if(mode==='campus'){
+    if(internship.length)return reject('explicit_internship_not_campus');
+    if(social.length)return reject('explicit_social_not_campus');
+    const actual=[...campus,...explicitFormal,...campusEvidence(job)];
+    if(!actual.length)return reject('no_explicit_returned_campus_type_or_project');
+    actual.forEach(x=>add(x.field,x.value,'campus_type'));
+    return {accepted:true,reason:'explicit_current_complete_campus_jd',evidence};
+  }
   if(mode==='internship'){
     if(!internship.length)return reject('no_explicit_returned_internship_type_or_title');
     internship.forEach(x=>add(x.field,x.value,'internship_type'));

@@ -1,7 +1,7 @@
 // Admission metadata only. This does not rate ability, interest, or graduate eligibility.
 import {SEARCH_MODE,searchMode} from './search-mode.mjs';
 import {bodyPendingReason} from './body-fetch.mjs';
-export const RECRUITMENT_POLICY_VERSION = '2026-09-18-campus-evidence';
+export const RECRUITMENT_POLICY_VERSION = '2026-09-29-unified-recruitment-evidence';
 const yes = value => value === true || value === 1 || value === '1' || value === 'true';
 const label = value => typeof value === 'string' ? value : value?.name?.zh_cn || value?.name?.i18n || value?.label || value?.name || '';
 const campusLabel = value => /校招|校园(?:人才)?招聘|应届|fresh\s*graduate|university\s*(?:recruit|hiring|graduate)|graduate\s*(?:recruit|program|scheme)|campus\s*(?:recruit|hiring)/i.test(label(value));
@@ -35,6 +35,7 @@ export function campusEvidence(job) {
   if (e.provider==='amazon_jobs'&&e.primary_search_label==='studentprograms.team-jobs-for-grads') add('recruitment_evidence.primary_search_label',e.primary_search_label);
   if (yes(e.showIsCampus)&&!(['moka','moka_api_platform'].includes(e.provider)&&Number(e.hireMode)===1)) add('recruitment_evidence.showIsCampus',e.showIsCampus);
   if (['moka','moka_api_platform'].includes(e.provider) && Number(e.hireMode) === 2) add('recruitment_evidence.hireMode',e.hireMode);
+  if (['beisen','beisen_lightbolt'].includes(e.provider) && Number(e.CategoryId) === 2) add('recruitment_evidence.CategoryId',e.CategoryId);
   if (e.provider === 'hotjob' && Number(e.recruitType) === 1) add('recruitment_evidence.recruitType',e.recruitType);
   if (e.query_recruitType === 'GRADUATE') add('recruitment_evidence.query_recruitType',e.query_recruitType);
   if (e.query_recruitment_id_list?.length === 1 && String(e.query_recruitment_id_list[0]) === '201') add('recruitment_evidence.query_recruitment_id_list',e.query_recruitment_id_list);
@@ -77,9 +78,9 @@ function directionEvidence(job) {
 
 export function reviewRecruitment(job,targetMode=SEARCH_MODE.id) {
   const e = job.recruitment_evidence || {};
-  if(targetMode!=='campus'&&!e.type_conflict&&!(e.conflicting_recruitment_types?.length>1)) {
+  if(!e.type_conflict&&!(e.conflicting_recruitment_types?.length>1)) {
     const found=directionEvidence(job);
-    if(found)return {...job,formal_status:found.status,recruitment_evidence:{...e,admission_review:{policy_version:'2026-09-19-direction-evidence',status:found.status,reason:'依据岗位返回的招聘类型或明确职位标识确认；工作时间安排与招聘身份分别判断',evidence:found.evidence}}};
+    if(found&&!(found.status==='social'&&found.evidence[0]?.field==='title'&&(campusEvidence(job).length||job.formal_status==='formal')))return {...job,formal_status:found.status,recruitment_evidence:{...e,admission_review:{policy_version:RECRUITMENT_POLICY_VERSION,status:found.status,reason:'依据岗位返回的招聘类型或明确职位标识确认；工作时间安排与招聘身份分别判断',evidence:found.evidence}}};
   }
   const evidence = campusEvidence(job);
   const title = String(job.title || '');
@@ -102,7 +103,8 @@ export function reviewRecruitment(job,targetMode=SEARCH_MODE.id) {
   } else if (evidence.length) {
     status = 'formal'; reason = '接口明确标注校招或岗位关联校招项目，按用户规则确认；不再要求另填全职/正式字段'; basis = evidence;
   } else if (status === 'formal') {
-    return job;
+    if(['moka','moka_api_platform'].includes(e.provider)&&e.campus_context){status='unknown';reason='门户上下文与全职安排不足以确认岗位招聘类型';}
+    else return job;
   } else {
     reason = targetMode==='campus'?'尚未找到该岗位的校招类型标签或校招项目关联证据；仅全职、公司校招入口或初级岗位名称不足以确认':'尚未找到该岗位的明确目标招聘类型证据；仅全职、门户名称或普通岗位名称不足以确认';
   }

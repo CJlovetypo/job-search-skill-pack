@@ -85,6 +85,8 @@ JobScope_CN 是面向中文求职场景的 AI Agent 技能包。通过 [job-sear
 
 正式主体总数：**3,233**；有正式招聘源的主体：**3,232**；尚无招聘源的主体：**1**。
 
+各来源分别维护校招、社招和实习的采集路由，共用接口可由多个方向引用。路由已登记、接口可用和该方向岗位已核验分别呈现；待核或采样零命中不代表公司没有招聘。配置与证据口径见[招聘方向与采集路由](shared/job-search-core/references/recruitment-routes.md)。
+
 统计于 **2026-09-29**，招聘源覆盖主体及接口数量依据[招聘来源库](shared/job-search-core/assets/sources.json)，正式主体总数与行业归属依据当前[正式公司画像](shared/job-search-core/data/company-records.json)。同一主体可归入多个行业；包括待独立复核的 Demo 标签。
 
 ### 行业覆盖一览

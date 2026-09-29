@@ -63,3 +63,12 @@ test('CLI 进程之间持久保存订阅，暂停不会被重复订阅重置',t=
   cli('resume','--id','pm');assert.equal(JSON.parse(cli('list'))[0].enabled,1);
   assert.deepEqual(JSON.parse(cli('runs','--id','pm')),[]);
 });
+
+test('explicit route migration resets comparison once and labels do not reset the following scan',async t=>{
+ const db=fixture(t);await run(db,'pm',companies,collect([job]));
+ const current={...companies[0],provider:'workday',source_id:'s',primary_entry_url:'https://fixture.invalid/jobs',collection_routes:[{route_id:'all',adapter_route:'configured',overrides:{}}],recruitment_modes:Object.fromEntries(['campus','social','internship'].map(m=>[m,{status:'legacy_unverified',route_ids:['all']}]))};
+ const ctx={...context,registry:{companies:[current]}};
+ let r=await runSubscription(db,'pm',[current],collect([]),{context:ctx});assert.deepEqual(events(db,r),[]);
+ current.display_name='新名称';current.source_verification={checked_at:'2026-09-29'};
+ r=await runSubscription(db,'pm',[current],collect([]),{context:ctx});assert.deepEqual(events(db,r),['missing']);
+});

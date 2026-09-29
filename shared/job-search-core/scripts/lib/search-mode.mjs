@@ -14,7 +14,7 @@ export function searchMode(value=collectionMode.getStore()||runtimeContext().mod
   return SEARCH_MODES[value];
 }
 export const SEARCH_MODE=new Proxy({}, {get:(_,key)=>searchMode()[key]});
-export const MODE_POLICY_VERSION='2026-09-19-direction-v2-target-api-proof';
+export const MODE_POLICY_VERSION='2026-09-29-explicit-routes-unified-types';
 export function isTargetJob(job,mode=SEARCH_MODE.id) { return job.formal_status===searchMode(mode).status; }
 export function knownOtherType(job,mode=SEARCH_MODE.id) {
   return ['formal','internship','social','activity','parttime'].includes(job.formal_status)&&!isTargetJob(job,mode);

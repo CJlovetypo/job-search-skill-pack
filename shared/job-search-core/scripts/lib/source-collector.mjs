@@ -1,4 +1,5 @@
 import {collectHuatie} from './provider-huatie.mjs';
+import {companyRouteEntries,expandRecruitmentRoutes,recruitmentCoverage} from './recruitment-routes.mjs';
 import {reviewJobBody} from './body-review.mjs';
 import {collectIqvia} from './provider-iqvia.mjs';
 import {collectRecoveredDirection} from './providers-direction-recovered.mjs';
@@ -45,7 +46,20 @@ const hardware={iqvia_public:collectIqvia,huatie_public:collectHuatie,ajinga_pub
 async function collectOriginalEndpoint(source,options){const recovered=await collectRecoveredDirection(source,options);if(recovered)return recovered;const result=source.provider==='shlab_public'?await collectShlab(source,options):source.provider==='hcmcloud_public'?await collectHcmCloud(source,options):source.provider==='sf_campus'?await collectSf(source,options):source.provider==='beisen_lightbolt'?await collectLightbolt(source,options):source.provider==='yokaverse'?await collectYokaverse(source,options):hardware[source.provider]?await hardware[source.provider](source,options):await collectRound4(source,options)||await collectRound3(source,options)||await collectSelfHosted(source,options)||await collectRecovered(source,options)||await collectOracleNowcoder(source,options)||await collectXYZ(source,options)||await collectCommon(source,options)||await collectCustom(source,options);if(!result)throw Error('未配置该来源采集器：'+source.provider);return enforceListOnlyCoverage(result,options);}
 async function collectRoutedEndpoint(source,options={}) {
  const mode=options.targetMode||SEARCH_MODE.id;
- if(mode==='campus')return collectOriginalEndpoint(source,options);
+ if(source.route_id){
+  if(source.adapter_route!=='configured'&&source.adapter_route!==mode)throw Error('Route direction mismatch');
+  const result=await collectOriginalEndpoint(source,options);
+  result.jobs=(result.jobs||[]).map(j=>({...reviewRecruitment(j,mode),source_ids:[source.source_id],source_route_ids:[source.source_id+'/'+source.route_id]}));
+  result.coverage={...result.coverage,route_id:source.route_id,route_config_fingerprint:source.route_config_fingerprint,direction:{mode,status:source.route_status,scope:source.route_scope,limitation:source.route_limitation,target_jobs_observed:result.jobs.filter(j=>j.formal_status===searchMode(mode).status).length}};
+  return result;
+ }
+ if(source.collection_routes){
+  const results=[];
+  for(const route of expandRecruitmentRoutes(source,mode))results.push({source:route,result:await collectEndpoint(route,{...options,evidenceDir:options.evidenceDir?path.join(options.evidenceDir,route.route_id):undefined})});
+  if(!results.length)return {company_id:source.company_id,jobs:[],requests:[],coverage:{status:'unavailable',collection_complete:false,pages:0,reason:'source_direction_not_supported',direction:source.recruitment_modes[mode]}};
+  return mergeSourceResults(source,results,options);
+ }
+ if(mode==='campus'){const r=await collectOriginalEndpoint(source,options);r.jobs=(r.jobs||[]).map(j=>reviewRecruitment(j,mode));return r;}
  const routed=await directionSources(source,{...options,targetMode:mode}),results=[];
  for(const [i,route] of routed.sources.entries()) {
   const current={...route,source_id:(source.source_id||source.provider)+'-direction-'+i};let result;
@@ -72,7 +86,7 @@ export function sourceCacheMatches(result,company,searchPlan=null){
  else if(result.search_plan_fingerprint||result.search_mode==='targeted')return false;
  if(result.source_config_fingerprint)return !!company&&result.source_config_fingerprint===sourceConfigFingerprint(company);
  // Legacy single-entry snapshots remain reusable; merged source lists must be collected once.
- return SEARCH_MODE.id==='campus'&&!company?.recruitment_sources?.length;
+ return SEARCH_MODE.id==='campus'&&!company?.recruitment_sources?.length&&!company?.collection_routes;
 }
 function jobNamespace(source){
  if(source.job_namespace)return source.provider+':reviewed:'+source.job_namespace;
@@ -92,26 +106,29 @@ export function mergeSourceResults(company,results,options={}){
  const stored=new Map(),requests=[],contexts=[];
  const primary=jobNamespace(company.primary_entry_url?company:results.find(r=>r.source.provider===company.provider)?.source||company);
  const namespaces=new Map();for(const {source} of results){if(!namespaces.has(source.provider))namespaces.set(source.provider,new Set());namespaces.get(source.provider).add(jobNamespace(source));}
- for(const {source,result} of results){requests.push(...(result.requests||[]));contexts.push({source_id:source.source_id,provider:source.provider,entry_url:source.primary_entry_url,...result.coverage});
+ for(const {source,result} of results){requests.push(...(result.requests||[]));contexts.push({source_id:source.source_id,route_id:source.route_id,provider:source.provider,entry_url:source.primary_entry_url,...result.coverage});
   const namespace=jobNamespace(source),prefix=namespace===primary?'':source.provider!==company.provider&&namespaces.get(source.provider).size===1?source.provider+':':source.provider+':'+createHash('sha256').update(namespace).digest('hex').slice(0,12)+':';
   for(const raw of result.jobs||[]){const original=String(raw.job_id),key=namespace+':'+original,id=prefix+original;
-   const job={...raw,job_id:id,source_job_id:original,source_provider:source.provider,source_job_namespace:namespace,source_ids:[source.source_id],company_id:company.company_id,company_name:company.display_name,raw_file:raw.raw_file||raw.evidence_files?.at(-1)};
+   const job={...raw,job_id:id,source_job_id:original,source_provider:source.provider,source_job_namespace:namespace,source_ids:[...new Set([...(raw.source_ids||[]),source.source_id])],source_route_ids:[...new Set([...(raw.source_route_ids||[]),...(source.route_id?[source.source_id+'/'+source.route_id]:[])])],company_id:company.company_id,company_name:company.display_name,raw_file:raw.raw_file||raw.evidence_files?.at(-1)};
    const previous=stored.get(key);if(!previous){stored.set(key,job);continue;}
    const sourceIds=[...new Set([...previous.source_ids,source.source_id])],a=previous.formal_status,b=job.formal_status;
    const types=[...new Set([...(previous.recruitment_evidence?.conflicting_recruitment_types||[]),a,b].filter(t=>t&&t!=='unknown'))],conflict=types.length>1;
    const current=(!previous.body_complete&&job.body_complete)||(previous.body_complete===job.body_complete&&!conflict&&a==='unknown'&&b!=='unknown')?job:previous;
-   stored.set(key,{...current,source_ids:sourceIds,...conflict?{formal_status:'unknown',recruitment_evidence:{...current.recruitment_evidence,conflicting_recruitment_types:types,type_conflict:{sources:sourceIds,types}}}:{}});
+   stored.set(key,{...current,source_ids:sourceIds,source_route_ids:[...new Set([...(previous.source_route_ids||[]),...(job.source_route_ids||[])])],...conflict?{formal_status:'unknown',recruitment_evidence:{...current.recruitment_evidence,conflicting_recruitment_types:types,type_conflict:{sources:sourceIds,types}}}:{}});
   }
  }
  const jobs=[...stored.values()],failed=contexts.filter(x=>x.status==='failed').length,incomplete=options.mode==='list'?0:jobs.filter(j=>needsTargetBody(j,options)).length;
  const status=contexts.length&&contexts.every(x=>x.status==='complete')&&!incomplete?'complete':failed===contexts.length?'failed':'partial';
- return {company_id:company.company_id,display_name:company.display_name,checked_at:new Date().toISOString(),jobs,requests,coverage:{status,collection_complete:contexts.length>0&&contexts.every(c=>c.status==='complete'||c.collection_complete===true)&&!incomplete,pages:contexts.reduce((n,c)=>n+(typeof c.pages==='number'?c.pages:c.pages?.length||0),0),server_total:null,jobs_observed:jobs.length,contexts,reason:contexts.map(c=>`${c.provider}/${c.source_id}: ${c.reason||c.status}`).join('; ')+(incomplete?`; ${incomplete} observed jobs have incomplete or unresolved JD sections`:''),details_failed:contexts.reduce((n,c)=>n+(c.details_failed||0),0)}};
+ return {company_id:company.company_id,display_name:company.display_name,checked_at:new Date().toISOString(),jobs,requests,coverage:{status,collection_complete:contexts.length>0&&contexts.every(c=>c.status==='complete'||c.collection_complete===true)&&!incomplete,pages:contexts.reduce((n,c)=>n+(typeof c.pages==='number'?c.pages:c.pages?.length||0),0),server_total:null,jobs_observed:jobs.length,contexts,reason:contexts.map(c=>`${c.provider}/${c.source_id}${c.route_id?'/'+c.route_id:''}: ${c.reason||c.status}`).join('; ')+(incomplete?`; ${incomplete} observed jobs have incomplete or unresolved JD sections`:''),details_failed:contexts.reduce((n,c)=>n+(c.details_failed||0),0)}};
 }
 export async function collectCompanySources(company,options={},collector=collectEndpoint){
  if(!company.provider&&!company.recruitment_sources?.length)return {company_id:company.company_id,jobs:[],requests:[],coverage:{status:'unavailable',reason:'company_has_no_runnable_sources',pages:0,collection_complete:false}};
  options={...options,targetMode:options.targetMode||SEARCH_MODE.id};
  const fingerprint=sourceConfigFingerprint(company,options.targetMode);
- if(!company.recruitment_sources?.length){const result=await collector(company,options);return {...result,source_config_fingerprint:fingerprint};}
- const results=[];for(const config of company.recruitment_sources){const source={...config,company_id:company.company_id,display_name:company.display_name};try{results.push({source,result:await collector(source,{...options,evidenceDir:options.evidenceDir?path.join(options.evidenceDir,source.source_id):undefined})});}catch(e){results.push({source,result:{jobs:[],requests:[],coverage:{status:'failed',reason:String(e.message||e),pages:0}}});}}
- return {...mergeSourceResults(company,results,options),source_config_fingerprint:fingerprint};
+ if(!company.recruitment_sources?.length&&!company.collection_routes){const result=await collector(company,options);return {...result,source_config_fingerprint:fingerprint};}
+ const entries=companyRouteEntries(company,options.targetMode);
+ if(!entries.length)return {company_id:company.company_id,jobs:[],requests:[],source_config_fingerprint:fingerprint,coverage:{status:'unavailable',collection_complete:false,pages:0,reason:'no_applicable_direction_routes',direction_sources:recruitmentCoverage(company,options.targetMode)}};
+ const results=[];for(const {source} of entries){try{results.push({source,result:await collector(source,{...options,evidenceDir:options.evidenceDir?path.join(options.evidenceDir,source.source_id||'legacy',source.route_id||'source'):undefined})});}catch(e){results.push({source,result:{jobs:[],requests:[],coverage:{status:'failed',reason:String(e.message||e),pages:0}}});}}
+ const merged=mergeSourceResults(company,results,options);
+ return {...merged,coverage:{...merged.coverage,direction_sources:recruitmentCoverage(company,options.targetMode)},source_config_fingerprint:fingerprint};
 }
