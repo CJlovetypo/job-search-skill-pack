@@ -230,7 +230,7 @@ async function collectIhnhr(source,client){
   const jobs=new Map(),pages=[];let total=null,reason='max_pages_reached';
   for(let page=1;page<=100;page++){
     const response=await client.request({url:'https://gp-api.iguopin.com/api/jobs/v1/list',method:'POST',headers:{Device:'pc',Version:'5.2.300',Subsite:'ihnhr',Origin:'https://job.ihnhr.com',Referer:source.primary_entry_url||'https://job.ihnhr.com/'},body:{page,page_size:100,company_id:[companyId]}},{purpose:'job_list_full_body'});
-    const rows=response.data?.data?.list;if(response.data?.code!==200||!Array.isArray(rows)){reason=`invalid_list_response_http_${response.record.http_status}`;break;}
+    const payload=response.data?.data,rows=payload?.list===null&&payload.total===0?[]:payload?.list;if(response.record.http_status!==200||response.data?.code!==200||!Array.isArray(rows)){reason=`invalid_list_response_http_${response.record.http_status}`;break;}
     total=Number(response.data.data.total);const before=jobs.size;
     for(const row of rows){if(String(row.company_id)!==companyId)continue;const job=normalizeRound3(source,row,response.record.response_file);if(job.job_id)jobs.set(job.job_id,job);}
     pages.push({page,rows:rows.length,new_ids:jobs.size-before,response_file:response.record.response_file});

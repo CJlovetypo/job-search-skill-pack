@@ -7,6 +7,14 @@ const duty='负责业务系统设计、功能开发、测试验证和技术文�
 const requirement='本科及以上学历，具备扎实专业基础、良好沟通能力和独立分析解决问题的能力。';
 const source=(provider,name='测试公司',api_config={})=>({company_id:'synthetic',display_name:name,provider,api_config});
 
+test('IHNHR accepts explicit zero with null list but refuses nonzero or failed envelopes',async()=>{
+  for(const [code,total,expected] of [[200,0,true],[200,5,false],[401,0,false]]){
+    const client={records:[],async request(){return {record:{http_status:200,response_file:'raw'},data:{code,data:{list:null,total}}};}};
+    const r=await collectRound3(source('ihnhr_public','测试公司',{company_id:'123'}),{client});
+    assert.equal(r.coverage.list_complete,expected);assert.equal(r.jobs.length,0);
+  }
+});
+
 test('round-3 normalizers preserve provider-specific campus, employer and body evidence',()=>{
   const ct=normalizeRound3(source('ct108_campus','畅唐网络',{locations:['杭州']}),{id:1,name:'开发工程师',jobDescription:duty,responsibility:requirement,status:1,_trail:['应届生','开发工程师']},'raw');
   assert.equal(ct.formal_status,'formal');assert.equal(ct.open_status,'open');assert.equal(ct.body_complete,true);assert.deepEqual(ct.cities,['杭州']);
