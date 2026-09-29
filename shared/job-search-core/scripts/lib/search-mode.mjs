@@ -1,12 +1,15 @@
 import {runtimeContext} from '../../runtime-context.mjs';
 import {isV5} from './assessment-v5.mjs';
+import {AsyncLocalStorage} from 'node:async_hooks';
+const collectionMode=new AsyncLocalStorage();
+export function withSearchMode(mode,work){searchMode(mode);return collectionMode.run(mode,work);}
 
 export const SEARCH_MODES = Object.freeze({
   campus: {id:'campus', status:'formal', label:'校招', report:'校招岗位匹配.xlsx'},
   internship: {id:'internship', status:'internship', label:'实习', report:'实习岗位匹配.xlsx'},
   social: {id:'social', status:'social', label:'社招', report:'社招岗位匹配.xlsx'},
 });
-export function searchMode(value=runtimeContext().mode) {
+export function searchMode(value=collectionMode.getStore()||runtimeContext().mode) {
   if(!Object.hasOwn(SEARCH_MODES,value))throw Error('未知招聘方向：'+value);
   return SEARCH_MODES[value];
 }

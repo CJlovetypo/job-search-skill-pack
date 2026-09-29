@@ -24,7 +24,7 @@ import {collectSelfHosted} from './providers-selfhosted.mjs';
 import {collectRound3} from './providers-round3.mjs';
 import {collectRound4} from './providers-round4.mjs';
 import {directionSources} from './source-directions.mjs';
-import {SEARCH_MODE,MODE_POLICY_VERSION,searchMode} from './search-mode.mjs';
+import {SEARCH_MODE,MODE_POLICY_VERSION,searchMode,withSearchMode} from './search-mode.mjs';
 import {reviewRecruitment} from './recruitment-policy.mjs';
 import {normalizeJobLocations,jobCityStatus} from './locations.mjs';
 import {searchPlanFingerprint} from './targeted-search.mjs';
@@ -62,7 +62,7 @@ async function collectRoutedEndpoint(source,options={}) {
 export async function collectEndpoint(source,options={}){
  if(source.identity_verification?.identity_verified===false)return {company_id:source.company_id,display_name:source.display_name,checked_at:new Date().toISOString(),jobs:[],requests:[],coverage:{status:'failed',pages:0,reason:'source_identity_not_verified: '+(source.identity_verification.basis||'explicit identity verification failure')}};
  let result;
- try{result=await collectRoutedEndpoint(source,options);}catch(e){result={company_id:source.company_id,display_name:source.display_name,checked_at:new Date().toISOString(),jobs:[],requests:[],coverage:{status:'failed',pages:0,reason:e.message}};}
+ try{result=await withSearchMode(options.targetMode||SEARCH_MODE.id,()=>collectRoutedEndpoint(source,options));}catch(e){result={company_id:source.company_id,display_name:source.display_name,checked_at:new Date().toISOString(),jobs:[],requests:[],coverage:{status:'failed',pages:0,reason:e.message}};}
  return result;
 }
 export function sourceCacheMatches(result,company,searchPlan=null){

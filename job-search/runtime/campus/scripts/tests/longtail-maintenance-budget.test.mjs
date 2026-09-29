@@ -6,6 +6,15 @@ import path from 'node:path';
 import {collectIvva} from '../../../../../shared/job-search-core/scripts/lib/providers-ivva.mjs';
 import {collectUgreen} from '../../../../../shared/job-search-core/scripts/lib/provider-ugreen.mjs';
 import {createMaintenanceScope,withMaintenanceNetworkScope} from '../../../../../shared/job-search-core/scripts/lib/maintenance-network-scope.mjs';
+import {SEARCH_MODE,withSearchMode} from '../../../../../shared/job-search-core/scripts/lib/search-mode.mjs';
+
+test('concurrent collectors keep separate explicit recruitment modes without changing product runtime',async()=>{
+  const values=await Promise.all(['campus','social','internship'].map(mode=>withSearchMode(mode,async()=>{
+    await new Promise(resolve=>setTimeout(resolve,5));assert.equal(SEARCH_MODE.id,mode);return SEARCH_MODE.id;
+  })));
+  assert.deepEqual(values,['campus','social','internship']);
+  assert.throws(()=>SEARCH_MODE.id,/未知招聘方向/);
+});
 
 async function fixture(t,handler){
   const dir=await fs.mkdtemp(path.join(os.tmpdir(),'longtail-budget-'));
