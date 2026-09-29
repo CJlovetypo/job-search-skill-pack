@@ -28,6 +28,9 @@ export function validateRecruitmentRoutes(source){
     const entry=route.overrides.primary_entry_url??source.primary_entry_url;
     if(!['http:','https:'].includes(new URL(entry).protocol)||new URL(entry).username||new URL(entry).password)throw Error('Invalid route entry URL');
     for(const field of ['validated_api_request_examples','public_bootstrap_requests'])if(route.overrides[field]!==undefined&&!Array.isArray(route.overrides[field]))throw Error('Route request overrides must be arrays');
+    const origin=value=>{const u=new URL(value);if(!['http:','https:'].includes(u.protocol)||u.username||u.password)throw Error('Invalid route request URL');return u.origin;};
+    const knownOrigins=new Set([source.primary_entry_url,...source.alternative_entry_urls||[],...source.additional_entry_urls||[],...(source.validated_api_request_examples||[]).map(q=>q.url),...(source.public_bootstrap_requests||[]).map(q=>q.url)].filter(Boolean).map(origin));
+    for(const url of [route.overrides.primary_entry_url,route.overrides.api_config?.origin,...(route.overrides.validated_api_request_examples||[]).map(q=>q.url),...(route.overrides.public_bootstrap_requests||[]).map(q=>q.url)].filter(Boolean))if(!knownOrigins.has(origin(url)))throw Error('Unreviewed route origin; register a reviewed source or alias');
     const identityKeys=['tenant','tenant_id','orgId','ctmid','ehire_ctm_id'];
     for(const key of identityKeys)if(source.api_config?.[key]!=null&&route.overrides.api_config?.[key]!=null&&String(source.api_config[key])!==String(route.overrides.api_config[key]))throw Error('Route changes source tenant: '+key);
     const requestBody=q=>{if(typeof q?.body==='object')return q.body||{};try{return JSON.parse(q?.body||'{}');}catch{return Object.fromEntries(new URLSearchParams(q?.body||''));}};
