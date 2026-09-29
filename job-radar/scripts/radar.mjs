@@ -1,4 +1,5 @@
 import {normalizeRadarConfig,radarQuery,radarSelection} from './query.mjs';
+import {bodyPendingReason} from '../../shared/job-search-core/scripts/lib/body-fetch.mjs';
 import {initializeReviewTables,collectRadar,pendingReviews,submitReviews,finalizeRadar} from './review-runtime.mjs';
 import {migrationPreview,migrateDatabase,rollbackMigration} from './migration.mjs';
 import fs from 'node:fs';
@@ -61,12 +62,12 @@ function candidate(c,j) {
   if(j.role_relevance?.status==='uncertain')pending.push('职能相关性');
   if (j.formal_status !== modes[c.mode]) pending.push('招聘类型');
   if (radarQuery(c).city_filters.length && cityStatus === 'unknown') pending.push('城市');
-  if (!j.body_complete) pending.push('JD正文');
+  if (!j.body_complete) pending.push(bodyPendingReason(j));
   if (j.open_status !== 'open') pending.push('开放状态');
   return {...j, radar_pending:pending, radar_locations:locations};
 }
 function semantic(j) {
-  return hash([j.title,j.description || '',j.requirements || '',j.radar_locations.slice().sort(),j.formal_status,j.open_status,j.salary || j.salary_raw || '',j.official_url || '',j.radar_pending]);
+  return hash([j.title,j.body_content_fingerprint||[j.description||'',j.requirements||''],j.radar_locations.slice().sort(),j.formal_status,j.open_status,j.salary || j.salary_raw || '',j.official_url || '']);
 }
 export function ingest(db,run,c,revision,company,result,now) {
   db.exec('BEGIN IMMEDIATE');
@@ -91,7 +92,9 @@ export function ingest(db,run,c,revision,company,result,now) {
       j.company_name = company.display_name;
       const old = db.prepare('SELECT * FROM jobs WHERE subscription=? AND revision=? AND company=? AND job=?').get(c.id,revision,company.company_id,id);
       const fingerprint = semantic(j);
-      const kind = result.baseline_reset ? null : !old ? 'new' : result.migration_bridge ? null : JSON.parse(old.payload).role_relevance?.status==='unrelated'?'matching_changed':old.missing ? 'reappeared' : old.fingerprint !== fingerprint ? 'updated' : null;
+      const oldJob=old?JSON.parse(old.payload):null;
+      const bodyMigration=oldJob&&!!oldJob.body_content_fingerprint!==!!j.body_content_fingerprint;
+      const kind = result.baseline_reset ? null : !old ? 'new' : result.migration_bridge ? null : oldJob.role_relevance?.status==='unrelated'?'matching_changed':old.missing ? 'reappeared' : !bodyMigration&&semantic(oldJob)!==fingerprint ? 'updated' : null;
       db.prepare(`INSERT INTO jobs VALUES(?,?,?,?,?,?,?,?,0) ON CONFLICT(subscription,revision,company,job) DO UPDATE SET fingerprint=excluded.fingerprint,payload=excluded.payload,last_seen=excluded.last_seen,missing=0`).run(c.id,revision,company.company_id,id,fingerprint,json(j),old?.first_seen || now,now);
       if (kind) db.prepare('INSERT OR REPLACE INTO events VALUES(?,?,?,?,?)').run(run,company.company_id,id,kind,json(j));
     }

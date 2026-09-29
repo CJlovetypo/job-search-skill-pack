@@ -58,7 +58,7 @@ export function verificationReviewSheet(audit) {
 // A process declaration is not proof of reading: the model must actually read
 // the complete JD and produce the evidence comparisons before setting it.
 export function reviewNeedsUpdate(review, job, profile) {
-  if (job.body_complete !== true) return '完整 JD 正文未取得，不能形成全文评估';
+  if (job.body_complete !== true) return (job.body_review?.reason||'正文获取或内容识别待核')+'；不能形成全文评估';
   if (!review) return '尚未评估';
   if (review.review_method !== 'full_jd') return '缺少全文阅读评估记录，需完整阅读 JD 后重新评估';
   if (!jobFingerprintMatches(review.jd_fingerprint,job)) return 'JD更新，旧评估已失效';

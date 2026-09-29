@@ -1,7 +1,9 @@
 import './context.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { reviewJobBody, extractRawBody, bodyText } from '../lib/body-review.mjs';
+import { reviewJobBody as review, extractRawBody, bodyText } from '../lib/body-review.mjs';
+// These parser cases supply already acquired official body text explicitly.
+const reviewJobBody=job=>review({...job,body_fetch:{status:'available',origin:'detail',reason:'fixture_official_body'}});
 
 test('co-located body keeps all text, including optional conditions', () => {
   const description = '岗位内容：\n负责产品需求分析和版本交付。\n任职要求：\n本科以上，具备沟通能力。\n加分项：\n有项目管理实习经历优先。\n其他信息：\n轮班工作。';

@@ -1,4 +1,5 @@
 import {collectHuatie} from './provider-huatie.mjs';
+import {reviewJobBody} from './body-review.mjs';
 import {collectIqvia} from './provider-iqvia.mjs';
 import {collectRecoveredDirection} from './providers-direction-recovered.mjs';
 import path from 'node:path';
@@ -32,6 +33,7 @@ import {sourceConfigFingerprint} from './source-fingerprint.mjs';
 export {sourceConfigFingerprint};
 function needsTargetBody(job,options){const loc=normalizeJobLocations(job);return job.formal_status===searchMode(options.targetMode||SEARCH_MODE.id).status&&job.open_status==='open'&&!job.body_complete&&job.detail_skipped_reason!=='explicit_non_target_city'&&jobCityStatus({cities:loc.cities,location_unknown:loc.unknown,location_special:loc.special},options.cities||[])!=='excluded';}
 function enforceListOnlyCoverage(result,options){
+ result={...result,jobs:(result.jobs||[]).map(j=>reviewJobBody(j,{requests:result.requests||[]}))};
  if(options.mode!=='list'&&result.coverage?.capability==='public_list_only'&&(result.jobs||[]).some(j=>!j.body_complete)){
   if(result.coverage.status==='complete')result.coverage.status='partial';
   result.coverage.collection_complete=false;

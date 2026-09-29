@@ -2,6 +2,7 @@ import {collectEndpoint,mergeSourceResults,sourceConfigFingerprint} from './sour
 import {directionSourceKey} from './direction-validation.mjs';
 import {matchesSearchTitle,applyTargetedResult,nativeKeywordParameter} from './targeted-search.mjs';
 import {SEARCH_MODE} from './search-mode.mjs';
+import {needsBodyFetch} from './body-fetch.mjs';
 
 const selectiveDetails=new Set(['moka','beisen','feishu','hotjob','workday','smartrecruiters','tencent','alibaba','baidu','jd','bilibili','kuaishou','pdd','xiaohongshu','meituan','openout','mihoyo','first_party']);
 export async function collectTargeted(company,plan,options={},capabilities={},collector=collectEndpoint){
@@ -17,7 +18,7 @@ export async function collectTargeted(company,plan,options={},capabilities={},co
    if(options.evidenceDir)opts.evidenceDir=options.evidenceDir+'/'+(source.source_id||index)+'/query-'+n;
    try{
     let result=await collector(source,{...opts,mode:selectiveDetails.has(source.provider)?options.mode||'full':'list'});
-    if(!selectiveDetails.has(source.provider)&&options.mode!=='list'&&(result.jobs||[]).some(j=>titleFilter(j.title)&&!j.body_complete)){
+    if(!selectiveDetails.has(source.provider)&&options.mode!=='list'&&(result.jobs||[]).some(j=>titleFilter(j.title)&&needsBodyFetch(j))){
      const full=await collector(source,{...opts,mode:'full'});result={...full,requests:[...(result.requests||[]),...(full.requests||[])]};strategies.at(-1).strategy='provider_full_fetch_then_title_filter';
     }
     results.push({source,result:applyTargetedResult(result,plan,strategies.at(-1).strategy)});

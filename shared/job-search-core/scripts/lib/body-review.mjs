@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
+import {bodyFetch} from './body-fetch.mjs';
 
 // Completeness only. No recruitment/location decisions, matching, network or writes.
-export const BODY_REVIEW_VERSION = 1;
+export const BODY_REVIEW_VERSION = 2;
 export function bodyText(value) {
   if (typeof value !== 'string') return '';
   return value.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
@@ -32,7 +33,7 @@ export function extractRawBody(payload, jobId) {
   const matches = [];
   function walk(v, pointer) {
     if (!v || typeof v !== 'object') return;
-    const ids = ['postId', 'id_icims', 'job_id', 'jobId', 'JobAdId', 'Id', 'id'];
+    const ids = ['postId', 'id_icims', 'job_id', 'jobId', 'JobAdId', 'Id', 'id', 'jobReqId', 'positionId', 'requisitionId'];
     if (!Array.isArray(v) && ids.some(k => v[k] != null && (typeof v[k] !== 'number' || Number.isSafeInteger(v[k])) && String(v[k]) === String(jobId))) matches.push({ record: v, pointer });
     for (const [k, child] of Object.entries(v)) if (child && typeof child === 'object') walk(child, `${pointer}/${k.replace(/~/g, '~0').replace(/\//g, '~1')}`);
   }
@@ -104,18 +105,30 @@ function numberedQualificationTail(text) {
   return '';
 }
 
+/** Called only by provider normalizers which select their official body fields. */
+export function reviewProviderBody(job) {
+  const present=[job.description,job.requirements].some(x=>meaningful(bodyText(x)));
+  return reviewJobBody({...job,...present&&!job.body_fetch?{body_fetch:{status:'available',origin:'unknown',reason:'provider_official_body_fields'}}:{}});
+}
+
 /** Return a new job, preserving the full original body and all unrelated fields.
  * Reads job.raw_file only if supplied; optional job.body_source_files are additional
  * caller-selected local snapshots. No implicit scans or downloads.
  */
-export function reviewJobBody(job) {
-  const original = { description: job.description ?? '', requirements: job.requirements ?? '', body_complete: job.body_complete };
-  let description = bodyText(job.description), requirements = bodyText(job.requirements);
+export function reviewJobBody(job,{requests=[],rawCache}={}) {
+  const identity=[job.company_id||'',String(job.source_job_id??job.job_id??'')];
+  const outputHash=j=>sha(JSON.stringify([identity,j.description??'',j.requirements??'']));
+  const prior=job.body_review;
+  const unchanged=prior?.version===BODY_REVIEW_VERSION&&prior.output_sha256===outputHash(job);
+  const original = unchanged?prior.original:{ description: job.description ?? '', requirements: job.requirements ?? '', body_complete: job.body_complete };
+  let description = bodyText(original.description), requirements = bodyText(original.requirements);
   const sources = [], rawErrors = [], rawFields = [];
   const files = [...new Set([job.raw_file, ...(job.body_source_files || [])].filter(Boolean))];
   for (const file of files) {
     try {
-      const bytes = fs.readFileSync(file), raw = extractRawBody(JSON.parse(bytes.toString('utf8').replace(/^\uFEFF/, '')), job.job_id);
+      let cached=rawCache?.get(file);
+      if(!cached){const bytes=fs.readFileSync(file);cached={bytes,payload:JSON.parse(bytes.toString('utf8').replace(/^\uFEFF/, ''))};rawCache?.set(file,cached);}
+      const {bytes,payload}=cached,raw=extractRawBody(payload,job.source_job_id??job.job_id);
       sources.push({ path: file, sha256: sha(bytes), pointer: raw.pointer ?? null, fields: raw.fields || [], error: raw.error || null });
       if (raw.error) { rawErrors.push(raw.error); continue; }
       rawFields.push(...raw.fields);
@@ -125,6 +138,11 @@ export function reviewJobBody(job) {
       if (raw.requirements && !includes(requirements, raw.requirements)) requirements = meaningful(requirements) ? `${requirements}\n\n${raw.requirements}` : raw.requirements;
     } catch (error) { rawErrors.push(error.code || 'invalid_local_json'); sources.push({ path: file, error: error.code || 'invalid_local_json' }); }
   }
+  const content={description,requirements};
+  let fetch=bodyFetch({...job,description,requirements},requests);
+  if(fetch.status==='unknown'&&rawFields.length&&(meaningful(description)||meaningful(requirements)))fetch={...fetch,status:'available',reason:'exact_id_official_body_fields'};
+  const contentFingerprint=sha(JSON.stringify(content));
+  const inputHash=sha(JSON.stringify([identity,content,fetch,sources.map(s=>[s.sha256,s.pointer,s.error])]));
   const di = inspect(description), ri = inspect(requirements);
   const rules = [];
   if (rawFields.some(k => /topicDetail|topicRequirement/.test(k))) rules.push('raw_topic_fields');
@@ -150,16 +168,23 @@ export function reviewJobBody(job) {
   }
   const duties = [...di.duties, ...ri.duties];
   if (!meaningful(description) && ri.duties.length) { description = ri.duties.join('\n'); rules.push('duties_in_requirements'); }
-  const complete = duties.some(x => meaningful(unbullet(x))) && reqEvidence.some(x => meaningful(unbullet(x)));
+  const sections={responsibilities:duties.some(x=>meaningful(unbullet(x)))?'identified':'not_identified',requirements:reqEvidence.some(x=>meaningful(unbullet(x)))?'identified':'not_identified'};
+  if(!meaningful(description)&&!meaningful(requirements))sections.responsibilities=sections.requirements='not_evaluated';
+  const validOverride=['manual_full_record_review','model_full_available_body_and_local_evidence_review'].includes(prior?.method)&&prior.version===BODY_REVIEW_VERSION&&prior.input_sha256===inputHash&&prior.output_sha256===outputHash(job)&&fetch.status==='available'&&['duty_clauses','requirement_clauses'].every(k=>prior.evidence?.[k]?.some(q=>meaningful(q)&&(content.description+'\n'+content.requirements).includes(q)));
+  if(validOverride)sections.responsibilities=sections.requirements='identified';
+  const complete = fetch.status==='available'&&sections.responsibilities==='identified'&&sections.requirements==='identified';
   if (complete && !rules.length) rules.push('distinct_duties_and_qualification_evidence');
   const reason = complete ? '已定位实际工作职责和任职条件；保留原文及加分表述，仅核验正文完整性。'
+    : sections.responsibilities==='identified'&&sections.requirements==='identified' ? '文本中已识别职责与任职条件，但完整正文获取证据尚未确认。'
     : !meaningful(description) && !meaningful(requirements) ? '当次可读字段无有效职责或任职条件（空值／占位文本），不能确认完整。'
     : !duties.length ? '未能以安全规则定位实际岗位职责；可能仅有要求、招聘介绍或特殊行文，需逐岗全文判定。'
     : '已有职责，但未能以安全规则定位完整任职条件；需逐岗全文判定。';
-  return { ...job, description, requirements, body_complete: Boolean(complete), body_review: {
-    version: BODY_REVIEW_VERSION, scope: 'body_completeness_only', method: 'deterministic_rules', rules, reason,
+  return { ...job, description, requirements, body_fetch:fetch,body_content_fingerprint:contentFingerprint,body_complete: Boolean(complete), body_review: {
+    version: BODY_REVIEW_VERSION, scope: 'body_completeness_only', method: validOverride?prior.method:'deterministic_rules', rules, reason,
+    sections,input_sha256:inputHash,output_sha256:outputHash({description,requirements}),
+    ...(prior?.version!==BODY_REVIEW_VERSION&&prior?{previous_review:prior}:prior?.previous_review?{previous_review:prior.previous_review}:{}),
     source_files: sources.map(x => x.path), sources, raw_errors: rawErrors,
-    evidence: { duty_clauses: duties, requirement_clauses: reqEvidence, headings: [...di.headings, ...ri.headings] },
+    evidence: validOverride?prior.evidence:{ duty_clauses: duties, requirement_clauses: reqEvidence, headings: [...di.headings, ...ri.headings] },
     original, original_sha256: sha(JSON.stringify(original)), candidate_matching_performed: false,
     downstream_jd_fingerprint_must_be_recomputed: description !== original.description || requirements !== original.requirements,
   } };

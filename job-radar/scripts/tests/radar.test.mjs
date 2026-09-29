@@ -15,6 +15,13 @@ const context={registry:{companies},cities:{social:{companies:[{company_id:'a',c
 const run=(db,id,cs,collector)=>runSubscription(db,id,cs,collector,{context});
 const collect=(jobs,status='complete')=>async()=>({jobs,coverage:{status}});
 const events=(db,run)=>db.prepare('SELECT kind FROM events WHERE run=?').all(run).map(x=>x.kind);
+test('正文规则迁移和提示变化不冒充官方更新，稳定原文变化仍通知',async t=>{
+ const db=fixture(t);await run(db,'pm',companies,collect([job]));
+ const current={...job,body_content_fingerprint:'official-A',body_fetch:{status:'available'},body_review:{version:2,sections:{responsibilities:'identified',requirements:'not_identified'}}};
+ let r=await run(db,'pm',companies,collect([current]));assert.deepEqual(events(db,r),[]);
+ r=await run(db,'pm',companies,collect([{...current,requirements:'新提取结果',body_complete:false,body_review:{...current.body_review,version:3}}]));assert.deepEqual(events(db,r),[]);
+ r=await run(db,'pm',companies,collect([{...current,body_content_fingerprint:'official-B'}]));assert.deepEqual(events(db,r),['updated']);
+});
 test('持久去重、内容更新、完整扫描未见及重现；失败和部分覆盖不推断消失',async t=>{
   const db=fixture(t);
   let r=await run(db,'pm',companies,collect([job])); assert.deepEqual(events(db,r),['new']);
@@ -29,7 +36,7 @@ test('配置版本隔离、未知信息、明确类型冲突和城市筛选',asy
   const db=fixture(t);
   assert.equal(subscribe(db,normalizeConfig(config,companies)).revision,1);
   const r=await run(db,'pm',companies,collect([job,{...job,job_id:'2',cities:[],body_complete:false,formal_status:'unknown'},{...job,job_id:'3',cities:['北京']},{...job,job_id:'4',formal_status:'internship'}]));
-  assert.equal(events(db,r).length,2);assert.match(renderReport(db,r),/招聘类型、城市、JD正文/);
+  assert.equal(events(db,r).length,2);assert.match(renderReport(db,r),/招聘类型、城市、正文获取证据不足/);
   assert.equal(subscribe(db,normalizeConfig({...config,keywords:['经理']},companies)).revision,2);
   const next=await run(db,'pm',companies,collect([job]));assert.deepEqual(events(db,next),['new']);
   assert.equal(db.prepare('SELECT count(*) AS n FROM jobs').get().n,3);

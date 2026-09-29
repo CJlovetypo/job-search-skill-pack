@@ -1,6 +1,6 @@
 import {createClient} from './http.mjs';
 import {normalizeJobLocations,jobCityStatus} from './locations.mjs';
-import {reviewJobBody,bodyText} from './body-review.mjs';
+import {reviewProviderBody as reviewJobBody,bodyText} from './body-review.mjs';
 import {reviewRecruitment} from './recruitment-policy.mjs';
 import {SEARCH_MODE,knownOtherType} from './search-mode.mjs';
 

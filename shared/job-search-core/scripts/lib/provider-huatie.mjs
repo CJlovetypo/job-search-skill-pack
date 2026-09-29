@@ -1,5 +1,5 @@
 import {createClient} from './http.mjs';
-import {bodyText,reviewJobBody} from './body-review.mjs';
+import {bodyText,reviewProviderBody as reviewJobBody} from './body-review.mjs';
 import {reviewRecruitment} from './recruitment-policy.mjs';
 import {normalizeJobLocations} from './locations.mjs';
 

@@ -1,5 +1,6 @@
 // Admission metadata only. This does not rate ability, interest, or graduate eligibility.
 import {SEARCH_MODE,searchMode} from './search-mode.mjs';
+import {bodyPendingReason} from './body-fetch.mjs';
 export const RECRUITMENT_POLICY_VERSION = '2026-09-18-campus-evidence';
 const yes = value => value === true || value === 1 || value === '1' || value === 'true';
 const label = value => typeof value === 'string' ? value : value?.name?.zh_cn || value?.name?.i18n || value?.label || value?.name || '';
@@ -113,6 +114,6 @@ export function verificationIssues(job,targetMode=SEARCH_MODE.id) {
   if (job.formal_status !== searchMode(targetMode).status) result.push({code:'recruitment',reason:job.recruitment_evidence?.admission_review?.reason || '该岗位的'+searchMode(targetMode).label+'性质尚未确认'});
   if (job.open_status !== 'open') result.push({code:'open_status',reason:'当前开放投递状态尚未确认'});
   if (job.city_status === 'unknown') result.push({code:'location',reason:'接口地点、岗位标题及正文均未确认具体工作城市或明确的全国/远程安排'});
-  if (!job.body_complete) result.push({code:'body',reason:job.body_review?.reason || '已获取文本尚未完整覆盖岗位职责及任职要求'});
+  if (!job.body_complete) result.push({code:'body',reason:bodyPendingReason(job)});
   return result;
 }

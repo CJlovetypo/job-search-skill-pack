@@ -113,7 +113,7 @@ test('prepare复用旧快照时重用新校招和标题城市规则，保留旧�
  await runCommand(process.execPath,[path.join(SKILL_ROOT,'scripts/campus.mjs'),'prepare','--profile',input,'--out',out,'--reuse-run',dir],{cwd:SKILL_ROOT});
  const current=(await readJson(path.join(out,'companies',company.company_id+'.json'))).jobs[0];
  assert.equal(current.formal_status,'formal');assert.deepEqual(current.cities,['深圳']);assert.equal(current.evaluation_status,'missing_body');
- assert.equal(current.body_review.reason,'原文只提供职责，没有要求');assert.equal(await fs.readFile(oldFile,'utf8'),before);
+ assert.equal(current.body_review.previous_review.reason,'原文只提供职责，没有要求');assert.equal(await fs.readFile(oldFile,'utf8'),before);
 });
 test('同一高能力随独立意愿改变双向汇总，投递建议不复述内部排序',async()=>{
  for(const interest of ['aligned','explore','conflict','unknown']){
@@ -396,7 +396,7 @@ test('即使已声明全文阅读，正文不完整或完整状态缺失的岗�
   const dir=await fixture('incomplete-full-jd-'+String(body_complete),{job:{body_complete,description:'仅取得部分职责，任职要求尚未完整获取。'}});
   await assert.rejects(()=>buildReportData(dir),/尚未评估|全文/);
   const data=await buildReportData(dir,{allowPartial:true});assert.equal(data.audit.assessed_jobs,0);assert.equal(data.audit.complete_assessment,false);assert.equal(data.audit.missing_assessments.length,1);
-  assert.equal(sheet(data).rows.length,0);const pending=sheet(data,'待核实与未评估').rows;assert.equal(pending.length,1);assert.equal(pending[0][8],'待评估');assert.equal(pending[0][9],'待评估');assert.match(data.audit.missing_assessments[0].reason,/完整 JD 正文未取得/);
+  assert.equal(sheet(data).rows.length,0);const pending=sheet(data,'待核实与未评估').rows;assert.equal(pending.length,1);assert.equal(pending[0][8],'待评估');assert.equal(pending[0][9],'待评估');assert.match(data.audit.missing_assessments[0].reason,/正文获取或内容识别待核/);
  }
 });
 test('next-batch 与 Excel 使用同一全文评估门槛，并交付完整 JD 供重评',async()=>{
@@ -571,7 +571,7 @@ test('交付隔离内部说明和诊断，每次导出独立日志并复用公�
 });
 
 test('采集完成只保存筛选摘要和独立归档，未确认范围时不能取得评估批次',async()=>{
- const dir=await fixture('scope-awaiting',{missing:true});
+ const dir=await fixture('scope-awaiting',{missing:true,job:{body_fetch:{status:'available',origin:'detail',reason:'fixture_official_body'},formal_status:'formal',open_status:'open'}});
  await fs.unlink(path.join(dir,'evaluation-scope.json'));
  await runCommand(process.execPath,[path.join(SKILL_ROOT,'scripts/campus.mjs'),'collect','--run',dir],{cwd:SKILL_ROOT});
  const summary=await readJson(path.join(dir,'screening-summary.json'));assert.equal(summary.total_to_assess,1);

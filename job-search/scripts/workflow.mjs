@@ -1,4 +1,5 @@
 import {syncRoleReviews} from './role-review.mjs';
+import {bodyCacheReusable} from '../../shared/job-search-core/scripts/lib/body-fetch.mjs';
 import {selectQueryCompanies} from '../../shared/job-search-core/scripts/lib/query-selection.mjs';
 import {retrieveCompany,normalizeRetrievedJob} from '../../shared/job-search-core/scripts/lib/job-retrieval.mjs';
 import {datasetPath,COMPANY_SIZE_FILE,SEARCH_CAPABILITIES_FILE} from '../../shared/job-search-core/registry.mjs';
@@ -189,7 +190,10 @@ async function collectRun() {
  await mapLimit(selected,integer('concurrency',3,8),async(c)=>{
   const p=path.join(dir,'companies',c.company_id+'.json');const existing=await readJson(p,null);
   const source=sources.find(s=>s.company_id===c.company_id);
-  if(existing&&!flags.refresh&&(existing.coverage.status==='complete'||existing.coverage.collection_complete===true)&&sourceCacheMatches(existing,source,run.search_plan)&&!existing.jobs.some(j=>j.city_status==='included'&&!j.body_complete&&!knownOtherType(j)&&j.open_status!=='closed')){if(isV5(run.profile))await writeJson(p,allowLocationReview(existing,run.profile));return;}
+  if(existing&&!flags.refresh&&sourceCacheMatches(existing,source,run.search_plan)){
+   const updated={...existing,jobs:existing.jobs.map(j=>normalizeRetrievedJob(j,source||c,SEARCH_MODE.id,existing.requests||[]))};
+   if(bodyCacheReusable(updated)){applyJobScope(updated,run.profile.city_filters||[]);await writeJson(p,isV5(run.profile)?allowLocationReview(updated,run.profile):updated);return;}
+  }
   if(!source)throw Error('当前来源名单已无该公司，请核对历史运行范围：'+c.display_name);
   const result=await collect(source,{mode:'full',maxPages:integer('max-pages',1000,10000),pageSize:SEARCH_MODE.id==='campus'?20:50,timeoutMs:20000,evidenceDir:path.join(dir,'raw',c.company_id),cities:run.profile.city_filters,searchPlan:run.search_plan,refresh:flags.refresh===true});
   allowLocationReview(applyJobScope(result,run.profile.city_filters),run.profile);await writeJson(p,result);console.log(JSON.stringify({company:c.display_name,coverage:result.coverage.status,...result.counts}));
