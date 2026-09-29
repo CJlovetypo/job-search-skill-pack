@@ -15,3 +15,12 @@ test('Workday ING qualities-and-skills heading separates real eligibility from r
 test('a qualities-and-skills heading without eligibility text does not establish a complete JD',()=>{
  assert.equal(normalize('<p>Conduct market research and prepare client presentations while supporting sales.</p><p>What qualities and skills are we looking for?</p>').body_complete,false);
 });
+test('candidate and education headings preserve published eligibility requirements',()=>{
+ for(const heading of ['ABOUT THE CANDIDATE','Education and Experience Requirements 教育和经验要求']){
+  const job=normalize('<p>Responsibilities: design production tools and support manufacturing process improvements.</p><p>'+heading+'</p><p>Bachelor degree in engineering and three years of manufacturing experience.</p>');
+  assert.equal(job.body_complete,true);
+  assert.match(job.requirements,/Bachelor degree/);
+  assert.doesNotMatch(job.requirements,/design production tools/);
+ }
+ assert.equal(normalize('<p>Help us build a better future. Register for alerts about future opportunities.</p>').body_complete,false);
+});

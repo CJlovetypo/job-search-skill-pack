@@ -5,7 +5,7 @@ import {smartRecruitersOpenStatus,additionalRequirements} from './normalization-
 
 const clean=s=>String(s||'').replace(/<\/(?:p|div|li|h[1-6])>|<br\s*\/?\s*>/gi,'\n').replace(/<[^>]+>/g,'').replace(/&#x([\da-f]+);/gi,(_,n)=>String.fromCodePoint(parseInt(n,16))).replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(Number(n))).replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/\n{3,}/g,'\n\n').trim();
 const cityFields=job=>{const x=normalizeJobLocations(job);return {cities:x.cities,location_special:x.special,location_unknown:x.unknown,location_unresolved:x.unresolved};};
-function combinedBody(html){const all=clean(html);const m=/(?:^|\n)\s*(?:[•\-*]\s*)?(?:任职要求|岗位要求|职位要求|任职资格|招聘要求|基本要求|教育背景|专业技能|Qualifications?(?:\s*\/\s*Requirements?)?|(?:Basic|Minimum|Required|Preferred) Qualifications|Requirements?(?:\s*\/\s*Qualifications)?|Your (?:Profile|Background)|Who you are|What (?:we(?:'|’)re|we are) looking for|What you (?:bring|need)|What (?:you(?:'|’)ll|you will) (?:need|bring)|What we need to see|What qualities and skills are we looking for\??|Skills[\s&]+Qualifications|Position requirements)\s*[:：]?/im.exec(all);return {description:all,requirements:m?all.slice(m.index):'',body_complete:!!m&&m.index>35&&all.slice(m.index+m[0].length).trim().length>30};}
+function combinedBody(html){const all=clean(html);const m=/(?:^|\n)\s*(?:[•\-*]\s*)?(?:任职要求|岗位要求|职位要求|任职资格|招聘要求|基本要求|教育背景|专业技能|Qualifications?(?:\s*\/\s*Requirements?)?|(?:Basic|Minimum|Required|Preferred) Qualifications|Requirements?(?:\s*\/\s*Qualifications)?|Your (?:Profile|Background)|Who you are|What (?:we(?:'|’)re|we are) looking for|What you (?:bring|need)|What (?:you(?:'|’)ll|you will) (?:need|bring)|What we need to see|What qualities and skills are we looking for\??|Skills[\s&]+Qualifications|Position requirements|About the candidate|Education and Experience Requirements)\s*[:：]?/im.exec(all);return {description:all,requirements:m?all.slice(m.index):'',body_complete:!!m&&m.index>35&&all.slice(m.index+m[0].length).trim().length>30};}
 function formalType(title,body,types=''){
   if(/实习|\bintern(?:ship)?\b/i.test(title+' '+types))return 'internship';
   // Explicit graduate hiring title plus corroborating graduate/degree eligibility in the body.
@@ -59,6 +59,11 @@ export function isMainlandChinaCountry(value){
   const country=value.normalize('NFKC').trim().replace(/\s+/g,' ');
   return /^(?:cn|China|China Mainland|Mainland China|China\s*\(\s*Mainland\s*\)|China\s*\/\s*Mainland|中国|中国大陆)$/i.test(country);
 }
+// A multi-location posting may have a foreign primary location and a mainland requisition location.
+export function isWorkdayMainlandDetail(raw){
+  const d=raw?.jobPostingInfo||{};
+  return isMainlandChinaCountry(d.country?.descriptor)||isMainlandChinaCountry(d.jobRequisitionLocation?.country?.descriptor);
+}
 function chinaFacet(facets){let answer=null;const walk=f=>{if(!f||typeof f!=='object')return;if(f.facetParameter&&Array.isArray(f.values)){const x=f.values.find(x=>isMainlandChinaCountry(x.descriptor));if(x)answer={field:f.facetParameter,value:x.id,label:x.descriptor};}for(const x of Object.values(f))if(x&&typeof x==='object')Array.isArray(x)?x.forEach(walk):walk(x);};walk(facets);return answer;}
 export async function collectInternational(source,options={}){
   if(!['workday','smartrecruiters'].includes(source.provider))return null;
@@ -78,11 +83,15 @@ export async function collectInternational(source,options={}){
       const r=await requestJson(client,{url:u.href,method:source.provider==='workday'?'POST':'GET',body:source.provider==='workday'?{...body,offset}:null},'job_list');
       const a=source.provider==='workday'?r.data.jobPostings:r.data.content;total=Number(source.provider==='workday'?r.data.total:r.data.totalFound);
       if(!Array.isArray(a)||!Number.isFinite(total))throw Error('Missing expected jobs/count fields');
+      const reportedTotal=total;
+      // Workday can omit the count on noninitial pages by returning zero with rows.
+      // Keep the first count; still require unique IDs to reconcile it exactly.
+      if(source.provider==='workday'&&offset>0&&total===0&&a.length&&initialTotal>0)total=initialTotal;
       if(initialTotal===null)initialTotal=total;else if(total!==initialTotal)errors.push('server_total_changed');
       const ids=a.map(j=>String(j.externalPath||j.id||'')),before=rows.size;
       if(ids.some(id=>rows.has(id))||new Set(ids).size!==ids.length)errors.push('duplicate_job_ids_across_pages');
       for(const j of a)if(j.externalPath||j.id)rows.set(String(j.externalPath||j.id),{row:j,record:r.record});
-      pages.push({page:page+1,job_ids:ids,response_file:r.record.response_file,server_total:total,new_ids:rows.size-before});
+      pages.push({page:page+1,job_ids:ids,response_file:r.record.response_file,server_total:total,reported_server_total:reportedTotal,new_ids:rows.size-before});
       if(ids.some(x=>!x)){reason='missing_job_id';break;}
       if(rows.size===total){complete=!errors.length;reason='unique_ids_reconcile_server_total';break;}
       if(!a.length||rows.size===before){reason='empty_or_repeated_page_before_total';break;}
@@ -100,7 +109,7 @@ export async function collectInternational(source,options={}){
       const r=await requestJson(client,{url},'job_detail');
       if(source.provider==='workday')assertWorkdayDetailIdentity(row,r.data);
       const country=source.provider==='workday'?r.data.jobPostingInfo?.country?.descriptor:r.data.location?.country;
-      if(!isMainlandChinaCountry(country)){errors.push('Country filter not confirmed in detail '+(row.id||row.externalPath));excluded.push({job_id:row.id||row.externalPath,country,raw_file:r.record.response_file});continue;}
+      if(!(source.provider==='workday'?isWorkdayMainlandDetail(r.data):isMainlandChinaCountry(country))){errors.push('Country filter not confirmed in detail '+(row.id||row.externalPath));excluded.push({job_id:row.id||row.externalPath,country,raw_file:r.record.response_file});continue;}
       const j=source.provider==='workday'?normalizeWorkday(r.data,source,r.record):normalizeSmartRecruiters(r.data,source,r.record,true);
       if(!j.job_id)throw Error('Missing detail job ID');
       if(source.provider==='smartrecruiters'&&j.job_id!==String(row.id))throw Error('Detail ID mismatch');
