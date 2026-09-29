@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {collectIvva} from '../../../../../shared/job-search-core/scripts/lib/providers-ivva.mjs';
 import {collectUgreen} from '../../../../../shared/job-search-core/scripts/lib/provider-ugreen.mjs';
+import {collectCvte} from '../../../../../shared/job-search-core/scripts/lib/provider-cvte.mjs';
 import {createMaintenanceScope,withMaintenanceNetworkScope} from '../../../../../shared/job-search-core/scripts/lib/maintenance-network-scope.mjs';
 import {SEARCH_MODE,withSearchMode} from '../../../../../shared/job-search-core/scripts/lib/search-mode.mjs';
 
@@ -23,6 +24,13 @@ async function fixture(t,handler){
   return dir;
 }
 const json=value=>new Response(JSON.stringify(value),{headers:{'content-type':'application/json'}});
+
+test('CVTE preserves the sampled project when further projects exceed the budget',async t=>{
+  let hits=0;const evidenceDir=await fixture(t,async url=>{hits++;return String(url).endsWith('/project')?json({projects:[{id:'one',name:'校园招聘'},{id:'two',name:'校园招聘'}]}):json({projectPositions:[{id:'job',name:'工程师'}]});});
+  const scope=createMaintenanceScope({maxPages:1});
+  const r=await withMaintenanceNetworkScope(scope,()=>collectCvte({company_id:'fixture'},{evidenceDir,maxPages:10}));
+  assert.equal(hits,2);assert.equal(r.jobs.length,1);assert.equal(r.coverage.status,'partial');assert.equal(r.coverage.list_complete,false);assert.match(r.coverage.reason,/budget_exhausted/);
+});
 
 test('IVVA keeps acquired rows and evidence when the shared page budget stops pagination',async t=>{
   let hits=0;
