@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import {bodyFetch} from './body-fetch.mjs';
 
 // Completeness only. No recruitment/location decisions, matching, network or writes.
-export const BODY_REVIEW_VERSION = 2;
+export const BODY_REVIEW_VERSION = 3;
 export function bodyText(value) {
   if (typeof value !== 'string') return '';
   return value.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
@@ -20,13 +20,17 @@ const sha = s => createHash('sha256').update(s).digest('hex');
 const meaningful = s => /\p{L}/u.test(s) && !/^(?:test|testing|tbd|n\/?a|none|null|暂无|无|待补充|详见附件|略|测试|测试岗位)[\s.!。]*$/i.test(s.trim());
 const aliasReqHeading = /^(?:[一二三四五六七八九十\d]+[、.．）)]\s*)?[【\[（(]?\s*(?:岗位需求|工作要求|技术要求|学历和专业要求|技术技能要求|软性素质要求|期望你是|我们期待这样的你|职位要求|職位要求|應聘條件|基础要求|硬性要求|必备技能要求|应聘资格要求|选拔条件|要求|Job Requirements|Required Qualification|Who We Are Looking For|We Hope You(?: Are)?|We(?:’|')re looking for someone who is)(?:\s*[】\]）)]?\s*[：:]|\s*[】\]）)]?\s*$)/i;
 const aliasDutyHeading = /^(?:[一二三四五六七八九十\d]+[、.．）)]\s*)?[【\[（(]?\s*(?:具体工作|你需要做什么|你将如何发挥你的潜能|Job Description|核心职责|職責內容|崗位職責|Here(?:’|')s what you(?:’|')ll do)(?:\s*[】\]）)]?\s*[：:]|\s*[】\]）)]?\s*$)/i;
-const bonusHeading = /^(?:加分项|优先条件|加分说明|补充说明|Preferred qualifications|加分项（graduateBonus）|加分项（internBonus）)/i;
+const contextualReqHeading = /^(?:(?:[一二三四五六七八九十\d]+[、.．）)]|[（(][一二三四五六七八九十\d]+[）)])\s*)?[【\[（(]?\s*(?:(?:(?:校园大使|知识、经验与技能|岗位任职能力与资格|任职人员|教育(?:背景)?|专业(?:技能)?|能力素质|工作经验|工作时间|语言|素质|素养|核心技术|核心|基础硬性|必备能力|特殊岗位的技能和\/或培训和\/或证书|实习生?|行业|报名|录用|竞聘|应聘|岗位|职位|任职|招聘|选聘|其他|通用|首选)(?:要求|条件|资格|资质))|(?:通用|专业|设计专业)能力|我们(?:期望|期待|希望|渴望)(?:的|这样的)?你(?:是|加入)?|为了[^\n：:。！？!?]{1,28}，?我们(?:期望|期待|希望)你(?:是|具备|拥有)?|你(?:需要|应当|应)具备|什么资质会让你成功|what(?:’|'| i)s required|what you need to succeed|required skills?(?:\s*(?:&|and)\s*experience)?|skills you(?:’|')ll need to bring|who we(?:’|')re looking for|what we will be looking for in you|your experience|you should have|(?:examples of )?desirable skills(?:,? knowledge,? (?:&|and) experience)?|personal specifications?(?:\/个人能力描述)?|(?:the )?ideal candidate|candidate profile|your profile|your present skillset|skills (?:&|and) expertise|experience you will bring|job qualifications|qualifications?(?:\/requirements)?(?:\s*\([^\n]{1,80}\))?|qualifications? (?:&|and) skills required for the position|let(?:’|')s talk about qualifications? and experience)(?:\s*[】\]）)]?\s*[：:]|\s*[】\]）)]?\s*[?？]?\s*$)/i;
+const contextualDutyHeading = /^(?:[一二三四五六七八九十\d]+[、.．）)]\s*)?[【\[（(]?\s*(?:(?:岗位职责(?:\/研究方向)?|[^\n：:。！？!?]{1,24}(?:职责|任务))|你将(?:会)?(?:做什么|(?:涉及|参与)的(?:核心)?工作(?:内容)?)|(?:作为[^\n：:。！？!?]{1,28}，?)?你(?:的工作)?将涉及(?:到)?以下[^\n：:。！？!?]*|(?:key )?job responsibilities|purpose of the job|job functions|job summary|position summary(?:\s*\([^\n]{1,100}\))?|primary responsibilities\/accountabilities of the job(?:\s*\([^\n]{1,120}\))?|about your role|your responsibilities will include|what you(?:’|')ll work on|day-to-day|duties\s*(?:&|and)\s*responsibilities(?:\/任务和职责)?|the role|your impact|your mission|what you(?:’|')ll be doing|what you(?:’|')ll (?:build and own|achieve|do)|in this role you will)(?:\s*[】\]）)]?\s*[：:]|\s*[】\]）)]?\s*[?？]?\s*$)/i;
+const bonusHeading = /^(?:[一二三四五六七八九十\d]+[、.．）)]\s*)?[【\[（(]?\s*(?:(?:[^\n：:。！？!?]{0,36})加分项|优先条件|加分说明|补充说明|Preferred qualifications|bonus points|nice to have|加分项（graduateBonus）|加分项（internBonus）)\s*[】\]）)]?(?:\s*[：:]|\s*$)/i;
 const reqHeading = /^(?:(?:[一二三四五六七八九十\d]+)[、.．）)]\s*)?[【\[（(]?\s*(?:(?:任职|岗位|职位|任用|招聘|基本|专业|技能|能力)(?:资格|要求|条件)|任职资格要求|应聘条件|任职资质|招募要求|人才要求|你需要具备|我们(?:希望|期待)你(?:具备|拥有)?|我们需要你|我们想找的|希望你是|招聘对象|招募对象|加分项|优先条件|(?:basic |minimum |preferred |required |desired )?(?:qualifications|requirements)|experience\s*(?:&|and)\s*background|what (?:you (?:bring|need)|we(?:'re| are) looking for)|who you are|skills(?: and experience)?)(?:\s*[\]】）)]?\s*[：:]|\s*[\]】）)]?\s*$)/i;
-const dutyHeading = /^(?:(?:[一二三四五六七八九十\d]+)[、.．）)]\s*)?[【\[（(]?\s*(?:(?:岗位|职位|工作|主要|核心)(?:职责|内容|描述|介绍)|职责|轮岗方向|培养方案|工作任务|responsibilities|(?:key |job )responsibilities|what you(?:'|’)ll do|what you will do|your (?:role|mission))(?:\s*[\]】）)]?\s*[：:]|\s*[\]】）)]?\s*$)/i;
-const otherHeading = /^(?:[一二三四五六七八九十\d]+[、.．）)]\s*)?(?:其他信息|福利待遇|工作地点|全球热门工作地点|薪资待遇|招聘流程|投递方式|关于我们|公司介绍|about us|benefits)[：:\s]*$/i;
-const unbullet = s => s.replace(/^\s*(?:[•●·*\-]|[（(]?[\d一二三四五六七八九十]+[、.．）)])\s*/, '').trim();
-const dutyCue = /^(?:(?:你|您|you)\s*(?:将|会|will)\s*)?(?:负责|参与|协助|承担|主导|设计|开发|研发|维护|搭建|建设|推动|推进|完成|跟进|对接|制定|分析|开展|执行|深入|学习并|探索|研究|优化|基于|从事|开发与|软件开发|与.{2,35}(?:一起|合作|协作)|(?:design|develop|build|implement|support|lead|work|collaborate|manage|drive|conduct|analy[sz]e|research|create|responsible for)\b)/i;
-const reqCue = /^(?:(?:你|您)\s*)?(?:\d{4}年?(?:应届|届)|全日制|本科|硕士|博士|大学|大专|研究生|计算机.{0,30}专业|具备|具有|拥有|熟悉|熟练|精通|掌握|了解|热爱|喜欢|良好的|较强的|优秀的|有.{1,70}(?:经验|经历|能力|基础)|对.{1,50}(?:了解|兴趣|热情|理解|热爱|认知)|能(?:够|适应|承受)|善于|英语|学历|专业[：:]|(?:bachelor|master|ph\.?d|degree|experience|proficien|strong |excellent |knowledge of|familiar|ability to|fluent|passion for|understanding of)\b)/i;
+const dutyHeading = /^(?:(?:[一二三四五六七八九十\d]+)[、.．）)]\s*)?[【\[（(]?\s*(?:(?:岗位|职位|工作|主要|核心)(?:职责|内容|描述|介绍|说明)|职责|轮岗方向|培养方案|工作任务|responsibilities|(?:key |job )responsibilities|what you(?:'|’)ll do|what you will do|your (?:role|mission))(?:\s*[\]】）)]?\s*[：:]|\s*[\]】）)]?\s*$)/i;
+const otherHeading = /^(?:[一二三四五六七八九十\d]+[、.．）)]\s*)?(?:其他信息|福利待遇|工作地点|全球热门工作地点|薪资待遇|招聘流程|投递方式|关于我们|公司介绍|我们提供|加入[^\n：:。！？!?]{0,24}你将获得|对优秀的你[^\n：:。！？!?]{0,24}(?:准备了|提供)|about us|who we are|what we offer|why join us|benefits(?: include)?|full-time employee benefits include|compensation(?: and benefits)?|equal opportunity|privacy notice|for current .{0,40}employees and contractors|sounds interesting|how to apply|application process)[：:\s]*$/i;
+const otherBoundary = /^(?:公司福利|福利待遇|岗位\s*base\s*地|为什么加入我们|你将获得|这对我有什么好处|团队文化|life at\b|what we offer(?: you)?\b|why (?:join|this role)\b|just some of the perks\b|our commitment\b|(?:our|company) (?:benefits|company|culture)\b|the (?:salary|hourly|pay) (?:range|rate)\b|privacy notice\b|for ca residents\b|for current .{0,40}employees and contractors\b|all qualified applicants\b|as an equal opportunity employer\b|equal employment opportunity\b|interview process adjustments\b|to learn more\b|to request assistance with the application process\b)/i;
+const unbullet = s => s.replace(/^\s*(?:[•●·*\-]|[（(]?(?:\d+(?:[、.．）),，]|\s+)|[一二三四五六七八九十]+[、.．）)])[）)]?)\s*/, '').trim();
+const dutyCue = /^(?:(?:[^\n：:]{1,35}[：:]\s*)|(?:(?:在|于)本岗位[^，,]{0,30}[，,]\s*)|(?:(?:in this role|as the .{1,35})[,，:]?\s*))?(?:(?:你|您|you)\s*(?:将|会|will)\s*)?(?:依据|根据|通过|负责|参与|协助|承担|主导|统筹|策划|协同|收集|解决|输出|监控|设计|开发|研发|维护|搭建|建设|推动|推进|完成|跟进|对接|制定|分析|开展|执行|深入|学习并|探索|研究|优化|基于|从事|开发与|软件开发|与.{2,35}(?:一起|合作|协作)|the .{1,50} will\b|(?:define|own|oversee|ensure|deliver|establish|coordinate|execute|design|develop|build|implement|support|lead|work|collaborate|manage|drive|conduct|analy[sz]e|research|create|responsible for)\b)/i;
+const reqCue = /^(?:[^\n：:]{1,30}[：:]\s*)?(?:(?:你|您)\s*)?(?:\d{4}\s*年?\s*(?:应届|届)|全日制|本科|硕士|博士|大学|大专|研究生|计算机.{0,30}专业|具备|具有|拥有|熟悉|熟练|精通|掌握|了解|热爱|喜欢|扎实|自驱力|责任心|逻辑清晰|良好的|较强的|优秀的|有.{1,70}(?:经验|经历|能力|基础)|对.{1,50}(?:了解|兴趣|热情|理解|热爱|认知)|能(?:够|适应|承受)|善于|英语|学历|专业[：:]|(?:bachelor|master|ph\.?d|degree|experience|proficien|strong |excellent |knowledge of|familiar|ability to|fluent|passion for|understanding of)\b)/i;
+const strongDutyCue = /^(?:(?:你|您|you)\s*(?:将|会|will)\s*)?(?:负责|参与|协助|承担|主导|推动|推进|完成|跟进|对接|制定|开展|执行|维护|搭建|建设|优化|(?:implement|develop|design|build|manage|lead|support|drive|conduct|create|responsible for)\b)/i;
 
 /** Exact-ID-only extraction from a local API response. A title never joins jobs. */
 export function extractRawBody(payload, jobId, job = {}, {parentVerified=false} = {}) {
@@ -81,9 +85,10 @@ function inspect(text) {
   let offset = 0;
   for (const line of lines) {
     const clean = unbullet(line);
-    const r = reqHeading.exec(line.trim()) || aliasReqHeading.exec(line.trim()), d = dutyHeading.exec(line.trim()) || aliasDutyHeading.exec(line.trim());
+    const r = reqHeading.exec(line.trim()) || aliasReqHeading.exec(line.trim()) || contextualReqHeading.exec(line.trim());
+    const d = dutyHeading.exec(line.trim()) || aliasDutyHeading.exec(line.trim()) || contextualDutyHeading.exec(line.trim());
     const bonus = bonusHeading.test(line.trim());
-    if (r || d || bonus || otherHeading.test(line.trim())) {
+    if (r || d || bonus || otherHeading.test(line.trim()) || otherBoundary.test(line.trim())) {
       if (reqStart >= 0 && !bonus) { reqBlocks.push(text.slice(reqStart, offset).trim()); reqStart = -1; }
       section = bonus ? 'bonus' : r ? 'requirements' : d ? 'duties' : 'other';
       headings.push({ kind: section, text: line, offset });
@@ -105,12 +110,12 @@ function inspect(text) {
 }
 
 function numberedQualificationTail(text) {
-  const entries = [...text.matchAll(/^(\d+)[、.．）)]\s*(.*)$/gm)];
+  const entries = [...text.matchAll(/^\s*(\d+)[、.．）)]\s*(.*)$/gm)];
   for (let i = 1; i < entries.length; i++) {
     const e = entries[i];
     if (Number(e[1]) !== 1 || Number(entries[i - 1][1]) < 2) continue;
     const prefix = text.slice(0, e.index), tail = text.slice(e.index);
-    if (!inspect(prefix).duties.length || !/(?:专业|学历|毕业生|届|具备|熟悉|degree|experience)/i.test(e[2])) continue;
+    if (!inspect(prefix).duties.length || !/(?:专业|学历|本科|硕士|博士|大专|毕业生|届|具备|熟悉|\d+\s*年.{0,20}经验|degree|experience)/i.test(e[2])) continue;
     if (tail.split('\n').filter(l => reqCue.test(unbullet(l))).length < 2) continue;
     return tail;
   }
@@ -165,6 +170,7 @@ export function reviewJobBody(job,{requests=[],rawCache}={}) {
   const di = inspect(description), ri = inspect(requirements);
   const rules = [];
   if (rawFields.some(k => /topicDetail|topicRequirement/.test(k))) rules.push('raw_topic_fields');
+  const hasHeading = (inspection, kind) => inspection.headings.some(x => x.kind === kind);
   let reqEvidence = ri.requirements;
   if (di.reqBlocks.some(meaningful)) {
     const extracted = di.reqBlocks.join('\n\n');
@@ -173,19 +179,66 @@ export function reviewJobBody(job,{requests=[],rawCache}={}) {
     else if (extracted.includes(requirements)) requirements = extracted;
     reqEvidence = [...reqEvidence, ...di.requirements];
     rules.push('explicit_requirement_sections');
-  } else if (!meaningful(requirements) && di.duties.length && di.requirements.length >= 2
-      && di.duties.every(x => description.indexOf(x) < description.indexOf(di.requirements[0]))) {
-    // Headerless mixed/numbered lists: retain each candidate condition verbatim,
-    // in order. Ambiguous prose remains pending for human overrides.
-    requirements = description.slice(description.indexOf(di.requirements[0])).trim();
-    reqEvidence = di.requirements;
-    rules.push('headerless_duties_and_multiple_qualification_clauses');
   }
   if (!reqEvidence.length || !meaningful(requirements)) {
     const tail = numberedQualificationTail(description);
-    if (tail) { requirements = tail; reqEvidence = inspect(tail).requirements; rules.push('numbered_list_restart_to_qualifications'); }
+    if (tail) {
+      requirements = tail;
+      reqEvidence = inspect(requirements).requirements;
+      rules.push('numbered_list_restart_to_qualifications');
+    }
   }
-  const duties = [...di.duties, ...ri.duties];
+  // A requirement can start with a duty-like verb (for example, “参与过项目”).
+  // Do not let an isolated cue in the requirements field prove responsibilities.
+  // Accept responsibilities from that field only when its own heading says so, or
+  // when both fields form a strong, headerless inversion.
+  let duties = [...di.duties];
+  const firstRequirementHeading = di.headings.find(x => x.kind === 'requirements')?.offset ?? Infinity;
+  let descriptionOffset = 0;
+  const structuredDescriptionDuties = description.split('\n').filter(line => {
+    const clean = unbullet(line);
+    const beforeRequirements = descriptionOffset < firstRequirementHeading;
+    descriptionOffset += line.length + 1;
+    return beforeRequirements && meaningful(clean) && clean.length >= 6
+      && /^\s*(?:[•●·*\-]|[（(]?(?:\d+(?:[、.．）),，]|\s+)|[一二三四五六七八九十]+[、.．）)])|方向\s*\d+\s*[：:])/.test(line)
+      && !reqCue.test(clean);
+  });
+  if (!duties.length && meaningful(requirements) && structuredDescriptionDuties.length >= 2) {
+    duties.push(...structuredDescriptionDuties);
+    rules.push('structured_description_field');
+  }
+  const semanticDescriptionDuties = description.split('\n').filter(line => {
+    const clean = unbullet(line);
+    return meaningful(clean) && !reqCue.test(clean) && dutyCue.test(clean);
+  });
+  if (!duties.length && reqEvidence.length && semanticDescriptionDuties.length >= 2) {
+    duties.push(...semanticDescriptionDuties);
+    rules.push('semantic_description_clauses');
+  }
+  const trainingProgramIntro = /(?:(?:人才|培训生?|管培生?|储备生?)[^。；;\n]{0,30}(?:培养|计划|项目)|培养[^。；;\n]{0,30}(?:人才|计划|项目))/.test(description.slice(0, 220));
+  if (!duties.length && reqEvidence.length && description.length <= 500 && !hasHeading(di, 'requirements') && !trainingProgramIntro
+      && /(?:^|[，,。；;]\s*)(?:负责|参与(?!过)|协助|承担|主导|推动|推进|完成|跟进|协调|开展|执行(?!力))/m.test(description)) {
+    duties.push(description);
+    rules.push('single_description_duty_clause');
+  }
+  const strongDutiesInRequirements = ri.duties.filter(x => {
+    const clean = unbullet(x);
+    return clean.length >= 15 && strongDutyCue.test(clean);
+  });
+  const invertedFields = meaningful(description) && meaningful(requirements)
+    && !hasHeading(di, 'duties') && !hasHeading(ri, 'requirements')
+    && di.duties.length === 0 && di.requirements.length >= 2
+    && (strongDutiesInRequirements.length >= Math.max(2, ri.requirements.length * 2)
+      || (di.requirements.length >= 3 && strongDutiesInRequirements.some(x => /^负责/.test(unbullet(x)))));
+  const firstRequirementsHeading = ri.headings.find(x => x.kind === 'requirements')?.offset ?? Infinity;
+  const dutiesBeforeRequirements = Number.isFinite(firstRequirementsHeading)
+    ? inspect(requirements.slice(0, firstRequirementsHeading)).duties
+    : [];
+  const mixedBodyInRequirements = hasHeading(ri, 'requirements') && dutiesBeforeRequirements.length >= 2;
+  if (hasHeading(ri, 'duties') || mixedBodyInRequirements || invertedFields) duties.push(...ri.duties);
+  if (hasHeading(di, 'requirements') || invertedFields) reqEvidence = [...reqEvidence, ...di.requirements];
+  if (invertedFields) rules.push('inverted_description_and_requirements_fields');
+  if (mixedBodyInRequirements) rules.push('mixed_body_in_requirements_field');
   if (!meaningful(description) && ri.duties.length) { description = ri.duties.join('\n'); rules.push('duties_in_requirements'); }
   const sections={responsibilities:duties.some(x=>meaningful(unbullet(x)))?'identified':'not_identified',requirements:reqEvidence.some(x=>meaningful(unbullet(x)))?'identified':'not_identified'};
   if(!meaningful(description)&&!meaningful(requirements))sections.responsibilities=sections.requirements='not_evaluated';
@@ -193,7 +246,7 @@ export function reviewJobBody(job,{requests=[],rawCache}={}) {
   if(validOverride)sections.responsibilities=sections.requirements='identified';
   const complete = fetch.status==='available'&&sections.responsibilities==='identified'&&sections.requirements==='identified';
   if (complete && !rules.length) rules.push('distinct_duties_and_qualification_evidence');
-  const reason = complete ? '已定位实际工作职责和任职条件；保留原文及加分表述，仅核验正文完整性。'
+  const reason = complete ? '已定位实际工作职责和任职条件；原始字段保留为审计证据，加分项随任职字段保留但不单独证明必备条件。'
     : sections.responsibilities==='identified'&&sections.requirements==='identified' ? '文本中已识别职责与任职条件，但完整正文获取证据尚未确认。'
     : !meaningful(description) && !meaningful(requirements) ? '当次可读字段无有效职责或任职条件（空值／占位文本），不能确认完整。'
     : !duties.length ? '未能以安全规则定位实际岗位职责；可能仅有要求、招聘介绍或特殊行文，需逐岗全文判定。'
