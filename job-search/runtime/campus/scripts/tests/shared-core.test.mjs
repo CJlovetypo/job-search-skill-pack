@@ -11,6 +11,7 @@ import {PACK_ROOT,recruitmentFile} from '../../../../../shared/job-search-core/r
 import {SOURCE_REGISTRY_FILE,CUSTOM_PROVIDERS_FILE,datasetPath,readSourceRegistry} from '../../../../../shared/job-search-core/registry.mjs';
 import {sourceConfigFingerprint} from '../../../../../shared/job-search-core/scripts/lib/source-collector.mjs';
 import {validatedDirectionRegistry} from '../../../../../shared/job-search-core/scripts/lib/direction-validation.mjs';
+import {companyRouteEntries} from '../../../../../shared/job-search-core/scripts/lib/recruitment-routes.mjs';
 const exec=promisify(execFile);
 const cli=(mode,...args)=>exec(process.execPath,[path.join(PACK_ROOT,MODE_ROOTS[mode],'scripts',mode==='campus'?'campus.mjs':'jobs.mjs'),...args],{windowsHide:true,maxBuffer:8e6});
 
@@ -27,15 +28,16 @@ test('migrated resume helpers for all three directions resolve the shared extrac
  }
 });
 
-test('all three real entrypoints load one live registry, with every configuration enabled',async()=>{
- const registry=await readSourceRegistry(),count=registry.companies.reduce((n,c)=>n+(c.recruitment_sources?.length||1),0);
+test('all three real entrypoints load one live registry, with every direction route enabled',async()=>{
+ const registry=await readSourceRegistry();
  await Promise.all(Object.entries(MODE_ROOTS).map(async([mode,name])=>{
   const root=path.join(PACK_ROOT,name),result=JSON.parse((await cli(mode,'industries')).stdout);
   assert.equal(result.all_companies,registry.companies.length);
   assert.equal(datasetPath(root,'assets/sources.json'),SOURCE_REGISTRY_FILE);
   assert.equal(datasetPath(root,'assets/custom-providers.json'),CUSTOM_PROVIDERS_FILE);
   await assert.rejects(fs.access(path.join(root,'assets/sources.json')),{code:'ENOENT'});
-  if(mode!=='campus')assert.equal(result.source_validation.enabled_configurations,count);
+  const routeCount=registry.companies.reduce((n,c)=>n+companyRouteEntries(c,mode).length,0);
+  if(mode!=='campus')assert.equal(result.source_validation.enabled_configurations,routeCount);
   assert.equal(datasetPath(root,'data/company-city-index.json'),path.join(root,'data/company-city-index.json'));
  }));
 });
