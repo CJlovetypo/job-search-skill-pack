@@ -29,6 +29,23 @@ test('CEC collector sends the server page field and reconciles every page',async
   assert.deepEqual(requests.map(item=>item.body.page),[1,2]);assert.equal(result.jobs.length,2);assert.equal(result.coverage.list_complete,true);
 });
 
+test('CEC collector exhausts the group list and applies an exact employer field filter',async()=>{
+  const requests=[];
+  const client={records:requests,async request(query){requests.push({body:query.body,http_status:200,response_file:'raw'});const page=query.body.page;
+    const rows={1:[{id:'a',name:'甲',jobDescription:full,jobRequirements:req,cityName:'上海',positionType:0,applyable:true,positionSecondOrg:'中电信息'}],2:[{id:'b',name:'乙',jobDescription:full,jobRequirements:req,cityName:'北京',positionType:0,applyable:true,positionSecondOrg:'其他公司'}],3:[{id:'c',name:'丙',jobDescription:full,jobRequirements:req,cityName:'深圳',positionType:0,applyable:true,positionSecondOrg:'中电信息'}]}[page]||[];
+    return {data:{code:'000000',data:{records:rows,total:3,current:page,size:1}},record:requests.at(-1)};}};
+  const filtered={...source('cec_campus'),api_config:{query:{positionType:0},employer_filter:{field:'positionSecondOrg',values:['中电信息']}}};
+  const result=await collectSelfHosted(filtered,{client,pageSize:1,maxPages:4});
+  assert.deepEqual(requests.map(item=>item.body.page),[1,2,3]);assert.deepEqual(result.jobs.map(job=>job.job_id),['a','c']);assert.equal(result.coverage.server_total,3);assert.equal(result.coverage.list_complete,true);
+  assert.deepEqual(result.coverage.page_evidence.map(page=>page.accepted_rows),[1,0,1]);
+});
+
+test('CEC collector rejects an invalid employer filter before making requests',async()=>{
+  const requests=[];const filtered={...source('cec_campus'),api_config:{employer_filter:{field:'unknown',values:['中电信息']}}};
+  await assert.rejects(()=>collectSelfHosted(filtered,{client:{records:requests,request:async()=>{throw new Error('must not request');}}}),/Invalid cec_campus employer_filter/);
+  assert.equal(requests.length,0);
+});
+
 function encryptResponse(value,key,iv){
   const cipher=createCipheriv('aes-128-cbc',Buffer.from(key),Buffer.from(iv));
   return Buffer.concat([cipher.update(JSON.stringify(value),'utf8'),cipher.final()]).toString('base64');

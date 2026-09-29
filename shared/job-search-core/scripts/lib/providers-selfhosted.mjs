@@ -95,9 +95,21 @@ function unpack(provider,data){
   if(provider==='ccb_public')return {rows:data?.planPostList,total:Number(data?.TOTAL_REC),ok:data?.SUCCESS==='true'};
 }
 
+function selfHostedRowFilter(source){
+  const filter=source.api_config?.employer_filter;
+  if(filter==null)return ()=>true;
+  if(source.provider!=='cec_campus')throw new Error('employer_filter is only supported for cec_campus');
+  const fields={org:'org',positionSecondOrg:'positionSecondOrg'};
+  if(!filter||typeof filter!=='object'||Array.isArray(filter)||!fields[filter.field]||!Array.isArray(filter.values)||!filter.values.length||filter.values.some(value=>typeof value!=='string'||!value.trim())){
+    throw new Error('Invalid cec_campus employer_filter; expected {field:"org"|"positionSecondOrg",values:[non-empty strings]}');
+  }
+  const accepted=new Set(filter.values.map(value=>value.trim()));
+  return row=>accepted.has(String(row?.[fields[filter.field]]||'').trim());
+}
+
 export async function collectSelfHosted(source,options={}){
   if(!supported.has(source.provider))return null;
-  const cfg={pageSize:100,maxPages:100,timeoutMs:20000,...options},client=cfg.client||createClient(cfg),jobs=new Map(),rawById=new Map(),pages=[],detailFailures=[];
+  const cfg={pageSize:100,maxPages:100,timeoutMs:20000,...options},client=cfg.client||createClient(cfg),jobs=new Map(),rawById=new Map(),pages=[],detailFailures=[],acceptRow=selfHostedRowFilter(source),seenIds=new Set();
   let total=null,listComplete=false,reason='max_pages_reached';
   if(source.provider==='ccb_public')await client.request({url:'http://job.ccb.com/cn/job/plan_index.html?planType=XY',headers:{Referer:'http://job.ccb.com/cn/job/'}},{purpose:'public_session_bootstrap'});
   for(let page=1;page<=cfg.maxPages;page++){
@@ -105,11 +117,15 @@ export async function collectSelfHosted(source,options={}){
     const parsed=unpack(source.provider,response.data),rows=parsed.rows;
     if(response.record.http_status!==200||!parsed.ok||!Array.isArray(rows)){reason=`invalid_list_response_http_${response.record.http_status}`;break;}
     if(Number.isFinite(parsed.total))total=parsed.total;
-    const before=jobs.size;
-    for(const row of rows){const job=normalizeSelfHosted(source,row,response.record.response_file);if(job.job_id){jobs.set(job.job_id,job);rawById.set(job.job_id,{row,list_file:response.record.response_file});}}
-    pages.push({page,rows:rows.length,new_ids:jobs.size-before,response_file:response.record.response_file});
-    if(source.provider==='wenhua_public'||rows.length<cfg.pageSize||Number.isFinite(total)&&jobs.size>=total){listComplete=true;reason=source.provider==='wenhua_public'?'single_complete_array':'terminal_page_or_total_reconciled';break;}
-    if(jobs.size===before){reason='repeated_page_no_new_ids';break;}
+    const before=seenIds.size,acceptedBefore=jobs.size;
+    for(const row of rows){
+      const job=normalizeSelfHosted(source,row,response.record.response_file);if(job.job_id)seenIds.add(job.job_id);
+      if(!job.job_id||!acceptRow(row))continue;
+      jobs.set(job.job_id,job);rawById.set(job.job_id,{row,list_file:response.record.response_file});
+    }
+    pages.push({page,rows:rows.length,new_ids:seenIds.size-before,accepted_rows:jobs.size-acceptedBefore,response_file:response.record.response_file});
+    if(source.provider==='wenhua_public'||rows.length<cfg.pageSize||Number.isFinite(total)&&seenIds.size>=total){listComplete=true;reason=source.provider==='wenhua_public'?'single_complete_array':'terminal_page_or_total_reconciled';break;}
+    if(seenIds.size===before){reason='repeated_page_no_new_ids';break;}
   }
   let detailsCapped=0;
   if(source.provider==='ccb_public'&&jobs.size&&cfg.mode!=='list'){
@@ -133,5 +149,5 @@ export async function collectSelfHosted(source,options={}){
   const status=listComplete&&!detailsCapped&&!detailFailures.length?'complete':jobs.size?'partial':'failed';
   return {company_id:source.company_id,display_name:source.display_name,checked_at:new Date().toISOString(),jobs:[...jobs.values()],requests:client.records,
     coverage:{status,pages:pages.length,server_total:Number.isFinite(total)?total:null,jobs_observed:jobs.size,list_complete:listComplete,reason,page_evidence:pages,
-      details_capped:detailsCapped,details_failed:detailFailures.length,scope:source.provider==='ccb_public'?'Anonymous first-party list and detail APIs; city-filtered runs fetch details only for in-scope locations.':'Anonymous first-party API; public list rows contain complete JD body fields.'}};
+      details_capped:detailsCapped,details_failed:detailFailures.length,scope:source.provider==='ccb_public'?'Anonymous first-party list and detail APIs; city-filtered runs fetch details only for in-scope locations.':source.api_config?.employer_filter?'Anonymous first-party API; every upstream list page is read before applying the configured exact employer filter.':'Anonymous first-party API; public list rows contain complete JD body fields.'}};
 }
