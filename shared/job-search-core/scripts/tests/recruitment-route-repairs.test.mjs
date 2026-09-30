@@ -25,6 +25,10 @@ test('Workday missing requisition uses exact same employer site/path, never a fo
  for(const externalUrl of ['https://other.myworkdayjobs.com/Careers/job/Shanghai/Engineer_','https://fixture.myworkdayjobs.com/Other/job/Shanghai/Engineer_','https://fixture.myworkdayjobs.com/Careers/job/Shanghai/Different_'])assert.throws(()=>assertWorkdayDetailIdentity(row,{jobPostingInfo:{...info,externalUrl}},source),/mismatch/);
  assert.throws(()=>assertWorkdayDetailIdentity(row,{jobPostingInfo:{...info,jobReqId:'DIFFERENT'}},source),/mismatch/);
 });
+test('Huawei shared student stream spends internship detail sample on observed interns',async()=>{
+ const requested=[],client={records:[],async request(q){if(q.url.includes('getJobPage'))return {record:{http_status:200,response_file:'list'},data:{status:'SUCCESS',data:{pageVO:{totalRows:2},result:[{advertisementId:1,jobId:11,jobName:'A',scenarioName:'应届生'},{advertisementId:2,jobId:22,jobName:'B',scenarioName:'实习生'}]}}};requested.push(q.body.jobId);return {record:{http_status:200,response_file:'detail'},data:{status:'SUCCESS',data:[]}};}};
+ await collectHuawei({company_id:'test',provider:'huawei'},{targetMode:'internship',maxDetails:1,client});assert.deepEqual(requested,[22]);
+});
 test('Workday additional mainland location needs structured location plus observed mainland filter',()=>{
  const make=loc=>({jobPostingInfo:{country:{descriptor:'Singapore'},additionalLocations:[loc]}});
  for(const loc of ['Shanghai','Shanghai, CHN','Beijing, CN']){
