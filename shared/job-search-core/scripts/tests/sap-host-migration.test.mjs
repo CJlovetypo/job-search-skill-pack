@@ -13,7 +13,7 @@ test('SAP legacy and reviewed migrated origins retain stable IDs and incomplete 
  try{for(const host of ['jobs.sap.com','careers.sap.com']){
   const config=source(host);globalThis.fetch=async(url,init)=>{assert.equal(url,config.validated_api_request_examples[0].url);assert.equal(new Headers(init.headers).get('X-Public-Fixture'),'configured');return new Response(feed(host),{headers:{'Content-Type':'application/rss+xml'}});};
   const result=await collectSap(config,{evidenceDir:dir});
-  assert.equal(result.jobs.length,1);assert.equal(result.jobs[0].job_id,'12345');assert.equal(result.jobs[0].formal_status,'internship');assert.equal(result.jobs[0].open_status,'unknown');assert.equal(result.coverage.list_complete,false);assert.equal(result.coverage.status,'partial');
+  assert.equal(result.jobs.length,1);assert.equal(result.jobs[0].job_id,'12345');assert.equal(result.jobs[0].formal_status,'internship');assert.equal(result.jobs[0].open_status,'unknown');assert.equal(result.jobs[0].body_fetch.status,'available');assert.equal(result.coverage.list_complete,false);assert.equal(result.coverage.status,'partial');
  }}finally{globalThis.fetch=original;await fs.rm(dir,{recursive:true,force:true});}
 });
 

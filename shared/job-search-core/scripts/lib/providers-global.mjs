@@ -95,6 +95,7 @@ export function normalizeSapFeed(xml,source,rawFile) {
     const city=title.match(/\(([^()]*(?:, CN|China)[^()]*)\)\s*$/)?.[1];
     jobs.push(withCities({job_id:id,company_id:source.company_id,company_name:source.display_name,title,
       locations_raw:city?[city]:[],...body,formal_status:formal,open_status:'unknown',
+      body_fetch:{status:html.trim()?'available':'partial',origin:'list',reason:html.trim()?'validated_rss_item_body':'rss_item_body_empty'},
       recruitment_evidence:{provider:'sap_rss',career_status:career,employment_type:employment,published_feed:true,open_status_note:'RSS is a latest-items feed, not a live per-job active-status API'},
       official_url:link,job_url_kind:'official_detail',raw_file:rawFile,raw_metadata:{published_at:field('pubDate'),feed_scope:'China latest 10 items'}}));
   }
