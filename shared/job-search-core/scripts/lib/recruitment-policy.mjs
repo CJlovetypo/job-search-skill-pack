@@ -39,6 +39,7 @@ export function campusEvidence(job) {
   if (e.provider === 'hotjob' && Number(e.recruitType) === 1) add('recruitment_evidence.recruitType',e.recruitType);
   if (e.query_recruitType === 'GRADUATE') add('recruitment_evidence.query_recruitType',e.query_recruitType);
   if (e.query_recruitment_id_list?.length === 1 && String(e.query_recruitment_id_list[0]) === '201') add('recruitment_evidence.query_recruitment_id_list',e.query_recruitment_id_list);
+  if(e.provider==='huawei'&&/应届|校招/.test(e.scenario_name||''))add('recruitment_evidence.scenario_name',e.scenario_name);
   // A campus landing-page URL on its own is not a returned job/project label.
   return found;
 }
@@ -50,6 +51,8 @@ function directionEvidence(job) {
  const text=labels.map(k=>label(e[k])||label(m[k])).filter(Boolean).map(x=>String(x).replace(/(?:需|可|要求|接受)?提前实习/g,'').replace(/实习(?:经历|经验).{0,4}(?:优先|加分)/g,'')).join(' ');
  const rt=e.recruit_type||e.nested_recruitment_type,rtLabel=[label(rt),label(rt?.parent)].join(' ');
  const use=(status,field,value)=>({status,evidence:[{field,value}]});
+ if(provider==='huawei'&&/实习/.test(e.scenario_name||''))return use('internship','scenario_name',e.scenario_name);
+ if(provider==='huawei'&&e.query_job_type==='SR'&&String(e.job_type)==='1')return use('social','job_type',e.job_type);
  if(/校园大使|夏令营|训练营|博士后|postdoctoral|postdoc\b/i.test(title))return use('activity','title',job.title);
  if(/实习|\bintern(?:ship)?\b|working student|co[ -]?op/i.test(text+' '+rtLabel)
    || /^实习|实习(?:生|转正|工程师|开发|算法|设计|产品|岗位|岗|助理)|转正实习|(?:^|[-—_/（(【［\[\s])实习(?:[-—_/）)】］\]\s]|$)|\bintern(?:ship)?\b|working student|co[ -]?op/i.test(title))return use('internship','returned_type_or_title',{text,rt,title:job.title});

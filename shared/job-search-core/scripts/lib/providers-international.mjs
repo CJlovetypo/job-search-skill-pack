@@ -2,6 +2,7 @@ import {createClient} from './http.mjs';
 import {normalizeJobLocations} from './locations.mjs';
 import {collectWorkdayLocationFallback} from './workday-location-fallback.mjs';
 import {smartRecruitersOpenStatus,additionalRequirements} from './normalization-additions.mjs';
+import {mainlandLocationQueries} from './workday-mainland-facets.mjs';
 
 const clean=s=>String(s||'').replace(/<\/(?:p|div|li|h[1-6])>|<br\s*\/?\s*>/gi,'\n').replace(/<[^>]+>/g,'').replace(/&#x([\da-f]+);/gi,(_,n)=>String.fromCodePoint(parseInt(n,16))).replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(Number(n))).replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/\n{3,}/g,'\n\n').trim();
 const cityFields=job=>{const x=normalizeJobLocations(job);return {cities:x.cities,location_special:x.special,location_unknown:x.unknown,location_unresolved:x.unresolved};};
@@ -33,9 +34,20 @@ export function normalizeSmartRecruiters(d,source,record,fromPublishedList=false
 };}
 const requestJson=async(client,q,purpose)=>{const r=await client.request(q,{purpose});if(r.record.http_status!==200||!r.data)throw Error('Expected public JSON; HTTP '+r.record.http_status);return r;};
 /** Match a returned requisition to the observed list, allowing Workday's posting-version suffix. */
-export function assertWorkdayDetailIdentity(row,raw) {
+export function assertWorkdayDetailIdentity(row,raw,source) {
   const info=raw.jobPostingInfo||{},id=String(info.jobReqId||info.id||'');
   if(!id)throw Error('Missing Workday detail job ID');
+  // Workday's internal UUID is not the public requisition. When jobReqId is
+  // absent, require the exact observed job path on this employer's public site.
+  if(!info.jobReqId&&source?.api_config&&info.externalUrl){
+    const cfg=source.api_config;
+    try{
+      const expected=new URL((cfg.public_path||'/'+cfg.site)+row.externalPath,cfg.origin);
+      const actual=new URL(info.externalUrl);
+      if(String(row.externalPath).startsWith('/job/')&&actual.origin===expected.origin
+        &&decodeURIComponent(actual.pathname)===decodeURIComponent(expected.pathname))return;
+    }catch{}
+  }
   const bulletIds=(row.bulletFields||[]).map(x=>typeof x==='string'?x.trim():String(x?.descriptor||''));
   if(bulletIds.includes(id))return;
   let tail;try{tail=decodeURIComponent(String(row.externalPath||'').split('/').at(-1));}catch{throw Error('Invalid observed Workday externalPath');}
@@ -60,9 +72,19 @@ export function isMainlandChinaCountry(value){
   return /^(?:cn|China|China Mainland|Mainland China|China\s*\(\s*Mainland\s*\)|China\s*\/\s*Mainland|中国|中国大陆)$/i.test(country);
 }
 // A multi-location posting may have a foreign primary location and a mainland requisition location.
-export function isWorkdayMainlandDetail(raw){
+export function isWorkdayMainlandDetail(raw,{mainlandFilterConfirmed=false}={}){
   const d=raw?.jobPostingInfo||{};
-  return isMainlandChinaCountry(d.country?.descriptor)||isMainlandChinaCountry(d.jobRequisitionLocation?.country?.descriptor);
+  if(isMainlandChinaCountry(d.country?.descriptor)||isMainlandChinaCountry(d.jobRequisitionLocation?.country?.descriptor))return true;
+  // A foreign primary country does not exclude a structured secondary location.
+  // Require both the API's observed mainland filter and an unambiguous location.
+  if(!mainlandFilterConfirmed)return false;
+  return (d.additionalLocations||[]).some(value=>{
+    const label=typeof value==='string'?value:value?.descriptor;
+    if(!label||/Hong Kong|Taiwan|Taipei|Macao|Macau|香港|台湾|台灣|澳门|澳門/i.test(label))return false;
+    if(!/^(?:Beijing|Shanghai|Tianjin|Chongqing|Shenzhen|Guangzhou|Hangzhou|Wuhan|Chengdu|Nanjing|Suzhou|Xian|Xi'an|Hefei|Changsha|Zhengzhou|Ningbo|Xiamen|Dalian|Qingdao|Wuxi|Nantong|[\u4e00-\u9fff]{2,8})(?:,\s*(?:CN|CHN|China))?$/i.test(label.trim()))return false;
+    const loc=normalizeJobLocations({locations_raw:[label]});
+    return !loc.unresolved.length&&mainlandLocationQueries([{facetParameter:'locations',values:[{id:'detail',descriptor:label}]}]).length>0;
+  });
 }
 function chinaFacet(facets){let answer=null;const walk=f=>{if(!f||typeof f!=='object')return;if(f.facetParameter&&Array.isArray(f.values)){const x=f.values.find(x=>isMainlandChinaCountry(x.descriptor));if(x)answer={field:f.facetParameter,value:x.id,label:x.descriptor};}for(const x of Object.values(f))if(x&&typeof x==='object')Array.isArray(x)?x.forEach(walk):walk(x);};walk(facets);return answer;}
 export async function collectInternational(source,options={}){
@@ -107,9 +129,9 @@ export async function collectInternational(source,options={}){
       if(source.provider==='workday'&&!String(row.externalPath).startsWith('/job/'))throw Error('Unexpected externalPath');
       if(source.provider==='smartrecruiters'&&!String(url).startsWith(listURL+'/'))throw Error('Unexpected detail API reference');
       const r=await requestJson(client,{url},'job_detail');
-      if(source.provider==='workday')assertWorkdayDetailIdentity(row,r.data);
+      if(source.provider==='workday')assertWorkdayDetailIdentity(row,r.data,source);
       const country=source.provider==='workday'?r.data.jobPostingInfo?.country?.descriptor:r.data.location?.country;
-      if(!(source.provider==='workday'?isWorkdayMainlandDetail(r.data):isMainlandChinaCountry(country))){errors.push('Country filter not confirmed in detail '+(row.id||row.externalPath));excluded.push({job_id:row.id||row.externalPath,country,raw_file:r.record.response_file});continue;}
+      if(!(source.provider==='workday'?isWorkdayMainlandDetail(r.data,{mainlandFilterConfirmed:!!filter}):isMainlandChinaCountry(country))){errors.push('Country filter not confirmed in detail '+(row.id||row.externalPath));excluded.push({job_id:row.id||row.externalPath,country,raw_file:r.record.response_file});continue;}
       const j=source.provider==='workday'?normalizeWorkday(r.data,source,r.record):normalizeSmartRecruiters(r.data,source,r.record,true);
       if(!j.job_id)throw Error('Missing detail job ID');
       if(source.provider==='smartrecruiters'&&j.job_id!==String(row.id))throw Error('Detail ID mismatch');

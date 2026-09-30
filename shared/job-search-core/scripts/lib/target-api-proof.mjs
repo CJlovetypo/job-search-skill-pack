@@ -87,6 +87,11 @@ export function targetApiProof(job={},source={},mode) {
     if(String(rt?.id)==='101'||String(rt?.parent?.id)==='1')push(social,'recruit_type.id',rt);
     if(String(rt?.id)==='201')push(explicitFormal,'recruit_type.id',rt);
   }
+  if(provider==='huawei'){
+    if(/实习/.test(e.scenario_name||''))push(internship,'scenario_name',e.scenario_name);
+    else if(/应届|校招/.test(e.scenario_name||''))push(campus,'scenario_name',e.scenario_name);
+    if(e.query_job_type==='SR'&&String(e.job_type)==='1')push(social,'job_type',e.job_type);
+  }
   if(provider==='hotjob'){
     if(Number(e.recruitType)===2)push(social,'recruitType',e.recruitType);
     // Official mc/index.js: intern <-> 12, label 实习生招聘. The response must

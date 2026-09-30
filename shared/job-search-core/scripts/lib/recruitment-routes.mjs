@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto';
 export const RECRUITMENT_MODES=Object.freeze(['campus','social','internship']);
 export const ROUTE_POLICY_VERSION='2026-09-29-explicit-routes-v1';
 // These adapters execute the supplied request configuration in every direction.
-export const CONFIGURED_ROUTE_PROVIDERS=new Set(['beisen','moka','moka_api_platform','hotjob','feishu','workday','smartrecruiters','greenhouse','ashby','beisen_lightbolt']);
+export const CONFIGURED_ROUTE_PROVIDERS=new Set(['beisen','moka','moka_api_platform','hotjob','feishu','workday','smartrecruiters','greenhouse','ashby','beisen_lightbolt','huawei']);
 export const ROUTE_OVERRIDE_FIELDS=Object.freeze(['primary_entry_url','api_config','validated_api_request_examples','public_bootstrap_requests','list_page_size','project_type','official_job_url_template']);
 const runtimeFields=['provider','job_namespace','identity_verification',...ROUTE_OVERRIDE_FIELDS];
 export const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
@@ -25,6 +25,7 @@ export function validateRecruitmentRoutes(source){
     if(!['configured',...RECRUITMENT_MODES].includes(route.adapter_route)||route.adapter_route==='configured'&&!CONFIGURED_ROUTE_PROVIDERS.has(source.provider))throw Error('Unregistered adapter route');
     if(!route.overrides||typeof route.overrides!=='object'||Array.isArray(route.overrides))throw Error('Route overrides must be an object');
     keys(route.overrides,ROUTE_OVERRIDE_FIELDS,'route override');
+    if(source.provider==='huawei'&&route.adapter_route==='configured'&&!['CR','SR'].includes((route.overrides.api_config||source.api_config)?.job_type))throw Error('Configured Huawei route requires CR or SR job_type');
     const entry=route.overrides.primary_entry_url??source.primary_entry_url;
     if(!['http:','https:'].includes(new URL(entry).protocol)||new URL(entry).username||new URL(entry).password)throw Error('Invalid route entry URL');
     for(const field of ['validated_api_request_examples','public_bootstrap_requests'])if(route.overrides[field]!==undefined&&!Array.isArray(route.overrides[field]))throw Error('Route request overrides must be arrays');

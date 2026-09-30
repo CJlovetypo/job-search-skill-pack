@@ -11,12 +11,13 @@ export async function collectOracleNowcoder(source,options={}) {
   const opts={mode:'list',pageSize:20,maxPages:100,detailConcurrency:2,timeoutMs:15000,...options};
   if(!['list','full'].includes(opts.mode))throw Error('mode must be list or full');
   for(const k of ['pageSize','maxPages','detailConcurrency'])if(!Number.isInteger(opts[k])||opts[k]<1)throw Error(k+' must be a positive integer');
+  if(opts.maxDetails!=null&&(!Number.isInteger(opts.maxDetails)||opts.maxDetails<0))throw Error('maxDetails must be a nonnegative integer');
   const cities=opts.cityFilters??opts.cities??[];
   if(!Array.isArray(cities))throw Error('city filters must be an array');
   const client=opts.client||createClient(opts),jobs=[],rows=new Map(),pages=[],errors=[],cfg=source.api_config;
   const oracleGlobalCountryScan=source.provider==='oracle_recruiting'&&!cfg.location_id;
   let total=null,firstTotal=null,detailFailures=0,listComplete=false,reason='max_pages_reached';
-  let detailsRequested=0,detailsSkippedMode=0,detailsSkippedCity=0;
+  let detailsRequested=0,detailsSkippedMode=0,detailsSkippedCity=0,detailsSkippedLimit=0;
   const excludedLocationRows=[],excludedEmployerRows=[];
   const request=async(q,purpose)=>{const r=await client.request(q,{purpose});if(r.record.http_status!==200||!r.data)throw Error('Expected JSON HTTP '+r.record.http_status);return r;};
   try {
@@ -66,6 +67,7 @@ export async function collectOracleNowcoder(source,options={}) {
         }else if(source.provider==='oracle_recruiting') {
           const needsMetadata=j.location_unknown||jobCityStatus(j,[])==='unknown'||j.formal_status==='unknown'||j.open_status==='unknown';
           if(opts.mode==='list'&&!needsMetadata){j.detail_skipped_reason='list_metadata_sufficient';detailsSkippedMode++;}
+          else if(opts.maxDetails!=null&&detailsRequested>=opts.maxDetails){j.detail_skipped_reason='detail_limit';detailsSkippedLimit++;}
           else {
             detailsRequested++;
             const r=await request({url:cfg.origin+'/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=ById;Id=%22'+row.data.Id+'%22,siteNumber='+cfg.site},'job_detail');
@@ -82,12 +84,13 @@ export async function collectOracleNowcoder(source,options={}) {
     }
   }));
   const incomplete=jobs.filter(j=>!j.body_complete).length;
-  const requiredIncomplete=opts.mode==='full'?jobs.filter(j=>!j.body_complete&&j.detail_skipped_reason!=='explicit_non_target_city').length:0;
+  const requiredIncomplete=opts.mode==='full'?jobs.filter(j=>!j.body_complete&&!['explicit_non_target_city','detail_limit'].includes(j.detail_skipped_reason)).length:0;
   if(requiredIncomplete)errors.push(requiredIncomplete+' required JD bodies need section review');
   return {company_id:source.company_id,display_name:source.display_name,checked_at:new Date().toISOString(),jobs,requests:client.records,
-    coverage:{status:listComplete&&!errors.length?'complete':pages.length?'partial':'failed',mode:opts.mode,city_filters:cities,pages:pages.length,
-      server_total:total,jobs_observed:jobs.length,list_complete:listComplete,reason:[reason,...errors].filter(Boolean).join('; '),page_evidence:pages,
+    coverage:{status:listComplete&&!errors.length&&!detailsSkippedLimit?'complete':pages.length?'partial':'failed',mode:opts.mode,city_filters:cities,pages:pages.length,
+      server_total:total,jobs_observed:jobs.length,list_complete:listComplete,reason:[reason,...errors,detailsSkippedLimit?'detail_limit_reached':null].filter(Boolean).join('; '),page_evidence:pages,
       details_requested:detailsRequested,details_failed:detailFailures,details_skipped_mode:detailsSkippedMode,details_skipped_city:source.provider==='oracle_recruiting'?detailsSkippedCity:0,jobs_outside_city:detailsSkippedCity,
+      details_skipped_limit:detailsSkippedLimit,
       incomplete_bodies:incomplete,required_incomplete_bodies:requiredIncomplete,excluded_location_rows:excludedLocationRows,excluded_employer_rows:excludedEmployerRows,
       metadata_unresolved:jobs.filter(j=>j.location_unknown||jobCityStatus(j,[])==='unknown'||j.formal_status==='unknown'||j.open_status==='unknown').length,
       global_rows_observed:source.provider==='oracle_recruiting'&&oracleGlobalCountryScan?rows.size:null,

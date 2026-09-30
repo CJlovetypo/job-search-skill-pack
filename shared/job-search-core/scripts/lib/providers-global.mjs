@@ -79,11 +79,13 @@ export async function collectMicrosoft(source,options={}) {
 }
 export function normalizeSapFeed(xml,source,rawFile) {
   if(!/<rss\b/.test(xml)||!/<channel>/.test(xml))throw Error('SAP RSS response missing channel');
+  const configuredOrigins=new Set([source.primary_entry_url,...(source.validated_api_request_examples||[]).map(q=>q.url)].filter(Boolean).map(url=>new URL(url).origin));
   const jobs=[];
   for(const item of xml.matchAll(/<item>([\s\S]*?)<\/item>/g)){
     const field=name=>decode(item[1].match(new RegExp('<'+name+'>([\\s\\S]*?)</'+name+'>'))?.[1]||'');
     const title=field('title'),link=field('link'),html=field('description'),body=fullBody(html),id=link.match(/\/(\d+)\/?(?:\?|$)/)?.[1];
-    if(!id||!/^https:\/\/jobs\.sap\.com\/job\//.test(link))throw Error('SAP item missing official stable job ID');
+    let official;try{official=new URL(link);}catch{}
+    if(!id||!official||!['https://jobs.sap.com','https://careers.sap.com'].includes(official.origin)||!configuredOrigins.has(official.origin)||official.username||official.password||!official.pathname.startsWith('/job/'))throw Error('SAP item missing official stable job ID');
     const employment=body.description.match(/Employment Type:\s*([^|\n]+)/i)?.[1]?.trim()||null;
     const career=body.description.match(/Career Status:\s*([^|\n]+)/i)?.[1]?.trim()||null;
     let formal='unknown';
@@ -100,7 +102,7 @@ export function normalizeSapFeed(xml,source,rawFile) {
 }
 export async function collectSap(source,options={}) {
   const client=createClient(options);let jobs=[],reason='latest_10_feed_without_pagination_contract';
-  try {const q=source.validated_api_request_examples[0],response=await client.request({url:q.url,headers:{Accept:'application/rss+xml,application/xml,text/xml'}},{purpose:'public_job_feed'});
+  try {const q=source.validated_api_request_examples[0],response=await client.request({...q,headers:{Accept:'application/rss+xml,application/xml,text/xml',...q.headers}},{purpose:'public_job_feed'});
     if(response.record.http_status!==200)throw Error('SAP RSS HTTP '+response.record.http_status);
     jobs=normalizeSapFeed(response.text,source,response.record.response_file);
     return {company_id:source.company_id,display_name:source.display_name,checked_at:new Date().toISOString(),jobs,requests:client.records,
