@@ -85,7 +85,10 @@ test('new or changed shared source configs remain enabled without inheriting sta
   assert.equal(after.unverified_configurations,before.unverified_configurations+1);
   const accepted=proof.configurations.find(r=>r.proof?.accepted),company=changed.find(c=>c.company_id===accepted.company_id);
   const sources=company.recruitment_sources?.length?company.recruitment_sources:[company];
-  const source=sources.find(s=>s.source_id===accepted.source_id)||sources[0];source.primary_entry_url+='?changed=1';
+  const source=sources.find(s=>s.source_id===accepted.source_id)||sources[0];
+  const route=source.collection_routes?.find(r=>r.route_id===accepted.route_id);
+  if(route)route.overrides.primary_entry_url=(route.overrides.primary_entry_url||source.primary_entry_url)+'?changed=1';
+  else source.primary_entry_url+='?changed=1';
   const stale=validatedDirectionRegistry(changed,proof,mode);
   assert(stale.unverified_configurations>after.unverified_configurations);
   assert.equal(stale.enabled_configurations,after.enabled_configurations);
